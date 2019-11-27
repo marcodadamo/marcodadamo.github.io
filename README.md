@@ -7,4 +7,4 @@ L'azione principale è quella di voler dare un cambiamento innovativo, commercia
 
 ### Progetti Digital Enterprise
 
-<img src="https://shopagritrade.it/wp-content/uploads/2019/11/Project-Trade-Repository-icone-progetti-1.png">
+<img src="https://shopagritrade.it/wp-content/uploads/2019/11/AgriTrade-CLOUD%C3%A0.png">
