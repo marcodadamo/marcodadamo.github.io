@@ -7,5 +7,5 @@ Le aziende che rientrano nel programma **Digital Enterprise** è perchè hanno l
 
 L'azione principale è quella di voler dare un cambiamento innovativo, commerciale ed organizzativo alla propria impresa. 
 
-### I progetti Digital Enterprise
-<a href="https://marcodadamo.github.io/pages/agritradecloudagriculturalfair.html"> <h3>Agri Trade Cloud agricultural Fair</h3> </a>
+#### I PROGETTI DIGITAL ENTERPRISE
+<a href="https://marcodadamo.github.io/pages/agritradecloudagriculturalfair.html"> <h2>Agri Trade Cloud agricultural Fair</h2> </a>
