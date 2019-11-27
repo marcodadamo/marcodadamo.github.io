@@ -1,11 +1,11 @@
 <a href="https://www.linkedin.com/in/marco-d-adamo/"><img src="http://www.ecotrade.bio/public/images/logo-footer-in.png" width="50" height="50"></a>
 
 # DIGITAL ENTERPRISE
-Le aziende che rientrano nel programma **Digital Enterprise** è perchè hanno le idee chiare, creare un marchio. 
+The companies that fall under the **Digital Enterprise** program are because they have clear ideas, create a brand.
 
-**Digital Enterprise**, progetto informatico che accompagna le aziende nel loro percorso di crescità nel digitale, nel marketing, nella comunicazione, nella gestione dei progetti interni aziendali e nel designer. 
+**Digital Enterprise**, an IT project that accompanies companies in their digital growth, marketing, communication, internal project management and designer development.
 
-L'azione principale è quella di voler dare un cambiamento innovativo, commerciale ed organizzativo alla propria impresa. 
+The main action is to want to give an innovative, commercial and organizational change to your business.
 
-## I PROGETTI
+## THE PROJECTS
 ### <a href="https://marcodadamo.github.io/pages/agritradecloudagriculturalfair.html">Agri Trade Cloud agricultural Fair</a>
