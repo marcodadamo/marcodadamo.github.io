@@ -1,3 +1,5 @@
+<a href="https://www.linkedin.com/in/marco-d-adamo/"><img src="http://www.ecotrade.bio/public/images/logo-footer-in.png" width="50" height="50"></a>
+
 ## DIGITAL ENTERPRISE
 Le aziende che rientrano nel programma **Digital Enterprise** è perchè hanno le idee chiare, creare un marchio. 
 
