@@ -7,11 +7,9 @@ L'azione principale è quella di voler dare un cambiamento innovativo, commercia
 
 ### Progetti Digital Enterprise
 <table>
-    <tr><td><img src="https://shopagritrade.it/wp-content/uploads/2019/11/AgriTrade-CLOUD%C3%A0.png"></td>
-        <td><img src="https://shopagritrade.it/wp-content/uploads/2019/11/AGRI-TRADE-fertilizers.png"></td></tr>
+    <tr><td><img src="https://shopagritrade.it/wp-content/uploads/2019/11/AgriTrade-CLOUD%C3%A0.png"></td></tr>
 </table>
 
-### AgriTrade Cloud agricultural Fair
 **Caratteristiche**
 Vantaggi:
 * Avvio rapido sulla piattaforma web shopagritrade.it nella sezione Project Trade.
