@@ -6,5 +6,7 @@ Le aziende che rientrano nel programma **Digital Enterprise** è perchè hanno l
 L'azione principale è quella di voler dare un cambiamento innovativo, commerciale ed organizzativo alla propria impresa. 
 
 ### Progetti Digital Enterprise
-
-<img src="https://shopagritrade.it/wp-content/uploads/2019/11/AgriTrade-CLOUD%C3%A0.png">
+<table>
+    <tr><td><img src="https://shopagritrade.it/wp-content/uploads/2019/11/AgriTrade-CLOUD%C3%A0.png"></td>
+        <td><img src="https://shopagritrade.it/wp-content/uploads/2019/11/AGRI-TRADE-fertilizers.png"></td></tr>
+</table>
