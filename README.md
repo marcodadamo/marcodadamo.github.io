@@ -1,4 +1,4 @@
-<b>[Home](marcodadamo.github.io)</b>
+## [Home](marcodadamo.github.io)
 <hr>
 <a href="https://www.linkedin.com/in/marco-d-adamo/"><img src="http://www.ecotrade.bio/public/images/logo-footer-in.png" width="50" height="50"></a>
 
