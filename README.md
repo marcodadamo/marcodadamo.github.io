@@ -14,6 +14,3 @@ This project adheres to the GitHub platform, where archives are made using repos
 * It is the part of development that realizes projects in open source, using programming languages.
 
 This working methodology is adopted in order to interact in detail so that data storage, management and storage archives of any entity can be created.
-
-## <font face="calibri"> THE PROJECTS </font>
-<font face="calibri" size="6"><em> <a href="https://marcodadamo.github.io/pages/agritradecloudagriculturalfair.html">Agri Trade Cloud agricultural Fair</a> </em></font>
