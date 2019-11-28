@@ -1,6 +1,6 @@
 <a href="https://www.linkedin.com/in/marco-d-adamo/"><img src="http://www.ecotrade.bio/public/images/logo-footer-in.png" width="50" height="50"></a>
 
-# <font face="calibri"> DIGITAL ENTERPRISE </font>
+<img src="https://raw.githubusercontent.com/marcodadamo/marcodadamo.github.io/master/immagini/digitalenterprise.png">
 The companies that fall under the **Digital Enterprise** program are because they have clear ideas, create a brand.
 
 **Digital Enterprise**, an IT project that accompanies companies in their digital growth, marketing, communication, internal project management and designer development.
