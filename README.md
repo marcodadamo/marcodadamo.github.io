@@ -8,4 +8,4 @@ The companies that fall under the **Digital Enterprise** program are because the
 The main action is to want to give an innovative, commercial and organizational change to your business.
 
 ## <font face="calibri"> THE PROJECTS </font>
-<font face="calibri" size="4"> <a href="https://marcodadamo.github.io/pages/agritradecloudagriculturalfair.html">Agri Trade Cloud agricultural Fair</a> </font>
+<font face="calibri" size="5"> <a href="https://marcodadamo.github.io/pages/agritradecloudagriculturalfair.html">Agri Trade Cloud agricultural Fair</a> </font>
