@@ -1,1 +1,7 @@
 theme: jekyll-theme-architect
+
+nav:
+  - text: HOME
+    url: /marcodadamo.github.io
+  - text: CATEGORIES
+    url: /pages/agritradecloudagriculturalfair.html
