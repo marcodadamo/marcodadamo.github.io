@@ -3,6 +3,8 @@
 <hr>
 <img src="https://raw.githubusercontent.com/marcodadamo/marcodadamo.github.io/master/immagini/digitalenterprise.png">
 
+**Communication, design, marketing and development**
+
 The companies that fall under the **Digital Enterprise** program are because they have clear ideas, create a brand.
 
 **Digital Enterprise**, an IT project that brings companies in their digital growth, marketing, communication, internal project management and designer development.
