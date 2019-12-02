@@ -3,7 +3,7 @@
 <hr>
 <img src="https://raw.githubusercontent.com/marcodadamo/marcodadamo.github.io/master/immagini/digitalenterprise.png">
 
-**Communication, design, marketing and development**
+**Communication, Design, Marketing and Development**
 
 The companies that fall under the **Digital Enterprise** program are because they have clear ideas, create a brand.
 
