@@ -16,4 +16,5 @@ This project adheres to the GitHub platform, where archives are made using repos
 * It is the part of development that realizes projects in open source, using programming languages.
 
 This working methodology is adopted in order to interact in detail so that data storage, management and storage archives of any entity can be created.
-<iframe src="https://www.linkedin.com/embed/feed/update/urn:li:ugcPost:6601167451193516032" height="512" width="504" frameborder="0" allowfullscreen="" title="Post incorporato"></iframe>
+
+<img src="https://raw.githubusercontent.com/marcodadamo/marcodadamo.github.io/master/immagini/Sfonto%20country%20notebook.png">
