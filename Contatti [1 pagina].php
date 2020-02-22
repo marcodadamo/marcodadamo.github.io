@@ -99,6 +99,6 @@
             document.body.appendChild(script);
         </script>
         
-        
+       
 	<script type="text/javascript">CsrfMagic.end();</script></body>
 	</html>
