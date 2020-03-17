@@ -50,4 +50,5 @@ $Test->Render("linegraph.png");
 // se invece si vuole mostrare direttamente l'immagine senza salvarla su disco, commentare la riga precedente e scommentare quella seguente
 //$Test->Stroke();
 
+
 ?>
