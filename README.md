@@ -1,6 +1,6 @@
 <table>
   <body>
-    <tr><td><a href="https://www.linkedin.com/in/marco-d-adamo/"><img src="http://www.ecotrade.bio/public/images/logo-footer-in.png" width="50" height="50"></a></td><td><a href="https://marcodadamo.github.io/menu.html"><h2>[Menu](https://marcodadamo.github.io/menu.html)</h2></a> </td></tr>
+    <tr><td><a href="https://www.linkedin.com/in/marco-d-adamo/"><img src="http://www.ecotrade.bio/public/images/logo-footer-in.png" width="50" height="50"></a></td><td><h2><a href="https://marcodadamo.github.io/menu.html">Menu</a></h2></td></tr>
   </body>
   </table>
 <hr>
