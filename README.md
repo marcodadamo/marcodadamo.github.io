@@ -1,4 +1,4 @@
-<table>
+<table border="0" bgcolor="white">
   <body>
     <tr><td><a href="https://www.linkedin.com/in/marco-d-adamo/"><img src="http://www.ecotrade.bio/public/images/logo-footer-in.png" width="50" height="50"></a></td><td><a href="https://marcodadamo.github.io/menu.html"><img src="https://cdn2.iconfinder.com/data/icons/ui-icon-part-2/128/menu-512.png" width="80" height="80"></a></td></tr>
   </body>
