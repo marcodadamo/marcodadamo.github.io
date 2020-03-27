@@ -1,6 +1,6 @@
 <table border="0" bordercolor="black" bgcolor="black" bordercolorlight="black" bordercolordark="black">
   <body>
-    <tr><td><a href="https://www.linkedin.com/in/marco-d-adamo/"><font color="withe">Linkedin</font></a></td><td><a href="https://marcodadamo.github.io/menu.html">Menu</a></td></tr>
+    <tr><td><a href="https://www.linkedin.com/in/marco-d-adamo/"><font color="white">Linkedin</font></a></td><td><a href="https://marcodadamo.github.io/menu.html">Menu</a></td></tr>
   </body>
   </table>
 <hr>
