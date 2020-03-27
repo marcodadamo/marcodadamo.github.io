@@ -1,4 +1,4 @@
-<table border="0" bordercolor="white" bgcolor="gray" bordercolorlight="gray" bordercolordark="black">
+<table border="0" bordercolor="white" bgcolor="black" bordercolorlight="gray" bordercolordark="black">
   <body>
     <tr><td><a href="https://www.linkedin.com/in/marco-d-adamo/">Linkedin</a></td><td><a href="https://marcodadamo.github.io/menu.html">Menu</a></td></tr>
   </body>
