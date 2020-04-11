@@ -1,0 +1,17 @@
+# Site settings
+title: SeanAbu 
+header-img: img/home-bg.jpg
+email: seanabu.wilson@gmail.com
+description: "Just a few posts to share my work as a data scientist with you."
+baseurl: ""
+url: "www.seanabu.com"
+linkedin_username: SeanAbu
+github_username:  SeanAbu
+
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+permalink: pretty
+paginate: 5
+exclude: ["less","node_modules","Gruntfile.js","package.json","README.md"]
