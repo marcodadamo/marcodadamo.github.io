@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Il Regno delle Tabelline - Avventura Epica</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts: Fredoka -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background: linear-gradient(135deg, #4F46E5 0%, #06B6D4 50%, #10B981 100%);
+            min-height: 100vh;
+        }
+        .bounce-custom {
+            animation: bounce 0.6s infinite alternate;
+        }
+        @keyframes bounce {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-10px); }
+        }
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        .pulse-glow {
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.7);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-3 sm:p-6">
+
+    <div id="app" class="w-full max-w-xl bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden border-4 border-yellow-300 transition-all duration-300">
+        
+        <!-- HEADER / NAVBAR -->
+        <div class="bg-gradient-to-r from-purple-600 via-pink-500 to-yellow-500 p-4 text-white flex justify-between items-center shadow-md">
+            <div class="flex items-center space-x-2">
+                <span class="text-3xl">🏰</span>
+                <h1 class="text-xl sm:text-2xl font-bold tracking-wide drop-shadow-md">Il Regno delle Tabelline</h1>
+            </div>
+            <div id="game-stats" class="hidden flex items-center space-x-3 text-sm sm:text-lg font-semibold">
+                <div class="flex items-center bg-white/20 px-2.5 py-1 rounded-full">
+                    👤 <span id="player-display" class="ml-1 truncate max-w-[80px] sm:max-w-[120px]">Eroe</span>
+                </div>
+                <div class="flex items-center bg-white/20 px-2.5 py-1 rounded-full">
+                    ⭐ <span id="score-display" class="ml-1">0</span>
+                </div>
+                <div class="flex items-center bg-white/20 px-2.5 py-1 rounded-full">
+                    🔥 <span id="streak-display" class="ml-1">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-menu" class="p-5 sm:p-8 space-y-6">
+            <div class="text-center space-y-2">
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-purple-700">Benvenuto, Eroe! 🛡️</h2>
+                <p class="text-gray-600 text-base sm:text-lg">Inserisci il tuo nome e preparati a conquistare il regno della matematica.</p>
+            </div>
+
+            <!-- Player Name Input -->
+            <div class="bg-purple-50 p-4 rounded-2xl border-2 border-purple-200 shadow-inner space-y-2">
+                <label for="username-input" class="block text-purple-900 font-bold text-sm sm:text-base">Nome del Giocatore:</label>
+                <input type="text" id="username-input" placeholder="Es. Sir Lancillotto o Principessa Sofia" maxlength="15" 
+                    class="w-full px-4 py-3 rounded-xl border-2 border-purple-300 focus:outline-none focus:border-purple-600 text-lg font-semibold text-gray-800 bg-white shadow-sm">
+            </div>
+
+            <!-- Mode Selector -->
+            <div class="space-y-2">
+                <label class="block text-gray-700 font-semibold text-md">Scegli la Modalità:</label>
+                <div class="grid grid-cols-3 gap-2 sm:gap-3">
+                    <button onclick="setGameMode('training')" id="mode-btn-training" class="mode-select-btn p-3 rounded-2xl border-2 font-bold text-sm sm:text-base transition flex flex-col items-center justify-center space-y-1 border-purple-500 bg-purple-100 text-purple-800 shadow-sm">
+                        <span class="text-2xl">🎯</span>
+                        <span>Allenamento</span>
+                    </button>
+                    <button onclick="setGameMode('timeattack')" id="mode-btn-timeattack" class="mode-select-btn p-3 rounded-2xl border-2 font-bold text-sm sm:text-base transition flex flex-col items-center justify-center space-y-1 border-gray-200 bg-gray-50 text-gray-500 shadow-sm">
+                        <span class="text-2xl">⏱️</span>
+                        <span>Sfida a Tempo</span>
+                    </button>
+                    <button onclick="setGameMode('monster')" id="mode-btn-monster" class="mode-select-btn p-3 rounded-2xl border-2 font-bold text-sm sm:text-base transition flex flex-col items-center justify-center space-y-1 border-gray-200 bg-gray-50 text-gray-500 shadow-sm">
+                        <span class="text-2xl">🐉</span>
+                        <span>Scontro Drago</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Selector Container (Visible mainly for Training) -->
+            <div id="table-selector-section" class="space-y-2">
+                <label class="block text-gray-700 font-semibold text-md">Seleziona Tabellina:</label>
+                <div class="grid grid-cols-5 gap-2">
+                    <button onclick="selectTable(1)" class="tab-btn bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold py-2.5 rounded-xl text-lg shadow border-2 border-blue-300 transition">1</button>
+                    <button onclick="selectTable(2)" class="tab-btn bg-green-100 hover:bg-green-200 text-green-800 font-bold py-2.5 rounded-xl text-lg shadow border-2 border-green-300 transition">2</button>
+                    <button onclick="selectTable(3)" class="tab-btn bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-bold py-2.5 rounded-xl text-lg shadow border-2 border-yellow-300 transition">3</button>
+                    <button onclick="selectTable(4)" class="tab-btn bg-pink-100 hover:bg-pink-200 text-pink-800 font-bold py-2.5 rounded-xl text-lg shadow border-2 border-pink-300 transition">4</button>
+                    <button onclick="selectTable(5)" class="tab-btn bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold py-2.5 rounded-xl text-lg shadow border-2 border-purple-300 transition">5</button>
+                    <button onclick="selectTable(6)" class="tab-btn bg-red-100 hover:bg-red-200 text-red-800 font-bold py-2.5 rounded-xl text-lg shadow border-2 border-red-300 transition">6</button>
+                    <button onclick="selectTable(7)" class="tab-btn bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-bold py-2.5 rounded-xl text-lg shadow border-2 border-indigo-300 transition">7</button>
+                    <button onclick="selectTable(8)" class="tab-btn bg-teal-100 hover:bg-teal-200 text-teal-800 font-bold py-2.5 rounded-xl text-lg shadow border-2 border-teal-300 transition">8</button>
+                    <button onclick="selectTable(9)" class="tab-btn bg-orange-100 hover:bg-orange-200 text-orange-800 font-bold py-2.5 rounded-xl text-lg shadow border-2 border-orange-300 transition">9</button>
+                    <button onclick="selectTable(10)" class="tab-btn bg-cyan-100 hover:bg-cyan-200 text-cyan-800 font-bold py-2.5 rounded-xl text-lg shadow border-2 border-cyan-300 transition">10</button>
+                </div>
+                <button onclick="selectTable('all')" id="btn-all-tables" class="w-full mt-2 bg-purple-200 hover:bg-purple-300 text-purple-900 font-bold py-2.5 rounded-xl text-md shadow border-2 border-purple-400 transition ring-4 ring-purple-300">
+                    🌟 Tutte le Tabelline (Miste)
+                </button>
+            </div>
+
+            <button onclick="startGame()" class="w-full bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-4 rounded-2xl text-2xl shadow-lg transition transform hover:scale-105 active:scale-95 flex items-center justify-center space-x-2">
+                <span>Inizia la Battaglia! ⚔️</span>
+            </button>
+
+            <!-- Hall of Fame Preview / Button -->
+            <div class="pt-2 border-t border-gray-200">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-bold text-gray-700 text-md">🏆 Sala degli Eroi (Classifica)</h3>
+                    <button onclick="clearLeaderboard()" class="text-xs text-red-500 hover:underline">Resetta</button>
+                </div>
+                <div id="hall-of-fame-list" class="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <div id="screen-game" class="p-5 sm:p-8 space-y-6 hidden">
+            <!-- Secondary top stats: Time / Lives / Monster HP -->
+            <div class="flex justify-between items-center bg-indigo-50 px-4 py-2 rounded-2xl border-2 border-indigo-200">
+                <div id="dynamic-game-info" class="font-bold text-indigo-800 text-lg">
+                    Domanda 1 / 10
+                </div>
+                <div id="secondary-status" class="text-xl font-bold text-red-500 flex items-center space-x-1">
+                    ❤️❤️❤️
+                </div>
+            </div>
+
+            <!-- Monster visual banner (active in Monster Mode) -->
+            <div id="monster-banner" class="hidden bg-gradient-to-r from-red-500 to-orange-500 text-white p-3 rounded-2xl text-center shadow-md relative overflow-hidden">
+                <div class="flex justify-between items-center px-4">
+                    <span class="text-2xl animate-bounce">🐉 Drago Sputafuoco</span>
+                    <span id="monster-hp-text" class="font-bold text-lg">HP: 100/100</span>
+                </div>
+                <div class="w-full bg-red-900/40 rounded-full h-3 mt-2 overflow-hidden">
+                    <div id="monster-hp-bar" class="bg-green-400 h-3 transition-all duration-300 w-full"></div>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div class="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-3xl border-4 border-indigo-200 text-center shadow-inner relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 text-8xl opacity-10">✨</div>
+                <h2 id="question-text" class="text-5xl sm:text-6xl font-extrabold text-indigo-900 tracking-tight my-2">
+                    7 × 8 = ?
+                </h2>
+                <div id="feedback-message" class="h-8 text-lg font-bold transition-all duration-300"></div>
+            </div>
+
+            <!-- Multiple Choice Grid -->
+            <div id="choices-container" class="grid grid-cols-2 gap-4">
+                <button onclick="checkAnswer(this)" class="choice-btn bg-white hover:bg-purple-50 text-purple-900 border-3 border-purple-200 hover:border-purple-400 font-bold p-4 rounded-2xl text-2xl shadow transition transform hover:scale-105 active:scale-95">24</button>
+                <button onclick="checkAnswer(this)" class="choice-btn bg-white hover:bg-purple-50 text-purple-900 border-3 border-purple-200 hover:border-purple-400 font-bold p-4 rounded-2xl text-2xl shadow transition transform hover:scale-105 active:scale-95">56</button>
+                <button onclick="checkAnswer(this)" class="choice-btn bg-white hover:bg-purple-50 text-purple-900 border-3 border-purple-200 hover:border-purple-400 font-bold p-4 rounded-2xl text-2xl shadow transition transform hover:scale-105 active:scale-95">49</button>
+                <button onclick="checkAnswer(this)" class="choice-btn bg-white hover:bg-purple-50 text-purple-900 border-3 border-purple-200 hover:border-purple-400 font-bold p-4 rounded-2xl text-2xl shadow transition transform hover:scale-105 active:scale-95">64</button>
+            </div>
+        </div>
+
+        <div id="screen-summary" class="p-5 sm:p-8 space-y-6 text-center hidden">
+            <div class="space-y-2">
+                <h2 id="summary-title" class="text-3xl sm:text-4xl font-extrabold text-purple-800">Missione Completata! 🎉</h2>
+                <p id="summary-subtitle" class="text-gray-600 text-lg">Il regno è salvo grazie al tuo coraggio!</p>
+            </div>
+
+            <!-- Stars container -->
+            <div id="stars-container" class="flex justify-center space-x-3 text-5xl py-2">
+                ⭐ ⭐ ⭐
+            </div>
+
+            <!-- Stats Box -->
+            <div class="bg-indigo-50 border-2 border-indigo-200 rounded-3xl p-5 space-y-3 max-w-sm mx-auto shadow-inner">
+                <div class="flex justify-between items-center text-lg">
+                    <span class="text-gray-600 font-semibold">Giocatore:</span>
+                    <span id="summary-player" class="font-bold text-purple-700 text-xl truncate max-w-[150px]">Eroe</span>
+                </div>
+                <div class="flex justify-between items-center text-lg">
+                    <span class="text-gray-600 font-semibold">Punteggio Totale:</span>
+                    <span id="final-score" class="font-bold text-indigo-700 text-2xl">0</span>
+                </div>
+                <div class="flex justify-between items-center text-lg">
+                    <span class="text-gray-600 font-semibold">Risposte Esatte:</span>
+                    <span id="final-correct" class="font-bold text-green-600 text-2xl">0/10</span>
+                </div>
+                <div class="flex justify-between items-center text-lg">
+                    <span class="text-gray-600 font-semibold">Miglior Serie:</span>
+                    <span id="final-streak" class="font-bold text-orange-500 text-2xl">0</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                <button onclick="resetToMenu()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-4 rounded-2xl text-xl shadow transition">
+                    🏠 Torna al Menu
+                </button>
+                <button onclick="startGame()" class="flex-1 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-4 rounded-2xl text-xl shadow-lg transition transform hover:scale-105">
+                    🔄 Gioca Ancora
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playTone(frequency, type, duration, delay = 0) {
+            setTimeout(() => {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.value = frequency;
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            }, delay);
+        }
+
+        const soundEffects = {
+            click: () => playTone(600, 'sine', 0.1),
+            correct: () => {
+                playTone(523.25, 'triangle', 0.15, 0); 
+                playTone(659.25, 'triangle', 0.15, 100); 
+                playTone(783.99, 'triangle', 0.3, 200); 
+            },
+            wrong: () => {
+                playTone(200, 'sawtooth', 0.2, 0);
+                playTone(150, 'sawtooth', 0.3, 100);
+            },
+            win: () => {
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((note, index) => {
+                    playTone(note, 'sine', 0.3, index * 120);
+                });
+            },
+            monsterHit: () => {
+                playTone(120, 'square', 0.2, 0);
+                playTone(80, 'square', 0.3, 100);
+            }
+        };
+
+        let leaderboard = JSON.parse(localStorage.getItem('tabelline_leaderboard')) || [];
+
+        function saveScoreToLeaderboard(playerName, score, mode) {
+            if (!playerName.trim()) playerName = "Eroe Senza Nome";
+            leaderboard.push({ name: playerName, score: score, mode: mode, date: new Date().toLocaleDateString() });
+            leaderboard.sort((a, b) => b.score - a.score);
+            leaderboard = leaderboard.slice(0, 10); // Keep top 10
+            localStorage.setItem('tabelline_leaderboard', JSON.stringify(leaderboard));
+            renderLeaderboard();
+        }
+
+        function renderLeaderboard() {
+            const listContainer = document.getElementById('hall-of-fame-list');
+            if (leaderboard.length === 0) {
+                listContainer.innerHTML = `<p class="text-gray-400 text-sm text-center py-2">Nessun eroe in classifica. Sii il primo!</p>`;
+                return;
+            }
+            let html = "";
+            leaderboard.forEach((item, index) => {
+                let badge = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `🏅`;
+                let modeText = item.mode === 'timeattack' ? '⏱️ Tempo' : item.mode === 'monster' ? '🐉 Drago' : '🎯 Allenamento';
+                html += `
+                    <div class="flex justify-between items-center bg-white px-3 py-2 rounded-xl border border-gray-200 text-sm shadow-sm">
+                        <div class="flex items-center space-x-2 truncate">
+                            <span>${badge}</span>
+                            <span class="font-bold text-purple-900 truncate max-w-[100px] sm:max-w-[130px]">${item.name}</span>
+                            <span class="text-xs text-gray-400">(${modeText})</span>
+                        </div>
+                        <span class="font-extrabold text-indigo-600">${item.score} pt</span>
+                    </div>
+                `;
+            });
+            listContainer.innerHTML = html;
+        }
+
+        function clearLeaderboard() {
+            soundEffects.click();
+            leaderboard = [];
+            localStorage.removeItem('tabelline_leaderboard');
+            renderLeaderboard();
+        }
+
+        let playerName = "";
+        let gameMode = 'training'; // 'training', 'timeattack', 'monster'
+        let selectedTable = 'all';
+        let currentQuestionIndex = 0;
+        let totalQuestions = 10;
+        let score = 0;
+        let streak = 0;
+        let maxStreak = 0;
+        let lives = 3;
+        let correctAnswersCount = 0;
+        let currentCorrectAnswer = 0;
+        let questionsList = [];
+
+        // Time Attack Variables
+        let timerInterval = null;
+        let timeLeft = 60;
+
+        // Monster Mode Variables
+        let monsterHP = 100;
+        let maxMonsterHP = 100;
+
+        // UI references
+        const screenMenu = document.getElementById('screen-menu');
+        const screenGame = document.getElementById('screen-game');
+        const screenSummary = document.getElementById('screen-summary');
+        const gameStats = document.getElementById('game-stats');
+        const playerDisplay = document.getElementById('player-display');
+        const scoreDisplay = document.getElementById('score-display');
+        const streakDisplay = document.getElementById('streak-display');
+        const dynamicGameInfo = document.getElementById('dynamic-game-info');
+        const secondaryStatus = document.getElementById('secondary-status');
+        const monsterBanner = document.getElementById('monster-banner');
+        const monsterHpBar = document.getElementById('monster-hp-bar');
+        const monsterHpText = document.getElementById('monster-hp-text');
+        const questionText = document.getElementById('question-text');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const choicesContainer = document.getElementById('choices-container');
+
+        // Initialize leaderboard on load
+        renderLeaderboard();
+
+        function setGameMode(mode) {
+            soundEffects.click();
+            gameMode = mode;
+            document.querySelectorAll('.mode-select-btn').forEach(btn => {
+                btn.className = "mode-select-btn p-3 rounded-2xl border-2 font-bold text-sm sm:text-base transition flex flex-col items-center justify-center space-y-1 border-gray-200 bg-gray-50 text-gray-500 shadow-sm";
+            });
+            const activeBtn = document.getElementById(`mode-btn-${mode}`);
+            activeBtn.className = "mode-select-btn p-3 rounded-2xl border-2 font-bold text-sm sm:text-base transition flex flex-col items-center justify-center space-y-1 border-purple-500 bg-purple-100 text-purple-800 shadow-sm";
+
+            const tableSection = document.getElementById('table-selector-section');
+            if (mode === 'monster' || mode === 'timeattack') {
+                tableSection.style.display = 'none';
+                selectedTable = 'all'; // forced mixed for special modes
+            } else {
+                tableSection.style.display = 'block';
+            }
+        }
+
+        function selectTable(table) {
+            soundEffects.click();
+            selectedTable = table;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('ring-4', 'ring-purple-400', 'bg-purple-200');
+            });
+            document.getElementById('btn-all-tables').classList.remove('ring-4', 'ring-purple-300');
+
+            if (table === 'all') {
+                document.getElementById('btn-all-tables').classList.add('ring-4', 'ring-purple-300');
+            } else {
+                event.currentTarget.classList.add('ring-4', 'ring-purple-400', 'bg-purple-200');
+            }
+        }
+
+        function startGame() {
+            soundEffects.click();
+            const inputVal = document.getElementById('username-input').value.trim();
+            playerName = inputVal !== "" ? inputVal : "Eroe Coraggioso";
+            playerDisplay.innerText = playerName;
+
+            currentQuestionIndex = 0;
+            score = 0;
+            streak = 0;
+            maxStreak = 0;
+            lives = 3;
+            correctAnswersCount = 0;
+
+            screenMenu.classList.add('hidden');
+            screenSummary.classList.add('hidden');
+            screenGame.classList.remove('hidden');
+            gameStats.classList.remove('hidden');
+
+            if (gameMode === 'timeattack') {
+                timeLeft = 60;
+                monsterBanner.classList.add('hidden');
+                startTimer();
+                questionsList = generateInfiniteQuestions();
+            } else if (gameMode === 'monster') {
+                monsterHP = 100;
+                maxMonsterHP = 100;
+                monsterBanner.classList.remove('hidden');
+                updateMonsterHPUI();
+                questionsList = generateInfiniteQuestions();
+            } else {
+                monsterBanner.classList.add('hidden');
+                questionsList = generateTrainingQuestions();
+            }
+
+            updateStatsUI();
+            loadNextQuestion();
+        }
+
+        function generateTrainingQuestions() {
+            let list = [];
+            for (let i = 0; i < totalQuestions; i++) {
+                let n1, n2;
+                if (selectedTable === 'all') {
+                    n1 = Math.floor(Math.random() * 10) + 1;
+                    n2 = Math.floor(Math.random() * 10) + 1;
+                } else {
+                    n1 = selectedTable;
+                    n2 = Math.floor(Math.random() * 10) + 1;
+                }
+                list.push({ n1, n2, answer: n1 * n2 });
+            }
+            return list;
+        }
+
+        function generateInfiniteQuestions() {
+            let list = [];
+            for (let i = 0; i < 50; i++) {
+                let n1 = Math.floor(Math.random() * 10) + 1;
+                let n2 = Math.floor(Math.random() * 10) + 1;
+                list.push({ n1, n2, answer: n1 * n2 });
+            }
+            return list;
+        }
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateStatsUI();
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function updateMonsterHPUI() {
+            let pct = (monsterHP / maxMonsterHP) * 100;
+            if (pct < 0) pct = 0;
+            monsterHpBar.style.width = `${pct}%`;
+            monsterHpText.innerText = `HP: ${monsterHP}/${maxMonsterHP}`;
+        }
+
+        function loadNextQuestion() {
+            if (gameMode === 'training' && currentQuestionIndex >= totalQuestions) {
+                endGame();
+                return;
+            }
+            if (gameMode === 'monster' && monsterHP <= 0) {
+                endGame();
+                return;
+            }
+            if (gameMode === 'training' && lives <= 0) {
+                endGame();
+                return;
+            }
+
+            feedbackMessage.innerText = "";
+            const currentQ = questionsList[currentQuestionIndex];
+            questionText.innerText = `${currentQ.n1} × ${currentQ.n2} = ?`;
+            currentCorrectAnswer = currentQ.answer;
+
+            if (gameMode === 'training') {
+                dynamicGameInfo.innerText = `Domanda ${currentQuestionIndex + 1} / ${totalQuestions}`;
+            } else if (gameMode === 'timeattack') {
+                dynamicGameInfo.innerText = `⏱️ Tempo: ${timeLeft}s`;
+            } else if (gameMode === 'monster') {
+                dynamicGameInfo.innerText = `Domanda #${currentQuestionIndex + 1}`;
+            }
+
+            setupChoices(currentCorrectAnswer);
+        }
+
+        function setupChoices(correctAns) {
+            let options = [correctAns];
+            while (options.length < 4) {
+                let offset = (Math.floor(Math.random() * 5) + 1) * (Math.random() < 0.5 ? 1 : -1);
+                let wrongAns = correctAns + offset;
+                if (wrongAns >= 0 && !options.includes(wrongAns)) {
+                    options.push(wrongAns);
+                }
+            }
+            options.sort(() => Math.random() - 0.5);
+
+            const choiceBtns = choicesContainer.querySelectorAll('.choice-btn');
+            choiceBtns.forEach((btn, index) => {
+                btn.innerText = options[index];
+                btn.disabled = false;
+                btn.className = "choice-btn bg-white hover:bg-purple-50 text-purple-900 border-3 border-purple-200 hover:border-purple-400 font-bold p-4 rounded-2xl text-2xl shadow transition transform hover:scale-105 active:scale-95";
+            });
+        }
+
+        function checkAnswer(btn) {
+            const selectedVal = parseInt(btn.innerText);
+            const isCorrect = (selectedVal === currentCorrectAnswer);
+
+            choicesContainer.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+
+            if (isCorrect) {
+                soundEffects.correct();
+                correctAnswersCount++;
+                streak++;
+                if (streak > maxStreak) maxStreak = streak;
+                score += 10 + (streak * 2);
+
+                feedbackMessage.innerHTML = `<span class="text-green-600 text-xl font-bold">✨ Ottimo colpo!</span>`;
+                btn.className = "choice-btn bg-green-500 text-white font-bold p-4 rounded-2xl text-2xl shadow border-3 border-green-600 scale-105 transition transform";
+
+                if (gameMode === 'monster') {
+                    soundEffects.monsterHit();
+                    monsterHP -= 20;
+                    if (monsterHP < 0) monsterHP = 0;
+                    updateMonsterHPUI();
+                }
+
+                confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 } });
+
+            } else {
+                soundEffects.wrong();
+                streak = 0;
+                feedbackMessage.innerHTML = `<span class="text-red-500 text-xl font-bold">❌ Sbagliato! Era ${currentCorrectAnswer}</span>`;
+                btn.className = "choice-btn bg-red-500 text-white font-bold p-4 rounded-2xl text-2xl shadow border-3 border-red-600 shake";
+
+                if (gameMode === 'training') {
+                    lives--;
+                }
+            }
+
+            updateStatsUI();
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                loadNextQuestion();
+            }, 1200);
+        }
+
+        function updateStatsUI() {
+            scoreDisplay.innerText = score;
+            streakDisplay.innerText = streak;
+
+            if (gameMode === 'training') {
+                let hearts = "";
+                for (let i = 0; i < 3; i++) {
+                    hearts += (i < lives) ? "❤️" : "🖤";
+                }
+                secondaryStatus.innerText = hearts;
+            } else if (gameMode === 'timeattack') {
+                secondaryStatus.innerText = `⏱️ ${timeLeft}s`;
+            } else if (gameMode === 'monster') {
+                secondaryStatus.innerText = `⚔️ Attacca`;
+            }
+        }
+
+        function endGame() {
+            if (timerInterval) clearInterval(timerInterval);
+            soundEffects.win();
+
+            screenGame.classList.add('hidden');
+            gameStats.classList.add('hidden');
+            screenSummary.classList.remove('hidden');
+
+            document.getElementById('summary-player').innerText = playerName;
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('final-correct').innerText = `${correctAnswersCount}/${currentQuestionIndex}`;
+            document.getElementById('final-streak').innerText = maxStreak;
+
+            // Calculate stars
+            let starsCount = 3;
+            if (gameMode === 'training' && correctAnswersCount < 7) starsCount = 2;
+            if (gameMode === 'training' && correctAnswersCount < 4) starsCount = 1;
+
+            let starsStr = "";
+            for (let i = 0; i < 3; i++) {
+                starsStr += (i < starsCount) ? "⭐ " : "⚪ ";
+            }
+            document.getElementById('stars-container').innerText = starsStr;
+
+            // Save to Leaderboard
+            saveScoreToLeaderboard(playerName, score, gameMode);
+
+            confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } });
+        }
+
+        function resetToMenu() {
+            soundEffects.click();
+            if (timerInterval) clearInterval(timerInterval);
+            screenSummary.classList.add('hidden');
+            screenMenu.classList.remove('hidden');
+            renderLeaderboard();
+        }
+    </script>
+</body>
+</html>
+```
