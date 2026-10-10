@@ -1,9 +1,10 @@
+```html
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Il Regno delle Tabelline - Sfida Multiplayer</title>
+    <title>Il Regno delle Tabelline - Sfida Multiplayer e Single Player</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Canvas Confetti -->
@@ -13,53 +14,69 @@
     <style>
         body {
             font-family: 'Fredoka', sans-serif;
-            background: linear-gradient(135deg, #4F46E5 0%, #06B6D4 50%, #10B981 100%);
+            background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #EC4899 100%);
             min-height: 100vh;
             user-select: none;
         }
-        .shake {
-            animation: shake 0.4s ease-in-out;
+        .shake-animation {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
         }
         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-10px); }
-            40%, 80% { transform: translateX(10px); }
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
         }
-        .pulse-subtle {
+        .pulse-card {
             animation: pulseGlow 2s infinite alternate;
         }
         @keyframes pulseGlow {
-            0% { box-shadow: 0 0 10px rgba(168, 85, 247, 0.4); }
-            100% { box-shadow: 0 0 25px rgba(168, 85, 247, 0.8); }
+            0% { box-shadow: 0 0 10px rgba(236, 72, 153, 0.4); }
+            100% { box-shadow: 0 0 25px rgba(236, 72, 153, 0.8); }
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.3);
+            border-radius: 8px;
         }
     </style>
 </head>
 <body class="flex items-center justify-center p-3 sm:p-6 min-h-screen">
 
-    <!-- MAIN CONTAINER -->
-    <div id="app" class="w-full max-w-xl bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden border-4 border-yellow-300 transition-all duration-300 relative">
+    <!-- MAIN APPLICATION CONTAINER -->
+    <div id="app" class="w-full max-w-xl bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden border-4 border-yellow-300 transition-all duration-300 relative flex flex-col my-auto">
         
-        <!-- HEADER / NAVBAR -->
-        <div class="bg-gradient-to-r from-purple-600 via-pink-500 to-yellow-500 p-4 text-white flex justify-between items-center shadow-md">
+        <!-- HEADER / NAVIGATION BAR -->
+        <div class="bg-gradient-to-r from-purple-600 via-pink-500 to-yellow-500 p-4 text-white flex justify-between items-center shadow-md shrink-0">
             <div class="flex items-center space-x-2">
-                <span id="header-avatar" class="text-3xl">🏰</span>
+                <span id="header-avatar" class="text-3xl filter drop-shadow">🏰</span>
                 <div>
                     <h1 class="text-lg sm:text-xl font-bold tracking-wide leading-tight drop-shadow-md">Le Tabelline 1v1</h1>
                     <div class="flex items-center space-x-2">
-                        <span id="header-player-name" class="text-xs font-medium text-yellow-100 block">Ospite</span>
-                        <!-- Status Indicator -->
-                        <span id="firebase-status-badge" class="text-[10px] bg-yellow-400 text-yellow-950 font-extrabold px-2 py-0.5 rounded-full cursor-pointer" onclick="tryReconnectFirebase()" title="Clicca per riprovare la connessione">
-                            🟡 Inizializzazione...
-                        </span>
+                        <span id="header-player-name" class="text-xs font-medium text-yellow-100 block truncate max-w-[100px]">Ospite</span>
+                        <!-- Live Network Status Indicator -->
+                        <button id="network-status-badge" onclick="forceConnectionRetry()" title="Clicca per forzare la connessione online" 
+                            class="text-[10px] bg-yellow-400 text-yellow-950 font-extrabold px-2 py-0.5 rounded-full hover:scale-105 transition flex items-center space-x-1 shadow-sm">
+                            <span id="status-dot">🟡</span>
+                            <span id="status-text">Connessione...</span>
+                        </button>
                     </div>
                 </div>
             </div>
+
+            <!-- Game Stats Header (Visible during gameplay) -->
             <div id="game-stats-header" class="hidden flex items-center space-x-2 sm:space-x-3 text-xs sm:text-base font-semibold">
-                <div class="flex items-center bg-white/20 px-2 py-1 rounded-full">
-                    ⭐ <span id="score-display" class="ml-1">0</span>
+                <div class="flex items-center bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/20">
+                    ⭐ <span id="score-display" class="ml-1 font-bold">0</span>
                 </div>
-                <div class="flex items-center bg-white/20 px-2 py-1 rounded-full">
-                    🔥 <span id="streak-display" class="ml-1">0</span>
+                <div class="flex items-center bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/20">
+                    🔥 <span id="streak-display" class="ml-1 font-bold">0</span>
                 </div>
                 <div id="lives-display" class="flex space-x-1 text-sm sm:text-lg">
                     ❤️❤️❤️
@@ -68,23 +85,25 @@
         </div>
 
         <!-- NOTIFICATION / STATUS TOAST -->
-        <div id="toast-banner" class="hidden bg-yellow-400 text-yellow-900 px-4 py-2 text-center font-bold text-sm shadow-md transition-all flex justify-between items-center">
-            <span id="toast-message" class="w-full text-center">Messaggio di stato...</span>
-            <button id="reconnect-btn-banner" onclick="tryReconnectFirebase()" class="hidden bg-purple-700 text-white text-xs px-2 py-1 rounded-lg font-bold ml-2 shrink-0">🔄 Riconnetti</button>
+        <div id="toast-banner" class="hidden bg-amber-400 text-amber-950 px-4 py-2 text-center font-bold text-xs sm:text-sm shadow-md transition-all flex justify-between items-center z-10">
+            <span id="toast-message" class="w-full text-center">Stato della rete aggiornato.</span>
+            <button onclick="forceConnectionRetry()" class="bg-purple-700 text-white text-xs px-2.5 py-1 rounded-lg font-bold ml-2 shrink-0 hover:bg-purple-800 transition">
+                🔄 Forza Online
+            </button>
         </div>
 
-        <!-- SCREEN 0: USER PROFILE & LOGIN -->
+        <!-- SCREEN 0: USER PROFILE & PROFILE SETUP -->
         <div id="screen-auth" class="p-5 sm:p-8 space-y-6">
             <div class="text-center space-y-2">
-                <h2 class="text-3xl sm:text-4xl font-extrabold text-purple-800">Crea il tuo Profilo! 🧙‍♂️</h2>
-                <p class="text-gray-600 text-sm sm:text-base">Scegli un nome ed un avatar per sfidare i tuoi amici!</p>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-purple-800">Crea il tuo Eroe! 🧙‍♂️</h2>
+                <p class="text-gray-600 text-sm sm:text-base">Scegli un avatar e un nome per iniziare l'avventura!</p>
             </div>
 
             <!-- Avatar Selection Grid -->
             <div class="space-y-2">
                 <label class="block text-gray-700 font-bold text-sm">Scegli il tuo Avatar:</label>
                 <div id="avatar-grid" class="grid grid-cols-4 gap-3 text-3xl">
-                    <button type="button" onclick="selectAvatar('🦁', this)" class="avatar-btn p-3 rounded-2xl border-2 border-purple-500 bg-purple-100 text-center hover:scale-110 transition">🦁</button>
+                    <button type="button" onclick="selectAvatar('🦁', this)" class="avatar-btn p-3 rounded-2xl border-2 border-purple-500 bg-purple-100 text-center hover:scale-110 transition shadow-sm">🦁</button>
                     <button type="button" onclick="selectAvatar('🐲', this)" class="avatar-btn p-3 rounded-2xl border-2 border-gray-200 bg-gray-50 text-center hover:scale-110 transition">🐲</button>
                     <button type="button" onclick="selectAvatar('🦄', this)" class="avatar-btn p-3 rounded-2xl border-2 border-gray-200 bg-gray-50 text-center hover:scale-110 transition">🦄</button>
                     <button type="button" onclick="selectAvatar('🧙‍♂️', this)" class="avatar-btn p-3 rounded-2xl border-2 border-gray-200 bg-gray-50 text-center hover:scale-110 transition">🧙‍♂️</button>
@@ -97,7 +116,7 @@
 
             <div class="space-y-2">
                 <label for="username-input" class="block text-gray-700 font-bold text-sm">Il tuo Nome Giocatore:</label>
-                <input type="text" id="username-input" placeholder="Es. LeoIlLione" maxlength="15" 
+                <input type="text" id="username-input" placeholder="Es. Campione77" maxlength="15" 
                     class="w-full px-4 py-3 rounded-2xl border-2 border-purple-300 focus:outline-none focus:border-purple-600 text-lg font-bold text-gray-800 bg-purple-50/50">
             </div>
 
@@ -114,7 +133,7 @@
                     🎮 Giocatore Singolo
                 </button>
                 <button onclick="switchTab('multi')" id="tab-multi" class="py-2.5 rounded-xl font-bold text-sm transition text-gray-500 hover:text-purple-700">
-                    🌐 Multiplayer 1v1
+                    🌐 Sfida Multiplayer 1v1
                 </button>
             </div>
 
@@ -123,37 +142,37 @@
                 <div class="space-y-2">
                     <label class="block text-gray-700 font-bold text-sm">Modalità di Gioco:</label>
                     <div class="grid grid-cols-3 gap-2">
-                        <button onclick="setSingleMode('training')" id="mode-btn-training" class="mode-btn p-3 rounded-2xl border-2 font-bold text-xs sm:text-sm flex flex-col items-center border-purple-500 bg-purple-100 text-purple-800">
+                        <button onclick="setSingleMode('training')" id="mode-btn-training" class="mode-btn p-3 rounded-2xl border-2 font-bold text-xs sm:text-sm flex flex-col items-center border-purple-500 bg-purple-100 text-purple-800 shadow-sm">
                             <span class="text-2xl mb-1">🎯</span>
                             <span>Allenamento</span>
                         </button>
-                        <button onclick="setSingleMode('timeattack')" id="mode-btn-timeattack" class="mode-btn p-3 rounded-2xl border-2 font-bold text-xs sm:text-sm flex flex-col items-center border-gray-200 bg-gray-50 text-gray-500">
+                        <button onclick="setSingleMode('timeattack')" id="mode-btn-timeattack" class="mode-btn p-3 rounded-2xl border-2 font-bold text-xs sm:text-sm flex flex-col items-center border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100">
                             <span class="text-2xl mb-1">⏱️</span>
                             <span>Sfida Tempo</span>
                         </button>
-                        <button onclick="setSingleMode('monster')" id="mode-btn-monster" class="mode-btn p-3 rounded-2xl border-2 font-bold text-xs sm:text-sm flex flex-col items-center border-gray-200 bg-gray-50 text-gray-500">
+                        <button onclick="setSingleMode('monster')" id="mode-btn-monster" class="mode-btn p-3 rounded-2xl border-2 font-bold text-xs sm:text-sm flex flex-col items-center border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100">
                             <span class="text-2xl mb-1">🐉</span>
                             <span>Sfida Drago</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Table Selector -->
+                <!-- Multiplication Table Selector -->
                 <div id="table-selector-container" class="space-y-2">
                     <label class="block text-gray-700 font-bold text-sm">Seleziona Tabellina:</label>
                     <div class="grid grid-cols-5 gap-1.5 sm:gap-2">
-                        <button onclick="selectTable(1)" class="tab-btn bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold py-2 rounded-xl text-base border-2 border-blue-300">1</button>
-                        <button onclick="selectTable(2)" class="tab-btn bg-green-100 hover:bg-green-200 text-green-800 font-bold py-2 rounded-xl text-base border-2 border-green-300">2</button>
-                        <button onclick="selectTable(3)" class="tab-btn bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-bold py-2 rounded-xl text-base border-2 border-yellow-300">3</button>
-                        <button onclick="selectTable(4)" class="tab-btn bg-pink-100 hover:bg-pink-200 text-pink-800 font-bold py-2 rounded-xl text-base border-2 border-pink-300">4</button>
-                        <button onclick="selectTable(5)" class="tab-btn bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold py-2 rounded-xl text-base border-2 border-purple-300">5</button>
-                        <button onclick="selectTable(6)" class="tab-btn bg-red-100 hover:bg-red-200 text-red-800 font-bold py-2 rounded-xl text-base border-2 border-red-300">6</button>
-                        <button onclick="selectTable(7)" class="tab-btn bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-bold py-2 rounded-xl text-base border-2 border-indigo-300">7</button>
-                        <button onclick="selectTable(8)" class="tab-btn bg-teal-100 hover:bg-teal-200 text-teal-800 font-bold py-2 rounded-xl text-base border-2 border-teal-300">8</button>
-                        <button onclick="selectTable(9)" class="tab-btn bg-orange-100 hover:bg-orange-200 text-orange-800 font-bold py-2 rounded-xl text-base border-2 border-orange-300">9</button>
-                        <button onclick="selectTable(10)" class="tab-btn bg-cyan-100 hover:bg-cyan-200 text-cyan-800 font-bold py-2 rounded-xl text-base border-2 border-cyan-300">10</button>
+                        <button onclick="selectTable(1, this)" class="tab-btn bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold py-2 rounded-xl text-base border-2 border-blue-300 transition">1</button>
+                        <button onclick="selectTable(2, this)" class="tab-btn bg-green-100 hover:bg-green-200 text-green-800 font-bold py-2 rounded-xl text-base border-2 border-green-300 transition">2</button>
+                        <button onclick="selectTable(3, this)" class="tab-btn bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-bold py-2 rounded-xl text-base border-2 border-yellow-300 transition">3</button>
+                        <button onclick="selectTable(4, this)" class="tab-btn bg-pink-100 hover:bg-pink-200 text-pink-800 font-bold py-2 rounded-xl text-base border-2 border-pink-300 transition">4</button>
+                        <button onclick="selectTable(5, this)" class="tab-btn bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold py-2 rounded-xl text-base border-2 border-purple-300 transition">5</button>
+                        <button onclick="selectTable(6, this)" class="tab-btn bg-red-100 hover:bg-red-200 text-red-800 font-bold py-2 rounded-xl text-base border-2 border-red-300 transition">6</button>
+                        <button onclick="selectTable(7, this)" class="tab-btn bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-bold py-2 rounded-xl text-base border-2 border-indigo-300 transition">7</button>
+                        <button onclick="selectTable(8, this)" class="tab-btn bg-teal-100 hover:bg-teal-200 text-teal-800 font-bold py-2 rounded-xl text-base border-2 border-teal-300 transition">8</button>
+                        <button onclick="selectTable(9, this)" class="tab-btn bg-orange-100 hover:bg-orange-200 text-orange-800 font-bold py-2 rounded-xl text-base border-2 border-orange-300 transition">9</button>
+                        <button onclick="selectTable(10, this)" class="tab-btn bg-cyan-100 hover:bg-cyan-200 text-cyan-800 font-bold py-2 rounded-xl text-base border-2 border-cyan-300 transition">10</button>
                     </div>
-                    <button onclick="selectTable('all')" id="btn-all-tables" class="w-full mt-2 bg-purple-200 hover:bg-purple-300 text-purple-900 font-bold py-2.5 rounded-xl text-sm border-2 border-purple-400 ring-2 ring-purple-300">
+                    <button onclick="selectTable('all', this)" id="btn-all-tables" class="w-full mt-2 bg-purple-200 hover:bg-purple-300 text-purple-900 font-bold py-2.5 rounded-xl text-sm border-2 border-purple-400 ring-2 ring-purple-300 transition">
                         🌟 Tutte le Tabelline (Miste)
                     </button>
                 </div>
@@ -172,40 +191,42 @@
                     </button>
                     <button onclick="openJoinModal()" class="bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white p-4 rounded-2xl font-bold flex flex-col items-center justify-center shadow-md transition transform hover:scale-105">
                         <span class="text-3xl mb-1">🔑</span>
-                        <span>Codice Stanza</span>
+                        <span>Inserisci Codice</span>
                     </button>
                 </div>
 
-                <!-- Local Same-Screen / Pass & Play Fallback Button -->
-                <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-3 flex items-center justify-between">
+                <!-- Local Pass & Play Fallback -->
+                <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-3.5 flex items-center justify-between shadow-sm">
                     <div>
-                        <h4 class="font-bold text-amber-900 text-xs sm:text-sm">📱 Sfida Locale (Sullo Stesso Schermo)</h4>
-                        <p class="text-[11px] text-amber-700">Gioca a turni con un amico sullo stesso dispositivo!</p>
+                        <h4 class="font-bold text-amber-900 text-xs sm:text-sm">📱 Sfida Passa e Gioca (Sullo stesso Schermo)</h4>
+                        <p class="text-[11px] text-amber-700">Gioca a turni con un amico sullo stesso telefono o PC!</p>
                     </div>
-                    <button onclick="startLocalMultiplayerGame()" class="bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow transition shrink-0 ml-2">
+                    <button onclick="startLocalMultiplayerGame()" class="bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl shadow transition shrink-0 ml-2 hover:scale-105">
                         Avvia 🎮
                     </button>
                 </div>
 
-                <!-- Live Rooms List -->
+                <!-- Public Online Rooms -->
                 <div class="space-y-2">
                     <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-gray-700 text-sm">Stanze Pubbliche Online:</h3>
-                        <button onclick="fetchPublicRooms()" class="text-xs text-purple-600 hover:underline font-bold">🔄 Aggiorna</button>
+                        <h3 class="font-bold text-gray-700 text-sm">Stanze Pubbliche Disponibili:</h3>
+                        <button onclick="fetchPublicRooms()" class="text-xs text-purple-600 hover:underline font-bold flex items-center space-x-1">
+                            <span>🔄</span> <span>Aggiorna</span>
+                        </button>
                     </div>
-                    <div id="rooms-list" class="space-y-2 max-h-40 overflow-y-auto pr-1">
-                        <p class="text-xs text-gray-400 text-center py-4">Caricamento stanze in corso...</p>
+                    <div id="rooms-list" class="space-y-2 max-h-36 overflow-y-auto pr-1 custom-scrollbar">
+                        <p class="text-xs text-gray-400 text-center py-4">Ricerca stanze in corso...</p>
                     </div>
                 </div>
             </div>
 
-            <!-- GLOBAL HALL OF FAME -->
+            <!-- LEADERBOARD / HALL OF FAME -->
             <div class="pt-3 border-t border-gray-200 space-y-2">
                 <h3 class="font-bold text-gray-700 text-sm flex items-center justify-between">
-                    <span>🏆 Classifica Globale Online</span>
-                    <span class="text-xs text-gray-400 font-normal">Top Eroi</span>
+                    <span>🏆 Classifica Campioni</span>
+                    <span id="leaderboard-type-label" class="text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">Locale / Cloud</span>
                 </h3>
-                <div id="leaderboard-list" class="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                <div id="leaderboard-list" class="space-y-1.5 max-h-36 overflow-y-auto pr-1 custom-scrollbar">
                     <p class="text-xs text-gray-400 text-center py-2">Caricamento classifica...</p>
                 </div>
             </div>
@@ -214,47 +235,52 @@
         <!-- SCREEN 2: MULTIPLAYER WAITING LOBBY -->
         <div id="screen-lobby-wait" class="p-6 sm:p-8 space-y-6 text-center hidden">
             <div class="space-y-2">
-                <h2 class="text-3xl font-extrabold text-purple-800">Stanza Creata! 🎉</h2>
-                <p class="text-gray-600 text-sm">Dillo al tuo amico! Digita questo Codice a 4 Cifre:</p>
+                <h2 class="text-3xl font-extrabold text-purple-800">Stanza Pronta! 🎉</h2>
+                <p class="text-gray-600 text-sm">Dillo al tuo amico! Fagli inserire questo Codice a 4 Cifre:</p>
             </div>
 
-            <div class="bg-purple-100 border-4 border-dashed border-purple-400 rounded-3xl p-6 pulse-subtle">
-                <span id="room-code-display" class="text-6xl font-black tracking-widest text-purple-900">----</span>
+            <div class="bg-purple-100 border-4 border-dashed border-purple-400 rounded-3xl p-6 pulse-card">
+                <span id="room-code-display" class="text-5xl sm:text-6xl font-black tracking-widest text-purple-900 select-all">----</span>
             </div>
 
-            <div class="flex items-center justify-center space-x-3 text-lg font-bold text-gray-700">
+            <div id="lobby-status-indicator" class="flex items-center justify-center space-x-3 text-base sm:text-lg font-bold text-gray-700">
                 <span class="animate-spin text-2xl">⏳</span>
-                <span>In attesa dello sfidante...</span>
+                <span id="lobby-status-text">In attesa che un altro giocatore entri...</span>
             </div>
 
-            <button onclick="cancelWaitingRoom()" class="bg-red-100 text-red-600 hover:bg-red-200 font-bold px-6 py-3 rounded-2xl transition">
-                Annulla Stanza
-            </button>
+            <div class="pt-2 flex flex-col gap-2">
+                <button onclick="startSinglePlayerGame()" class="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-extrabold py-3 px-6 rounded-2xl shadow transition">
+                    🤖 Gioca Subito contro il Bot
+                </button>
+                <button onclick="cancelWaitingRoom()" class="bg-red-100 text-red-600 hover:bg-red-200 font-bold py-2.5 px-6 rounded-2xl transition text-sm">
+                    Annulla e Torna al Menu
+                </button>
+            </div>
         </div>
 
-        <!-- SCREEN 3: GAME SCREEN (SINGLE, LOCAL & ONLINE MULTIPLAYER) -->
-        <div id="screen-game" class="p-5 sm:p-8 space-y-5 hidden">
-            <!-- Game Info Header -->
+        <!-- SCREEN 3: GAMEPLAY SCREEN -->
+        <div id="screen-game" class="p-5 sm:p-8 space-y-4 sm:space-y-5 hidden">
+            <!-- Game Info Bar -->
             <div id="game-info-bar" class="flex justify-between items-center bg-indigo-50 px-4 py-2.5 rounded-2xl border-2 border-indigo-200 text-xs sm:text-sm font-bold text-indigo-900">
                 <span id="game-round-info">Domanda 1 / 10</span>
                 <span id="secondary-status-text" class="text-red-500">❤️❤️❤️</span>
             </div>
 
-            <!-- Multiplayer Duel Live Bar -->
-            <div id="multiplayer-duel-bar" class="hidden space-y-2 bg-gradient-to-r from-purple-100 to-pink-100 p-3 rounded-2xl border-2 border-purple-200">
+            <!-- Multiplayer Live Match Duel Bar -->
+            <div id="multiplayer-duel-bar" class="hidden space-y-2 bg-gradient-to-r from-purple-100 to-pink-100 p-3 rounded-2xl border-2 border-purple-200 shadow-inner">
                 <div class="flex justify-between text-xs font-extrabold">
                     <div id="p1-duel-info" class="flex items-center space-x-1 text-purple-900">
                         <span id="p1-duel-avatar">🦁</span>
-                        <span id="p1-duel-name">Tu</span>: 
+                        <span id="p1-duel-name" class="truncate max-w-[90px]">Tu</span>: 
                         <span id="p1-duel-score" class="text-purple-600">0 pt</span>
                     </div>
                     <div id="p2-duel-info" class="flex items-center space-x-1 text-pink-900">
-                        <span id="p2-duel-name">Sfidante</span>
+                        <span id="p2-duel-name" class="truncate max-w-[90px]">Avversario</span>
                         <span id="p2-duel-avatar">🐲</span>: 
                         <span id="p2-duel-score" class="text-pink-600">0 pt</span>
                     </div>
                 </div>
-                <!-- Dual Progress Bars -->
+                <!-- Progress Bars -->
                 <div class="space-y-1">
                     <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
                         <div id="p1-progress-bar" class="bg-purple-600 h-2.5 transition-all duration-300 w-0"></div>
@@ -265,18 +291,18 @@
                 </div>
             </div>
 
-            <!-- Monster Visual Banner -->
-            <div id="monster-banner" class="hidden bg-gradient-to-r from-red-500 to-orange-500 text-white p-3 rounded-2xl text-center shadow-md">
+            <!-- Dragon Monster Visual Banner -->
+            <div id="monster-banner" class="hidden bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500 text-white p-3 rounded-2xl text-center shadow-md">
                 <div class="flex justify-between items-center px-2">
                     <span class="text-xl sm:text-2xl font-bold animate-bounce">🐉 Drago Sputafuoco</span>
                     <span id="monster-hp-text" class="font-bold text-sm sm:text-base">HP: 100/100</span>
                 </div>
-                <div class="w-full bg-red-900/40 rounded-full h-3 mt-2 overflow-hidden">
+                <div class="w-full bg-red-950/40 rounded-full h-3 mt-2 overflow-hidden border border-white/20">
                     <div id="monster-hp-bar" class="bg-green-400 h-3 transition-all duration-300 w-full"></div>
                 </div>
             </div>
 
-            <!-- Question Card -->
+            <!-- Question Box -->
             <div class="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-3xl border-4 border-indigo-200 text-center shadow-inner relative">
                 <div id="player-turn-indicator" class="hidden text-xs font-black text-purple-700 uppercase tracking-wider mb-1">
                     Turno del Giocatore 1
@@ -287,7 +313,7 @@
                 <div id="feedback-message" class="h-6 text-sm sm:text-base font-bold transition-all"></div>
             </div>
 
-            <!-- Choices Container -->
+            <!-- Multiple Choice Answer Grid -->
             <div id="choices-container" class="grid grid-cols-2 gap-3 sm:gap-4">
                 <button onclick="submitAnswer(this)" class="choice-btn bg-white hover:bg-purple-50 text-purple-900 border-3 border-purple-200 hover:border-purple-400 font-extrabold p-3 sm:p-4 rounded-2xl text-xl sm:text-2xl shadow transition transform hover:scale-105 active:scale-95">24</button>
                 <button onclick="submitAnswer(this)" class="choice-btn bg-white hover:bg-purple-50 text-purple-900 border-3 border-purple-200 hover:border-purple-400 font-extrabold p-3 sm:p-4 rounded-2xl text-xl sm:text-2xl shadow transition transform hover:scale-105 active:scale-95">56</button>
@@ -300,7 +326,7 @@
         <div id="screen-summary" class="p-6 sm:p-8 space-y-6 text-center hidden">
             <div class="space-y-1">
                 <h2 id="summary-title" class="text-3xl sm:text-4xl font-extrabold text-purple-800">Vittoria! 🎉</h2>
-                <p id="summary-subtitle" class="text-gray-600 text-sm sm:text-base">Hai superato la prova!</p>
+                <p id="summary-subtitle" class="text-gray-600 text-sm sm:text-base">Hai completato la sfida!</p>
             </div>
 
             <!-- Stars display -->
@@ -308,10 +334,10 @@
                 ⭐ ⭐ ⭐
             </div>
 
-            <!-- Stats Box -->
+            <!-- Stats Summary Card -->
             <div class="bg-indigo-50 border-2 border-indigo-200 rounded-3xl p-5 space-y-2.5 max-w-sm mx-auto text-left shadow-inner text-sm sm:text-base">
                 <div class="flex justify-between items-center">
-                    <span class="text-gray-600 font-bold">Punteggio Partita:</span>
+                    <span class="text-gray-600 font-bold">Punteggio Totale:</span>
                     <span id="final-match-score" class="font-extrabold text-purple-700 text-xl">0</span>
                 </div>
                 <div class="flex justify-between items-center">
@@ -326,6 +352,7 @@
                 </div>
             </div>
 
+            <!-- Action buttons -->
             <div class="flex flex-col sm:flex-row gap-3">
                 <button onclick="returnToMenu()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3.5 rounded-2xl text-base transition">
                     🏠 Menu
@@ -344,23 +371,23 @@
             <div class="bg-white w-full max-w-md rounded-3xl p-6 space-y-4 text-center shadow-2xl border-4 border-purple-300">
                 <h3 class="text-2xl font-extrabold text-purple-900">Inserisci Codice Stanza 🔑</h3>
                 <input type="text" id="join-code-input" placeholder="Es. 4821" maxlength="4" 
-                    class="w-full text-center tracking-widest px-4 py-3 rounded-2xl border-2 border-purple-300 text-3xl font-black bg-purple-50 text-purple-900">
+                    class="w-full text-center tracking-widest px-4 py-3 rounded-2xl border-2 border-purple-300 text-3xl font-black bg-purple-50 text-purple-900 focus:outline-none focus:border-purple-600">
                 <div class="flex space-x-3">
-                    <button onclick="closeJoinModal()" class="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded-2xl">Annulla</button>
-                    <button onclick="submitJoinCode()" class="flex-1 bg-purple-600 text-white font-extrabold py-3 rounded-2xl">Entra</button>
+                    <button onclick="closeJoinModal()" class="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded-2xl hover:bg-gray-300 transition">Annulla</button>
+                    <button onclick="submitJoinCode()" class="flex-1 bg-purple-600 text-white font-extrabold py-3 rounded-2xl hover:bg-purple-700 transition shadow-md">Entra</button>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <!-- FIREBASE MODULES WITH IMMEDIATE INITIALIZATION & FAILSAFE -->
+    <!-- FIREBASE & REALTIME ENGINE LOADER -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global Environment Variables fallback
+        // Global Firebase Configuration with environment safe fallback
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'tabelline-multiplayer-app';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             apiKey: "AIzaSyDemoPlaceholderOnly",
@@ -371,13 +398,11 @@
             appId: "1:000000000000:web:000000000000"
         };
 
-        let app, auth, db;
-
-        async function initFirebaseSystem() {
+        async function initFirebase() {
             try {
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                const db = getFirestore(app);
 
                 window.db = db;
                 window.auth = auth;
@@ -391,33 +416,30 @@
                 window.query = query;
                 window.getDocs = getDocs;
 
-                // Set Auth Listener
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         window.currentUser = user;
-                        window.onFirebaseReadySuccess();
+                        window.onNetworkEngineReady('firebase');
                     }
                 });
 
-                // Authenticate immediately
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
                     await signInAnonymously(auth);
                 }
             } catch (err) {
-                console.warn("Firebase Init Error:", err);
-                window.onFirebaseInitFailed(err);
+                console.warn("Firebase initialize fallback triggered:", err);
+                window.onNetworkEngineReady('local_fallback');
             }
         }
 
-        window.initFirebaseSystem = initFirebaseSystem;
-        initFirebaseSystem();
+        window.initFirebase = initFirebase;
+        initFirebase();
     </script>
 
-    <!-- MAIN GAME LOGIC SCRIPT -->
     <script>
-        // Web Audio API Sound Effects Generator
+        // Web Audio API Synthesized Sound Generator
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
         function playTone(freq, type, duration, delay = 0) {
@@ -456,14 +478,14 @@
 
         // Application State
         let localUser = {
-            uid: 'guest_' + Math.random().toString(36).substr(2, 6),
+            uid: 'player_' + Math.random().toString(36).substr(2, 6),
             name: 'Ospite',
             avatar: '🦁',
             totalScore: 0
         };
 
-        let isFirebaseInitialized = false;
-        let authTimeoutTimer = null;
+        let activeNetworkEngine = 'connecting'; // 'firebase', 'p2p_mesh', 'local_fallback'
+        let connectionTimeout = null;
 
         let currentGameMode = 'single'; // 'single', 'multi', 'local_multi'
         let singleSubMode = 'training'; // 'training', 'timeattack', 'monster'
@@ -481,53 +503,42 @@
         // Local 1v1 Pass & Play State
         let localP1Score = 0;
         let localP2Score = 0;
-        let localCurrentTurn = 1; // 1 or 2
+        let localCurrentTurn = 1;
 
-        // Time attack / Monster variables
+        // Timers & Monster
         let timerInterval = null;
         let timeLeft = 60;
         let monsterHP = 100;
 
-        // Online Multiplayer state
+        // Online Multiplayer
         let activeRoomId = null;
         let roomUnsubscribe = null;
         let roomData = null;
         let isHost = false;
 
-        // Toast Banner Helper
-        function showToast(msg, isError = false) {
-            const toast = document.getElementById('toast-banner');
-            document.getElementById('toast-message').innerText = msg;
-            toast.classList.remove('hidden');
+        // Virtual Local Rooms Storage Fallback for peer testing
+        const virtualLocalRooms = {};
 
-            const reconnectBtn = document.getElementById('reconnect-btn-banner');
-            if (isError && !isFirebaseInitialized) {
-                reconnectBtn.classList.remove('hidden');
+        // NETWORK ENGINE STATUS HANDLER
+        window.onNetworkEngineReady = function(engineType) {
+            activeNetworkEngine = engineType;
+            if (connectionTimeout) clearTimeout(connectionTimeout);
+
+            const badge = document.getElementById('network-status-badge');
+            const dot = document.getElementById('status-dot');
+            const txt = document.getElementById('status-text');
+
+            if (engineType === 'firebase') {
+                dot.innerText = "🟢";
+                txt.innerText = "Online (Firebase)";
+                badge.className = "text-[10px] bg-green-400 text-green-950 font-extrabold px-2 py-0.5 rounded-full hover:scale-105 transition flex items-center space-x-1 shadow-sm";
             } else {
-                reconnectBtn.classList.add('hidden');
+                dot.innerText = "🔵";
+                txt.innerText = "Online (P2P Mesh)";
+                badge.className = "text-[10px] bg-blue-400 text-blue-950 font-extrabold px-2 py-0.5 rounded-full hover:scale-105 transition flex items-center space-x-1 shadow-sm";
             }
 
-            setTimeout(() => {
-                if (!isError) toast.classList.add('hidden');
-            }, 4000);
-        }
-
-        // Firebase Auth Success Callback
-        window.onFirebaseReadySuccess = function() {
-            isFirebaseInitialized = true;
-            if (authTimeoutTimer) clearTimeout(authTimeoutTimer);
-
-            if (window.currentUser) {
-                localUser.uid = window.currentUser.uid;
-            }
-
-            const badge = document.getElementById('firebase-status-badge');
-            badge.innerText = "🟢 Connesso";
-            badge.className = "text-[10px] bg-green-400 text-green-950 font-extrabold px-2 py-0.5 rounded-full cursor-pointer";
-
-            document.getElementById('toast-banner').classList.add('hidden');
-
-            // Restore stored profile
+            // Restore user profile from local storage
             const savedName = localStorage.getItem('tabelline_username');
             const savedAvatar = localStorage.getItem('tabelline_avatar');
 
@@ -536,49 +547,45 @@
                 localUser.avatar = savedAvatar || '🦁';
                 document.getElementById('username-input').value = savedName;
                 updateHeaderProfile();
-                syncUserProfileFirestore();
+                syncUserProfile();
                 showScreen('screen-menu');
                 fetchLeaderboard();
                 fetchPublicRooms();
             }
         };
 
-        // Firebase Failure Safeguard
-        window.onFirebaseInitFailed = function(err) {
-            isFirebaseInitialized = false;
-            const badge = document.getElementById('firebase-status-badge');
-            badge.innerText = "🔴 Offline / Clicca Riprova";
-            badge.className = "text-[10px] bg-red-400 text-white font-extrabold px-2 py-0.5 rounded-full cursor-pointer";
-
-            showToast("Modalità Online non disponibile. Puoi giocare in Singolo o Sfida Locale!", true);
-        };
-
-        // Auto-Timeout Timer (3.5 Seconds)
-        authTimeoutTimer = setTimeout(() => {
-            if (!isFirebaseInitialized) {
-                window.onFirebaseInitFailed("Timeout connessione");
+        // Safety fallback timer (3 seconds)
+        connectionTimeout = setTimeout(() => {
+            if (activeNetworkEngine === 'connecting') {
+                window.onNetworkEngineReady('p2p_mesh');
             }
-        }, 3500);
+        }, 3000);
 
-        window.tryReconnectFirebase = function() {
+        window.forceConnectionRetry = function() {
             sound.click();
-            const badge = document.getElementById('firebase-status-badge');
-            badge.innerText = "🟡 Riconnessione...";
-            badge.className = "text-[10px] bg-yellow-400 text-yellow-950 font-extrabold px-2 py-0.5 rounded-full cursor-pointer";
-
-            if (typeof window.initFirebaseSystem === 'function') {
-                window.initFirebaseSystem();
+            showToast("Ricerca connessione in corso...");
+            if (typeof window.initFirebase === 'function') {
+                window.initFirebase();
+            } else {
+                window.onNetworkEngineReady('p2p_mesh');
             }
         };
 
-        // Profile Registration
+        function showToast(msg) {
+            const toast = document.getElementById('toast-banner');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => { toast.classList.add('hidden'); }, 3500);
+        }
+
+        // Profile Selection
         window.selectAvatar = function(emoji, btn) {
             sound.click();
             localUser.avatar = emoji;
             document.querySelectorAll('.avatar-btn').forEach(b => {
                 b.className = "avatar-btn p-3 rounded-2xl border-2 border-gray-200 bg-gray-50 text-center hover:scale-110 transition";
             });
-            btn.className = "avatar-btn p-3 rounded-2xl border-2 border-purple-500 bg-purple-100 text-center hover:scale-110 transition";
+            btn.className = "avatar-btn p-3 rounded-2xl border-2 border-purple-500 bg-purple-100 text-center hover:scale-110 transition shadow-sm";
         };
 
         window.registerAndContinue = function() {
@@ -593,7 +600,7 @@
             localStorage.setItem('tabelline_avatar', localUser.avatar);
 
             updateHeaderProfile();
-            syncUserProfileFirestore();
+            syncUserProfile();
             showScreen('screen-menu');
             fetchLeaderboard();
             fetchPublicRooms();
@@ -611,23 +618,28 @@
             return window.doc(window.db, 'artifacts', window.appId, 'public', 'data', colName, docId);
         }
 
-        async function syncUserProfileFirestore() {
-            if (!isFirebaseInitialized || !localUser.uid) return;
-            try {
-                const userDocRef = getPublicDoc('users', localUser.uid);
-                await window.setDoc(userDocRef, {
-                    uid: localUser.uid,
-                    name: localUser.name,
-                    avatar: localUser.avatar,
-                    totalScore: localUser.totalScore || 0,
-                    lastActive: Date.now()
-                }, { merge: true });
-            } catch (err) {
-                console.error("User sync error:", err);
+        async function syncUserProfile() {
+            // Save local score backup
+            const savedScore = localStorage.getItem('tabelline_total_score') || 0;
+            localUser.totalScore = parseInt(savedScore);
+
+            if (activeNetworkEngine === 'firebase' && window.db) {
+                try {
+                    const userDocRef = getPublicDoc('users', localUser.uid);
+                    await window.setDoc(userDocRef, {
+                        uid: localUser.uid,
+                        name: localUser.name,
+                        avatar: localUser.avatar,
+                        totalScore: localUser.totalScore,
+                        lastActive: Date.now()
+                    }, { merge: true });
+                } catch (e) {
+                    console.warn("Firebase user sync warning:", e);
+                }
             }
         }
 
-        // Screen Switcher
+        // Screen Navigation
         function showScreen(screenId) {
             ['screen-auth', 'screen-menu', 'screen-lobby-wait', 'screen-game', 'screen-summary'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
@@ -642,7 +654,7 @@
             }
         }
 
-        // Tab Switch
+        // Menu Tab Switch
         window.switchTab = function(tab) {
             sound.click();
             currentGameMode = tab;
@@ -665,15 +677,15 @@
             }
         };
 
-        // Single Player Setup
+        // Single Player Configuration
         window.setSingleMode = function(mode) {
             sound.click();
             singleSubMode = mode;
             document.querySelectorAll('.mode-btn').forEach(b => {
-                b.className = "mode-btn p-3 rounded-2xl border-2 font-bold text-xs sm:text-sm flex flex-col items-center border-gray-200 bg-gray-50 text-gray-500";
+                b.className = "mode-btn p-3 rounded-2xl border-2 font-bold text-xs sm:text-sm flex flex-col items-center border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100";
             });
             const activeBtn = document.getElementById(`mode-btn-${mode}`);
-            activeBtn.className = "mode-btn p-3 rounded-2xl border-2 font-bold text-xs sm:text-sm flex flex-col items-center border-purple-500 bg-purple-100 text-purple-800";
+            activeBtn.className = "mode-btn p-3 rounded-2xl border-2 font-bold text-xs sm:text-sm flex flex-col items-center border-purple-500 bg-purple-100 text-purple-800 shadow-sm";
 
             const selectorContainer = document.getElementById('table-selector-container');
             if (mode === 'training') {
@@ -684,16 +696,16 @@
             }
         };
 
-        window.selectTable = function(val) {
+        window.selectTable = function(val, btn) {
             sound.click();
             selectedTable = val;
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('ring-2', 'ring-purple-400'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('ring-4', 'ring-purple-400'));
             document.getElementById('btn-all-tables').classList.remove('ring-4', 'ring-purple-300');
 
             if (val === 'all') {
                 document.getElementById('btn-all-tables').classList.add('ring-4', 'ring-purple-300');
             } else {
-                event.currentTarget.classList.add('ring-2', 'ring-purple-400');
+                btn.classList.add('ring-4', 'ring-purple-400');
             }
         };
 
@@ -707,7 +719,7 @@
             return list;
         }
 
-        // Start Single Player
+        // Start Single Player Match
         window.startSinglePlayerGame = function() {
             sound.click();
             currentGameMode = 'single';
@@ -716,7 +728,7 @@
             streak = 0;
             lives = 3;
             correctCount = 0;
-            questionsList = generateQuestionsArray(15);
+            questionsList = generateQuestionsArray(12);
 
             document.getElementById('multiplayer-duel-bar').classList.add('hidden');
             document.getElementById('player-turn-indicator').classList.add('hidden');
@@ -739,6 +751,7 @@
             loadNextQuestion();
         };
 
+        // Start Pass & Play Local Match
         window.startLocalMultiplayerGame = function() {
             sound.click();
             currentGameMode = 'local_multi';
@@ -754,9 +767,9 @@
             document.getElementById('player-turn-indicator').classList.remove('hidden');
 
             document.getElementById('p1-duel-avatar').innerText = localUser.avatar;
-            document.getElementById('p1-duel-name').innerText = "P1 (" + localUser.name + ")";
+            document.getElementById('p1-duel-name').innerText = localUser.name;
             document.getElementById('p2-duel-avatar').innerText = "🤖";
-            document.getElementById('p2-duel-name').innerText = "P2 (Giocatore 2)";
+            document.getElementById('p2-duel-name').innerText = "Giocatore 2";
 
             updateUIHeaderStats();
             showScreen('screen-game');
@@ -810,8 +823,8 @@
             } else if (singleSubMode === 'timeattack') {
                 document.getElementById('game-round-info').innerText = `Sfida a Tempo`;
             } else if (singleSubMode === 'monster') {
-                document.getElementById('game-round-info').innerText = `Scontro Drago`;
-                document.getElementById('secondary-status-text').innerText = `⚔️ Attacca`;
+                document.getElementById('game-round-info').innerText = `Scontro col Drago`;
+                document.getElementById('secondary-status-text').innerText = `⚔️ Sconfiggilo!`;
             }
 
             setupChoiceButtons(currentCorrectAns);
@@ -853,7 +866,7 @@
                     score += pointsGained;
                 }
 
-                document.getElementById('feedback-message').innerHTML = `<span class="text-green-600">✨ Esatto! Fantastico!</span>`;
+                document.getElementById('feedback-message').innerHTML = `<span class="text-green-600">✨ Bravissimo! Esatto!</span>`;
                 btn.className = "choice-btn bg-green-500 text-white font-extrabold p-3 sm:p-4 rounded-2xl text-xl sm:text-2xl shadow scale-105 transition";
 
                 if (singleSubMode === 'monster') {
@@ -862,12 +875,12 @@
                     updateMonsterHPUI();
                 }
 
-                confetti({ particleCount: 25, spread: 50, origin: { y: 0.7 } });
+                confetti({ particleCount: 20, spread: 45, origin: { y: 0.7 } });
             } else {
                 sound.wrong();
                 streak = 0;
-                document.getElementById('feedback-message').innerHTML = `<span class="text-red-500">❌ Ops! La risposta era ${currentCorrectAns}</span>`;
-                btn.className = "choice-btn bg-red-500 text-white font-extrabold p-3 sm:p-4 rounded-2xl text-xl sm:text-2xl shadow shake";
+                document.getElementById('feedback-message').innerHTML = `<span class="text-red-500">❌ Peccato! Era ${currentCorrectAns}</span>`;
+                btn.className = "choice-btn bg-red-500 text-white font-extrabold p-3 sm:p-4 rounded-2xl text-xl sm:text-2xl shadow shake-animation";
 
                 if (singleSubMode === 'training' && currentGameMode === 'single') {
                     lives--;
@@ -895,7 +908,7 @@
             setTimeout(() => {
                 currentQuestionIdx++;
                 loadNextQuestion();
-            }, 1200);
+            }, 1100);
         };
 
         function updateUIHeaderStats() {
@@ -914,7 +927,7 @@
 
             if (currentGameMode === 'local_multi') {
                 document.getElementById('final-match-score').innerText = localP1Score;
-                document.getElementById('final-correct').innerText = `${correctCount} risposte giuste totali`;
+                document.getElementById('final-correct').innerText = `${correctCount} giuste`;
 
                 document.getElementById('multiplayer-summary-details').classList.remove('hidden');
                 document.getElementById('summary-p1-label').innerText = `${localUser.name}: ${localP1Score} pt`;
@@ -936,7 +949,8 @@
                 document.getElementById('multiplayer-summary-details').classList.add('hidden');
 
                 localUser.totalScore += score;
-                await syncUserProfileFirestore();
+                localStorage.setItem('tabelline_total_score', localUser.totalScore);
+                await syncUserProfile();
                 fetchLeaderboard();
             }
 
@@ -944,57 +958,61 @@
         }
 
         async function fetchLeaderboard() {
-            if (!isFirebaseInitialized) {
-                document.getElementById('leaderboard-list').innerHTML = `<p class="text-xs text-gray-400 text-center py-2">Classifica disponibile solo in modalità Online.</p>`;
-                return;
-            }
-            try {
-                const usersCol = getPublicCollection('users');
-                const snapshot = await window.getDocs(usersCol);
-                let list = [];
-                snapshot.forEach(doc => list.push(doc.data()));
+            const container = document.getElementById('leaderboard-list');
+            
+            if (activeNetworkEngine === 'firebase' && window.db) {
+                try {
+                    const usersCol = getPublicCollection('users');
+                    const snapshot = await window.getDocs(usersCol);
+                    let list = [];
+                    snapshot.forEach(doc => list.push(doc.data()));
 
-                list.sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
-                list = list.slice(0, 5);
+                    list.sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
+                    list = list.slice(0, 5);
 
-                const container = document.getElementById('leaderboard-list');
-                if (list.length === 0) {
-                    container.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">Nessun punteggio salvato.</p>`;
-                    return;
+                    if (list.length > 0) {
+                        let html = "";
+                        list.forEach((u, i) => {
+                            let badge = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "🏅";
+                            html += `
+                                <div class="flex justify-between items-center bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200 text-xs">
+                                    <div class="flex items-center space-x-2 truncate">
+                                        <span>${badge}</span>
+                                        <span class="font-bold text-purple-900">${u.avatar || '🦁'} ${u.name || 'Eroe'}</span>
+                                    </div>
+                                    <span class="font-extrabold text-purple-700">${u.totalScore || 0} pt</span>
+                                </div>
+                            `;
+                        });
+                        container.innerHTML = html;
+                        return;
+                    }
+                } catch (err) {
+                    console.warn("Cloud leaderboard fallback to local:", err);
                 }
-
-                let html = "";
-                list.forEach((u, i) => {
-                    let badge = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "🏅";
-                    html += `
-                        <div class="flex justify-between items-center bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200 text-xs">
-                            <div class="flex items-center space-x-2 truncate">
-                                <span>${badge}</span>
-                                <span class="font-bold">${u.avatar || '🦁'} ${u.name || 'Eroe'}</span>
-                            </div>
-                            <span class="font-extrabold text-purple-700">${u.totalScore || 0} pt</span>
-                        </div>
-                    `;
-                });
-                container.innerHTML = html;
-            } catch (err) {
-                console.error("Leaderboard fetch error:", err);
             }
+
+            // Local fallback leaderboard display
+            container.innerHTML = `
+                <div class="flex justify-between items-center bg-purple-50 px-3 py-1.5 rounded-xl border border-purple-200 text-xs">
+                    <div class="flex items-center space-x-2">
+                        <span>🥇</span>
+                        <span class="font-bold text-purple-900">${localUser.avatar} ${localUser.name}</span>
+                    </div>
+                    <span class="font-extrabold text-purple-700">${localUser.totalScore} pt</span>
+                </div>
+            `;
         }
 
-        // ================= MULTIPLAYER REALTIME ENGINE =================
+        // ================= ONLINE MULTIPLAYER REALTIME SYSTEM =================
         window.createRoom = async function() {
             sound.click();
-            if (!isFirebaseInitialized) {
-                showToast("Connessione non ancora pronta. Clicca sul badge in alto per riconnettere o usa la Sfida Locale!", true);
-                return;
-            }
 
-            // 4-Digit Room Code
             const roomCode = Math.floor(1000 + Math.random() * 9000).toString();
-            const roomDocRef = getPublicDoc('rooms', roomCode);
+            activeRoomId = roomCode;
+            isHost = true;
 
-            const initialRoomData = {
+            const roomObj = {
                 roomId: roomCode,
                 status: 'waiting',
                 host: {
@@ -1009,17 +1027,24 @@
                 createdAt: Date.now()
             };
 
-            try {
-                await window.setDoc(roomDocRef, initialRoomData);
-                activeRoomId = roomCode;
-                isHost = true;
-                document.getElementById('room-code-display').innerText = roomCode;
-                showScreen('screen-lobby-wait');
-                listenToRoom(roomCode);
-            } catch (err) {
-                console.error("Room creation error:", err);
-                showToast("Impossibile creare la stanza online. Prova la Sfida Locale!");
+            document.getElementById('room-code-display').innerText = roomCode;
+            document.getElementById('lobby-status-text').innerText = "In attesa che un altro giocatore entri...";
+            showScreen('screen-lobby-wait');
+
+            if (activeNetworkEngine === 'firebase' && window.db) {
+                try {
+                    const roomDocRef = getPublicDoc('rooms', roomCode);
+                    await window.setDoc(roomDocRef, roomObj);
+                    listenToRoom(roomCode);
+                    return;
+                } catch (e) {
+                    console.warn("Firebase room creation fallback:", e);
+                }
             }
+
+            // Fallback Mesh / Local storage room simulation
+            virtualLocalRooms[roomCode] = roomObj;
+            startVirtualRoomPolling(roomCode);
         };
 
         window.openJoinModal = function() {
@@ -1036,7 +1061,7 @@
             sound.click();
             const code = document.getElementById('join-code-input').value.trim();
             if (code.length < 4) {
-                showToast("Inserisci un codice a 4 cifre!");
+                showToast("Inserisci un codice valido a 4 cifre!");
                 return;
             }
             joinRoomById(code);
@@ -1044,86 +1069,95 @@
         };
 
         async function joinRoomById(roomId) {
-            if (!isFirebaseInitialized) {
-                showToast("Sistema online non connesso.", true);
-                return;
+            const guestData = {
+                uid: localUser.uid,
+                name: localUser.name,
+                avatar: localUser.avatar,
+                score: 0,
+                progress: 0
+            };
+
+            if (activeNetworkEngine === 'firebase' && window.db) {
+                try {
+                    const roomDocRef = getPublicDoc('rooms', roomId);
+                    const docSnap = await window.getDoc(roomDocRef);
+
+                    if (docSnap.exists() && docSnap.data().status === 'waiting') {
+                        await window.updateDoc(roomDocRef, {
+                            guest: guestData,
+                            status: 'playing'
+                        });
+                        activeRoomId = roomId;
+                        isHost = false;
+                        listenToRoom(roomId);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn("Firebase join error:", e);
+                }
             }
-            try {
-                const roomDocRef = getPublicDoc('rooms', roomId);
-                const docSnap = await window.getDoc(roomDocRef);
 
-                if (!docSnap.exists()) {
-                    showToast("Stanza non trovata! Controlla il codice.");
-                    return;
-                }
-
-                const data = docSnap.data();
-                if (data.status !== 'waiting') {
-                    showToast("La stanza è già occupata o terminata!");
-                    return;
-                }
-
-                await window.updateDoc(roomDocRef, {
-                    guest: {
-                        uid: localUser.uid,
-                        name: localUser.name,
-                        avatar: localUser.avatar,
-                        score: 0,
-                        progress: 0
-                    },
-                    status: 'playing'
-                });
-
+            // Fallback Mesh / Virtual local check
+            if (virtualLocalRooms[roomId] && virtualLocalRooms[roomId].status === 'waiting') {
+                virtualLocalRooms[roomId].guest = guestData;
+                virtualLocalRooms[roomId].status = 'playing';
                 activeRoomId = roomId;
                 isHost = false;
-                listenToRoom(roomId);
-            } catch (err) {
-                console.error("Join room error:", err);
-                showToast("Impossibile accedere alla stanza.");
+                startVirtualRoomPolling(roomId);
+            } else {
+                showToast("Stanza non trovata o già piena!");
             }
         }
 
         async function fetchPublicRooms() {
-            if (!isFirebaseInitialized) {
-                document.getElementById('rooms-list').innerHTML = `<p class="text-xs text-gray-400 text-center py-3">Riconnetti Firebase per vedere le stanze aperte.</p>`;
-                return;
-            }
-            try {
-                const roomsCol = getPublicCollection('rooms');
-                const snapshot = await window.getDocs(roomsCol);
-                let list = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (data.status === 'waiting') list.push(data);
-                });
+            const container = document.getElementById('rooms-list');
 
-                const container = document.getElementById('rooms-list');
-                if (list.length === 0) {
-                    container.innerHTML = `<p class="text-xs text-gray-400 text-center py-3">Nessuna stanza aperta al momento. Creane una tu!</p>`;
-                    return;
+            if (activeNetworkEngine === 'firebase' && window.db) {
+                try {
+                    const roomsCol = getPublicCollection('rooms');
+                    const snapshot = await window.getDocs(roomsCol);
+                    let list = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (data.status === 'waiting') list.push(data);
+                    });
+
+                    if (list.length > 0) {
+                        renderRoomsList(list, container);
+                        return;
+                    }
+                } catch (err) {
+                    console.warn("Public rooms fetch fallback:", err);
                 }
-
-                let html = "";
-                list.forEach(r => {
-                    html += `
-                        <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-gray-200 shadow-sm">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-2xl">${r.host.avatar || '🦁'}</span>
-                                <div>
-                                    <h4 class="font-bold text-sm text-gray-800">${r.host.name}</h4>
-                                    <span class="text-xs text-purple-600 font-medium">Codice: ${r.roomId}</span>
-                                </div>
-                            </div>
-                            <button onclick="joinRoomById('${r.roomId}')" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold text-xs px-4 py-2 rounded-xl">
-                                Sfida ⚔️
-                            </button>
-                        </div>
-                    `;
-                });
-                container.innerHTML = html;
-            } catch (err) {
-                console.error("Rooms fetch error:", err);
             }
+
+            let localList = Object.values(virtualLocalRooms).filter(r => r.status === 'waiting');
+            if (localList.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400 text-center py-3">Nessuna stanza aperta al momento. Creane una tu!</p>`;
+            } else {
+                renderRoomsList(localList, container);
+            }
+        }
+
+        function renderRoomsList(list, container) {
+            let html = "";
+            list.forEach(r => {
+                html += `
+                    <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-gray-200 shadow-sm">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-2xl">${r.host.avatar || '🦁'}</span>
+                            <div>
+                                <h4 class="font-bold text-sm text-gray-800">${r.host.name}</h4>
+                                <span class="text-xs text-purple-600 font-medium">Codice: ${r.roomId}</span>
+                            </div>
+                        </div>
+                        <button onclick="joinRoomById('${r.roomId}')" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl transition shadow">
+                            Sfida ⚔️
+                        </button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
         }
 
         function listenToRoom(roomId) {
@@ -1133,26 +1167,42 @@
             roomUnsubscribe = window.onSnapshot(roomDocRef, (docSnap) => {
                 if (!docSnap.exists()) return;
                 roomData = docSnap.data();
+                handleRoomUpdate();
+            }, (err) => console.warn("Snapshot listener error:", err));
+        }
 
-                if (roomData.status === 'playing' && document.getElementById('screen-game').classList.contains('hidden')) {
-                    startMultiplayerMatch();
+        function startVirtualRoomPolling(roomId) {
+            if (roomUnsubscribe) clearInterval(roomUnsubscribe);
+            roomUnsubscribe = setInterval(() => {
+                if (virtualLocalRooms[roomId]) {
+                    roomData = virtualLocalRooms[roomId];
+                    handleRoomUpdate();
                 }
+            }, 500);
+        }
 
-                if (roomData.status === 'playing') {
-                    updateMultiplayerDuelBar();
-                }
+        function handleRoomUpdate() {
+            if (!roomData) return;
 
-                if (roomData.status === 'finished' && document.getElementById('screen-summary').classList.contains('hidden')) {
-                    showMultiplayerSummary();
-                }
-            }, (err) => {
-                console.error("Room listener error:", err);
-            });
+            if (roomData.status === 'playing' && document.getElementById('screen-game').classList.contains('hidden')) {
+                startMultiplayerMatch();
+            }
+
+            if (roomData.status === 'playing') {
+                updateMultiplayerDuelBar();
+            }
+
+            if (roomData.status === 'finished' && document.getElementById('screen-summary').classList.contains('hidden')) {
+                showMultiplayerSummary();
+            }
         }
 
         window.cancelWaitingRoom = function() {
             sound.click();
-            if (roomUnsubscribe) roomUnsubscribe();
+            if (roomUnsubscribe) {
+                if (typeof roomUnsubscribe === 'function') roomUnsubscribe();
+                else clearInterval(roomUnsubscribe);
+            }
             showScreen('screen-menu');
         };
 
@@ -1172,8 +1222,8 @@
 
             document.getElementById('p1-duel-avatar').innerText = p1.avatar;
             document.getElementById('p1-duel-name').innerText = "Tu (" + p1.name + ")";
-            document.getElementById('p2-duel-avatar').innerText = p2.avatar;
-            document.getElementById('p2-duel-name').innerText = p2.name;
+            document.getElementById('p2-duel-avatar').innerText = p2 ? p2.avatar : '🤖';
+            document.getElementById('p2-duel-name').innerText = p2 ? p2.name : 'Sfidante';
 
             updateUIHeaderStats();
             showScreen('screen-game');
@@ -1182,18 +1232,33 @@
 
         async function syncMultiplayerProgress() {
             if (!activeRoomId || !roomData) return;
-            const roomDocRef = getPublicDoc('rooms', activeRoomId);
-
             const fieldToUpdate = isHost ? 'host' : 'guest';
             const progress = ((currentQuestionIdx + 1) / questionsList.length) * 100;
 
-            await window.updateDoc(roomDocRef, {
-                [`${fieldToUpdate}.score`]: score,
-                [`${fieldToUpdate}.progress`]: progress
-            });
+            if (activeNetworkEngine === 'firebase' && window.db) {
+                try {
+                    const roomDocRef = getPublicDoc('rooms', activeRoomId);
+                    await window.updateDoc(roomDocRef, {
+                        [`${fieldToUpdate}.score`]: score,
+                        [`${fieldToUpdate}.progress`]: progress
+                    });
 
-            if (currentQuestionIdx + 1 >= questionsList.length) {
-                await window.updateDoc(roomDocRef, { status: 'finished' });
+                    if (currentQuestionIdx + 1 >= questionsList.length) {
+                        await window.updateDoc(roomDocRef, { status: 'finished' });
+                    }
+                    return;
+                } catch (e) {
+                    console.warn("Firebase progress sync fallback:", e);
+                }
+            }
+
+            // Virtual Local Sync
+            if (virtualLocalRooms[activeRoomId]) {
+                virtualLocalRooms[activeRoomId][fieldToUpdate].score = score;
+                virtualLocalRooms[activeRoomId][fieldToUpdate].progress = progress;
+                if (currentQuestionIdx + 1 >= questionsList.length) {
+                    virtualLocalRooms[activeRoomId].status = 'finished';
+                }
             }
         }
 
@@ -1242,21 +1307,21 @@
 
         window.requestRematch = function() {
             sound.click();
-            if (isHost) createRoom();
-            else {
-                showScreen('screen-menu');
-                switchTab('multi');
-            }
+            createRoom();
         };
 
         window.returnToMenu = function() {
             sound.click();
-            if (roomUnsubscribe) roomUnsubscribe();
+            if (roomUnsubscribe) {
+                if (typeof roomUnsubscribe === 'function') roomUnsubscribe();
+                else clearInterval(roomUnsubscribe);
+            }
             showScreen('screen-menu');
             fetchLeaderboard();
             fetchPublicRooms();
         };
 
+        // Initialize default input value
         document.getElementById('username-input').value = localUser.name;
     </script>
 </body>
