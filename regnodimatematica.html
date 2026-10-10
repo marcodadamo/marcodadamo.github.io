@@ -419,7 +419,7 @@
                 if (streak > maxStreak) maxStreak = streak;
                 score += 10 + (streak * 2);
 
-                feedbackMessage.innerHTML = `<span class="text-green-600 text-xl font-bold">✨ Fantastico! Risposta Esatta!</span>`;
+                feedbackMessage.innerHTML = `<span class="text-green-600 text-xl font-bold">✨ Sei fantastica Letizia !Risposta Esatta!</span>`;
                 
                 if (targetElement) {
                     targetElement.className = "choice-btn bg-green-500 text-white font-bold p-4 rounded-2xl text-2xl shadow border-3 border-green-600 scale-105 transition transform";
@@ -437,7 +437,7 @@
                 streak = 0;
                 lives--;
 
-                feedbackMessage.innerHTML = `<span class="text-red-500 text-xl font-bold">❌ Ops! La risposta corretta era ${currentCorrectAnswer}</span>`;
+                feedbackMessage.innerHTML = `<span class="text-red-500 text-xl font-bold">❌ Ops Letizia! Asina! La risposta corretta era ${currentCorrectAnswer}</span>`;
                 
                 if (targetElement) {
                     targetElement.className = "choice-btn bg-red-500 text-white font-bold p-4 rounded-2xl text-2xl shadow border-3 border-red-600 shake";
