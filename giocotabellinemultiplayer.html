@@ -1,9 +1,10 @@
+```html
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Il Regno delle Tabelline - Sfida Multiplayer Online</title>
+    <title>Il Regno delle Tabelline - Sfida Multiplayer</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Canvas Confetti -->
@@ -45,7 +46,13 @@
                 <span id="header-avatar" class="text-3xl">🏰</span>
                 <div>
                     <h1 class="text-lg sm:text-xl font-bold tracking-wide leading-tight drop-shadow-md">Le Tabelline 1v1</h1>
-                    <span id="header-player-name" class="text-xs font-medium text-yellow-100 block">Ospite</span>
+                    <div class="flex items-center space-x-2">
+                        <span id="header-player-name" class="text-xs font-medium text-yellow-100 block">Ospite</span>
+                        <!-- Status Indicator -->
+                        <span id="firebase-status-badge" class="text-[10px] bg-yellow-400 text-yellow-950 font-extrabold px-2 py-0.5 rounded-full cursor-pointer" onclick="tryReconnectFirebase()" title="Clicca per riprovare la connessione">
+                            🟡 Inizializzazione...
+                        </span>
+                    </div>
                 </div>
             </div>
             <div id="game-stats-header" class="hidden flex items-center space-x-2 sm:space-x-3 text-xs sm:text-base font-semibold">
@@ -62,22 +69,23 @@
         </div>
 
         <!-- NOTIFICATION / STATUS TOAST -->
-        <div id="toast-banner" class="hidden bg-yellow-400 text-yellow-900 px-4 py-2 text-center font-bold text-sm shadow-md transition-all">
-            <span id="toast-message">Messaggio di stato...</span>
+        <div id="toast-banner" class="hidden bg-yellow-400 text-yellow-900 px-4 py-2 text-center font-bold text-sm shadow-md transition-all flex justify-between items-center">
+            <span id="toast-message" class="w-full text-center">Messaggio di stato...</span>
+            <button id="reconnect-btn-banner" onclick="tryReconnectFirebase()" class="hidden bg-purple-700 text-white text-xs px-2 py-1 rounded-lg font-bold ml-2 shrink-0">🔄 Riconnetti</button>
         </div>
 
         <!-- SCREEN 0: USER PROFILE & LOGIN -->
         <div id="screen-auth" class="p-5 sm:p-8 space-y-6">
             <div class="text-center space-y-2">
                 <h2 class="text-3xl sm:text-4xl font-extrabold text-purple-800">Crea il tuo Profilo! 🧙‍♂️</h2>
-                <p class="text-gray-600 text-sm sm:text-base">Scegli un nome ed un avatar per sfidare amici e guadagnare punti!</p>
+                <p class="text-gray-600 text-sm sm:text-base">Scegli un nome ed un avatar per sfidare i tuoi amici!</p>
             </div>
 
             <!-- Avatar Selection Grid -->
             <div class="space-y-2">
                 <label class="block text-gray-700 font-bold text-sm">Scegli il tuo Avatar:</label>
                 <div id="avatar-grid" class="grid grid-cols-4 gap-3 text-3xl">
-                    <button type="button" onclick="selectAvatar('🦁', this)" class="avatar-btn p-3 rounded-2xl border-2 border-purple-400 bg-purple-100 text-center hover:scale-110 transition">🦁</button>
+                    <button type="button" onclick="selectAvatar('🦁', this)" class="avatar-btn p-3 rounded-2xl border-2 border-purple-500 bg-purple-100 text-center hover:scale-110 transition">🦁</button>
                     <button type="button" onclick="selectAvatar('🐲', this)" class="avatar-btn p-3 rounded-2xl border-2 border-gray-200 bg-gray-50 text-center hover:scale-110 transition">🐲</button>
                     <button type="button" onclick="selectAvatar('🦄', this)" class="avatar-btn p-3 rounded-2xl border-2 border-gray-200 bg-gray-50 text-center hover:scale-110 transition">🦄</button>
                     <button type="button" onclick="selectAvatar('🧙‍♂️', this)" class="avatar-btn p-3 rounded-2xl border-2 border-gray-200 bg-gray-50 text-center hover:scale-110 transition">🧙‍♂️</button>
@@ -107,7 +115,7 @@
                     🎮 Giocatore Singolo
                 </button>
                 <button onclick="switchTab('multi')" id="tab-multi" class="py-2.5 rounded-xl font-bold text-sm transition text-gray-500 hover:text-purple-700">
-                    🌐 Multiplayer Online 
+                    🌐 Multiplayer 1v1
                 </button>
             </div>
 
@@ -156,12 +164,12 @@
                 </button>
             </div>
 
-            <!-- MULTIPLAYER ONLINE OPTIONS -->
+            <!-- MULTIPLAYER OPTIONS -->
             <div id="tab-content-multi" class="space-y-5 hidden">
                 <div class="grid grid-cols-2 gap-3">
                     <button onclick="createRoom()" class="bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white p-4 rounded-2xl font-bold flex flex-col items-center justify-center shadow-md transition transform hover:scale-105">
                         <span class="text-3xl mb-1">➕</span>
-                        <span>Crea Stanza</span>
+                        <span>Crea Stanza Online</span>
                     </button>
                     <button onclick="openJoinModal()" class="bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white p-4 rounded-2xl font-bold flex flex-col items-center justify-center shadow-md transition transform hover:scale-105">
                         <span class="text-3xl mb-1">🔑</span>
@@ -169,10 +177,21 @@
                     </button>
                 </div>
 
+                <!-- Local Same-Screen / Pass & Play Fallback Button -->
+                <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-3 flex items-center justify-between">
+                    <div>
+                        <h4 class="font-bold text-amber-900 text-xs sm:text-sm">📱 Sfida Locale (Sullo Stesso Schermo)</h4>
+                        <p class="text-[11px] text-amber-700">Gioca a turni con un amico sullo stesso dispositivo!</p>
+                    </div>
+                    <button onclick="startLocalMultiplayerGame()" class="bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow transition shrink-0 ml-2">
+                        Avvia 🎮
+                    </button>
+                </div>
+
                 <!-- Live Rooms List -->
                 <div class="space-y-2">
                     <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-gray-700 text-sm">Stanze Disponibili Online:</h3>
+                        <h3 class="font-bold text-gray-700 text-sm">Stanze Pubbliche Online:</h3>
                         <button onclick="fetchPublicRooms()" class="text-xs text-purple-600 hover:underline font-bold">🔄 Aggiorna</button>
                     </div>
                     <div id="rooms-list" class="space-y-2 max-h-40 overflow-y-auto pr-1">
@@ -197,11 +216,11 @@
         <div id="screen-lobby-wait" class="p-6 sm:p-8 space-y-6 text-center hidden">
             <div class="space-y-2">
                 <h2 class="text-3xl font-extrabold text-purple-800">Stanza Creata! 🎉</h2>
-                <p class="text-gray-600 text-sm">Condividi questo codice con il tuo amico per giocare:</p>
+                <p class="text-gray-600 text-sm">Dillo al tuo amico! Digita questo Codice a 4 Cifre:</p>
             </div>
 
             <div class="bg-purple-100 border-4 border-dashed border-purple-400 rounded-3xl p-6 pulse-subtle">
-                <span id="room-code-display" class="text-5xl font-black tracking-widest text-purple-900">------</span>
+                <span id="room-code-display" class="text-6xl font-black tracking-widest text-purple-900">----</span>
             </div>
 
             <div class="flex items-center justify-center space-x-3 text-lg font-bold text-gray-700">
@@ -214,7 +233,7 @@
             </button>
         </div>
 
-        <!-- SCREEN 3: GAME SCREEN (SINGLE & MULTIPLAYER) -->
+        <!-- SCREEN 3: GAME SCREEN (SINGLE, LOCAL & ONLINE MULTIPLAYER) -->
         <div id="screen-game" class="p-5 sm:p-8 space-y-5 hidden">
             <!-- Game Info Header -->
             <div id="game-info-bar" class="flex justify-between items-center bg-indigo-50 px-4 py-2.5 rounded-2xl border-2 border-indigo-200 text-xs sm:text-sm font-bold text-indigo-900">
@@ -260,6 +279,9 @@
 
             <!-- Question Card -->
             <div class="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-3xl border-4 border-indigo-200 text-center shadow-inner relative">
+                <div id="player-turn-indicator" class="hidden text-xs font-black text-purple-700 uppercase tracking-wider mb-1">
+                    Turno del Giocatore 1
+                </div>
                 <h2 id="question-text" class="text-4xl sm:text-6xl font-extrabold text-indigo-900 tracking-tight my-2">
                     7 × 8 = ?
                 </h2>
@@ -298,7 +320,7 @@
                     <span id="final-correct" class="font-extrabold text-green-600 text-xl">0</span>
                 </div>
                 <div id="multiplayer-summary-details" class="hidden border-t border-indigo-200 pt-2 space-y-1">
-                    <div class="flex justify-between items-center text-xs text-gray-500">
+                    <div class="flex justify-between items-center text-xs text-gray-600 font-bold">
                         <span id="summary-p1-label">P1: 0 pt</span>
                         <span id="summary-p2-label">P2: 0 pt</span>
                     </div>
@@ -322,8 +344,8 @@
         <div id="modal-join" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
             <div class="bg-white w-full max-w-md rounded-3xl p-6 space-y-4 text-center shadow-2xl border-4 border-purple-300">
                 <h3 class="text-2xl font-extrabold text-purple-900">Inserisci Codice Stanza 🔑</h3>
-                <input type="text" id="join-code-input" placeholder="Es. A1B2C3" maxlength="6" 
-                    class="w-full text-center tracking-widest uppercase px-4 py-3 rounded-2xl border-2 border-purple-300 text-2xl font-black bg-purple-50">
+                <input type="text" id="join-code-input" placeholder="Es. 4821" maxlength="4" 
+                    class="w-full text-center tracking-widest px-4 py-3 rounded-2xl border-2 border-purple-300 text-3xl font-black bg-purple-50 text-purple-900">
                 <div class="flex space-x-3">
                     <button onclick="closeJoinModal()" class="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded-2xl">Annulla</button>
                     <button onclick="submitJoinCode()" class="flex-1 bg-purple-600 text-white font-extrabold py-3 rounded-2xl">Entra</button>
@@ -333,7 +355,7 @@
 
     </div>
 
-    <!-- FIREBASE MODULES -->
+    <!-- FIREBASE MODULES WITH IMMEDIATE INITIALIZATION & FAILSAFE -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -350,45 +372,48 @@
             appId: "1:000000000000:web:000000000000"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        let app, auth, db;
 
-        // Make accessible to non-module script
-        window.db = db;
-        window.auth = auth;
-        window.appId = appId;
-        window.doc = doc;
-        window.setDoc = setDoc;
-        window.getDoc = getDoc;
-        window.updateDoc = updateDoc;
-        window.collection = collection;
-        window.onSnapshot = onSnapshot;
-        window.query = query;
-        window.getDocs = getDocs;
-
-        // Authenticate User
-        async function initAuth() {
+        async function initFirebaseSystem() {
             try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                window.db = db;
+                window.auth = auth;
+                window.appId = appId;
+                window.doc = doc;
+                window.setDoc = setDoc;
+                window.getDoc = getDoc;
+                window.updateDoc = updateDoc;
+                window.collection = collection;
+                window.onSnapshot = onSnapshot;
+                window.query = query;
+                window.getDocs = getDocs;
+
+                // Set Auth Listener
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        window.currentUser = user;
+                        window.onFirebaseReadySuccess();
+                    }
+                });
+
+                // Authenticate immediately
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
                     await signInAnonymously(auth);
                 }
             } catch (err) {
-                console.warn("Auth fallback activated:", err);
-                await signInAnonymously(auth);
+                console.warn("Firebase Init Error:", err);
+                window.onFirebaseInitFailed(err);
             }
         }
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                window.currentUser = user;
-                window.onFirebaseReady();
-            }
-        });
-
-        initAuth();
+        window.initFirebaseSystem = initFirebaseSystem;
+        initFirebaseSystem();
     </script>
 
     <!-- MAIN GAME LOGIC SCRIPT -->
@@ -398,17 +423,19 @@
 
         function playTone(freq, type, duration, delay = 0) {
             setTimeout(() => {
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = type;
-                osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + duration);
+                try {
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = type;
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + duration);
+                } catch(e) {}
             }, delay);
         }
 
@@ -430,14 +457,16 @@
 
         // Application State
         let localUser = {
-            uid: '',
+            uid: 'guest_' + Math.random().toString(36).substr(2, 6),
             name: 'Ospite',
             avatar: '🦁',
             totalScore: 0
         };
 
         let isFirebaseInitialized = false;
-        let currentGameMode = 'single'; // 'single' or 'multi'
+        let authTimeoutTimer = null;
+
+        let currentGameMode = 'single'; // 'single', 'multi', 'local_multi'
         let singleSubMode = 'training'; // 'training', 'timeattack', 'monster'
         let selectedTable = 'all';
 
@@ -450,34 +479,59 @@
         let correctCount = 0;
         let currentCorrectAns = 0;
 
+        // Local 1v1 Pass & Play State
+        let localP1Score = 0;
+        let localP2Score = 0;
+        let localCurrentTurn = 1; // 1 or 2
+
         // Time attack / Monster variables
         let timerInterval = null;
         let timeLeft = 60;
         let monsterHP = 100;
 
-        // Multiplayer state
+        // Online Multiplayer state
         let activeRoomId = null;
         let roomUnsubscribe = null;
         let roomData = null;
         let isHost = false;
 
-        // Helper Toast Notification
-        function showToast(msg) {
+        // Toast Banner Helper
+        function showToast(msg, isError = false) {
             const toast = document.getElementById('toast-banner');
             document.getElementById('toast-message').innerText = msg;
             toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 3500);
+
+            const reconnectBtn = document.getElementById('reconnect-btn-banner');
+            if (isError && !isFirebaseInitialized) {
+                reconnectBtn.classList.remove('hidden');
+            } else {
+                reconnectBtn.classList.add('hidden');
+            }
+
+            setTimeout(() => {
+                if (!isError) toast.classList.add('hidden');
+            }, 4000);
         }
 
-        // Firebase Ready Callback
-        window.onFirebaseReady = function() {
+        // Firebase Auth Success Callback
+        window.onFirebaseReadySuccess = function() {
             isFirebaseInitialized = true;
-            localUser.uid = window.currentUser.uid;
-            
-            // Check stored local profile
+            if (authTimeoutTimer) clearTimeout(authTimeoutTimer);
+
+            if (window.currentUser) {
+                localUser.uid = window.currentUser.uid;
+            }
+
+            const badge = document.getElementById('firebase-status-badge');
+            badge.innerText = "🟢 Connesso";
+            badge.className = "text-[10px] bg-green-400 text-green-950 font-extrabold px-2 py-0.5 rounded-full cursor-pointer";
+
+            document.getElementById('toast-banner').classList.add('hidden');
+
+            // Restore stored profile
             const savedName = localStorage.getItem('tabelline_username');
             const savedAvatar = localStorage.getItem('tabelline_avatar');
-            
+
             if (savedName) {
                 localUser.name = savedName;
                 localUser.avatar = savedAvatar || '🦁';
@@ -487,6 +541,34 @@
                 showScreen('screen-menu');
                 fetchLeaderboard();
                 fetchPublicRooms();
+            }
+        };
+
+        // Firebase Failure Safeguard
+        window.onFirebaseInitFailed = function(err) {
+            isFirebaseInitialized = false;
+            const badge = document.getElementById('firebase-status-badge');
+            badge.innerText = "🔴 Offline / Clicca Riprova";
+            badge.className = "text-[10px] bg-red-400 text-white font-extrabold px-2 py-0.5 rounded-full cursor-pointer";
+
+            showToast("Modalità Online non disponibile. Puoi giocare in Singolo o Sfida Locale!", true);
+        };
+
+        // Auto-Timeout Timer (3.5 Seconds)
+        authTimeoutTimer = setTimeout(() => {
+            if (!isFirebaseInitialized) {
+                window.onFirebaseInitFailed("Timeout connessione");
+            }
+        }, 3500);
+
+        window.tryReconnectFirebase = function() {
+            sound.click();
+            const badge = document.getElementById('firebase-status-badge');
+            badge.innerText = "🟡 Riconnessione...";
+            badge.className = "text-[10px] bg-yellow-400 text-yellow-950 font-extrabold px-2 py-0.5 rounded-full cursor-pointer";
+
+            if (typeof window.initFirebaseSystem === 'function') {
+                window.initFirebaseSystem();
             }
         };
 
@@ -546,7 +628,7 @@
             }
         }
 
-        // Screen Navigation
+        // Screen Switcher
         function showScreen(screenId) {
             ['screen-auth', 'screen-menu', 'screen-lobby-wait', 'screen-game', 'screen-summary'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
@@ -584,7 +666,7 @@
             }
         };
 
-        // Single Player Configuration
+        // Single Player Setup
         window.setSingleMode = function(mode) {
             sound.click();
             singleSubMode = mode;
@@ -616,7 +698,6 @@
             }
         };
 
-        // Question Generator
         function generateQuestionsArray(count = 10) {
             let list = [];
             for (let i = 0; i < count; i++) {
@@ -627,9 +708,10 @@
             return list;
         }
 
-        // Start Single Player Game
+        // Start Single Player
         window.startSinglePlayerGame = function() {
             sound.click();
+            currentGameMode = 'single';
             currentQuestionIdx = 0;
             score = 0;
             streak = 0;
@@ -638,6 +720,7 @@
             questionsList = generateQuestionsArray(15);
 
             document.getElementById('multiplayer-duel-bar').classList.add('hidden');
+            document.getElementById('player-turn-indicator').classList.add('hidden');
 
             if (singleSubMode === 'monster') {
                 monsterHP = 100;
@@ -651,6 +734,30 @@
                 timeLeft = 60;
                 startTimer();
             }
+
+            updateUIHeaderStats();
+            showScreen('screen-game');
+            loadNextQuestion();
+        };
+
+        window.startLocalMultiplayerGame = function() {
+            sound.click();
+            currentGameMode = 'local_multi';
+            currentQuestionIdx = 0;
+            localP1Score = 0;
+            localP2Score = 0;
+            localCurrentTurn = 1;
+            correctCount = 0;
+            questionsList = generateQuestionsArray(10);
+
+            document.getElementById('multiplayer-duel-bar').classList.remove('hidden');
+            document.getElementById('monster-banner').classList.add('hidden');
+            document.getElementById('player-turn-indicator').classList.remove('hidden');
+
+            document.getElementById('p1-duel-avatar').innerText = localUser.avatar;
+            document.getElementById('p1-duel-name').innerText = "P1 (" + localUser.name + ")";
+            document.getElementById('p2-duel-avatar').innerText = "🤖";
+            document.getElementById('p2-duel-name').innerText = "P2 (Giocatore 2)";
 
             updateUIHeaderStats();
             showScreen('screen-game');
@@ -676,7 +783,8 @@
         }
 
         function loadNextQuestion() {
-            if (singleSubMode === 'training' && currentQuestionIdx >= 10) {
+            if ((currentGameMode === 'single' && singleSubMode === 'training' && currentQuestionIdx >= 10) ||
+                (currentGameMode === 'local_multi' && currentQuestionIdx >= 10)) {
                 finishGame();
                 return;
             }
@@ -691,7 +799,11 @@
 
             document.getElementById('question-text').innerText = `${currentQ.n1} × ${currentQ.n2} = ?`;
 
-            if (singleSubMode === 'training') {
+            if (currentGameMode === 'local_multi') {
+                const turnLabel = localCurrentTurn === 1 ? `Turno: ${localUser.name}` : "Turno: Giocatore 2";
+                document.getElementById('player-turn-indicator').innerText = turnLabel;
+                document.getElementById('game-round-info').innerText = `Domanda ${currentQuestionIdx + 1} / 10`;
+            } else if (singleSubMode === 'training') {
                 document.getElementById('game-round-info').innerText = `Domanda ${currentQuestionIdx + 1} / 10`;
                 let hearts = "";
                 for (let i = 0; i < 3; i++) hearts += (i < lives) ? "❤️" : "🖤";
@@ -733,7 +845,14 @@
                 sound.correct();
                 correctCount++;
                 streak++;
-                score += 10 + (streak * 2);
+                
+                const pointsGained = 10 + (streak * 2);
+                if (currentGameMode === 'local_multi') {
+                    if (localCurrentTurn === 1) localP1Score += pointsGained;
+                    else localP2Score += pointsGained;
+                } else {
+                    score += pointsGained;
+                }
 
                 document.getElementById('feedback-message').innerHTML = `<span class="text-green-600">✨ Esatto! Fantastico!</span>`;
                 btn.className = "choice-btn bg-green-500 text-white font-extrabold p-3 sm:p-4 rounded-2xl text-xl sm:text-2xl shadow scale-105 transition";
@@ -748,10 +867,10 @@
             } else {
                 sound.wrong();
                 streak = 0;
-                document.getElementById('feedback-message').innerHTML = `<span class="text-red-500">❌ Ops! La risposta corretta era ${currentCorrectAns}</span>`;
+                document.getElementById('feedback-message').innerHTML = `<span class="text-red-500">❌ Ops! La risposta era ${currentCorrectAns}</span>`;
                 btn.className = "choice-btn bg-red-500 text-white font-extrabold p-3 sm:p-4 rounded-2xl text-xl sm:text-2xl shadow shake";
 
-                if (singleSubMode === 'training') {
+                if (singleSubMode === 'training' && currentGameMode === 'single') {
                     lives--;
                     if (lives <= 0) {
                         setTimeout(finishGame, 1000);
@@ -760,9 +879,16 @@
                 }
             }
 
-            updateUIHeaderStats();
+            if (currentGameMode === 'local_multi') {
+                document.getElementById('p1-duel-score').innerText = `${localP1Score} pt`;
+                document.getElementById('p2-duel-score').innerText = `${localP2Score} pt`;
+                document.getElementById('p1-progress-bar').style.width = `${((currentQuestionIdx + 1) / 10) * 100}%`;
+                document.getElementById('p2-progress-bar').style.width = `${((currentQuestionIdx + 1) / 10) * 100}%`;
+                localCurrentTurn = localCurrentTurn === 1 ? 2 : 1;
+            } else {
+                updateUIHeaderStats();
+            }
 
-            // Multiplayer Sync if active
             if (currentGameMode === 'multi' && activeRoomId) {
                 syncMultiplayerProgress();
             }
@@ -781,30 +907,48 @@
             document.getElementById('lives-display').innerText = hearts;
         }
 
-        // Finish Game & Update Firestore Leaderboard
         async function finishGame() {
             if (timerInterval) clearInterval(timerInterval);
             sound.win();
 
             showScreen('screen-summary');
-            document.getElementById('final-match-score').innerText = score;
-            document.getElementById('final-correct').innerText = `${correctCount} risposte`;
 
-            document.getElementById('rematch-btn').classList.add('hidden');
-            document.getElementById('play-again-btn').classList.remove('hidden');
-            document.getElementById('multiplayer-summary-details').classList.add('hidden');
+            if (currentGameMode === 'local_multi') {
+                document.getElementById('final-match-score').innerText = localP1Score;
+                document.getElementById('final-correct').innerText = `${correctCount} risposte giuste totali`;
 
-            // Cumulative score update
-            localUser.totalScore += score;
-            await syncUserProfileFirestore();
-            fetchLeaderboard();
+                document.getElementById('multiplayer-summary-details').classList.remove('hidden');
+                document.getElementById('summary-p1-label').innerText = `${localUser.name}: ${localP1Score} pt`;
+                document.getElementById('summary-p2-label').innerText = `Giocatore 2: ${localP2Score} pt`;
+
+                const title = document.getElementById('summary-title');
+                if (localP1Score > localP2Score) title.innerText = `🏆 Vince ${localUser.name}!`;
+                else if (localP1Score < localP2Score) title.innerText = "🏆 Vince Giocatore 2!";
+                else title.innerText = "🤝 Parità Assoluta!";
+
+                document.getElementById('rematch-btn').classList.add('hidden');
+                document.getElementById('play-again-btn').classList.remove('hidden');
+            } else {
+                document.getElementById('final-match-score').innerText = score;
+                document.getElementById('final-correct').innerText = `${correctCount} risposte`;
+
+                document.getElementById('rematch-btn').classList.add('hidden');
+                document.getElementById('play-again-btn').classList.remove('hidden');
+                document.getElementById('multiplayer-summary-details').classList.add('hidden');
+
+                localUser.totalScore += score;
+                await syncUserProfileFirestore();
+                fetchLeaderboard();
+            }
 
             confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
         }
 
-        // Leaderboard Fetching
         async function fetchLeaderboard() {
-            if (!isFirebaseInitialized) return;
+            if (!isFirebaseInitialized) {
+                document.getElementById('leaderboard-list').innerHTML = `<p class="text-xs text-gray-400 text-center py-2">Classifica disponibile solo in modalità Online.</p>`;
+                return;
+            }
             try {
                 const usersCol = getPublicCollection('users');
                 const snapshot = await window.getDocs(usersCol);
@@ -812,11 +956,11 @@
                 snapshot.forEach(doc => list.push(doc.data()));
 
                 list.sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
-                list = list.slice(0, 5); // Top 5
+                list = list.slice(0, 5);
 
                 const container = document.getElementById('leaderboard-list');
                 if (list.length === 0) {
-                    container.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">Nessun punteggio ancora salvato.</p>`;
+                    container.innerHTML = `<p class="text-xs text-gray-400 text-center py-2">Nessun punteggio salvato.</p>`;
                     return;
                 }
 
@@ -842,17 +986,18 @@
         // ================= MULTIPLAYER REALTIME ENGINE =================
         window.createRoom = async function() {
             sound.click();
-            if (!isFirebaseInitialized || !localUser.uid) {
-                showToast("Connessione in corso... Riprova tra un istante.");
+            if (!isFirebaseInitialized) {
+                showToast("Connessione non ancora pronta. Clicca sul badge in alto per riconnettere o usa la Sfida Locale!", true);
                 return;
             }
 
-            const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            // 4-Digit Room Code
+            const roomCode = Math.floor(1000 + Math.random() * 9000).toString();
             const roomDocRef = getPublicDoc('rooms', roomCode);
 
             const initialRoomData = {
                 roomId: roomCode,
-                status: 'waiting', // waiting, playing, finished
+                status: 'waiting',
                 host: {
                     uid: localUser.uid,
                     name: localUser.name,
@@ -874,7 +1019,7 @@
                 listenToRoom(roomCode);
             } catch (err) {
                 console.error("Room creation error:", err);
-                showToast("Errore nella creazione della stanza.");
+                showToast("Impossibile creare la stanza online. Prova la Sfida Locale!");
             }
         };
 
@@ -890,9 +1035,9 @@
 
         window.submitJoinCode = function() {
             sound.click();
-            const code = document.getElementById('join-code-input').value.trim().toUpperCase();
+            const code = document.getElementById('join-code-input').value.trim();
             if (code.length < 4) {
-                showToast("Codice non valido!");
+                showToast("Inserisci un codice a 4 cifre!");
                 return;
             }
             joinRoomById(code);
@@ -900,19 +1045,22 @@
         };
 
         async function joinRoomById(roomId) {
-            if (!isFirebaseInitialized) return;
+            if (!isFirebaseInitialized) {
+                showToast("Sistema online non connesso.", true);
+                return;
+            }
             try {
                 const roomDocRef = getPublicDoc('rooms', roomId);
                 const docSnap = await window.getDoc(roomDocRef);
 
                 if (!docSnap.exists()) {
-                    showToast("Stanza non trovata!");
+                    showToast("Stanza non trovata! Controlla il codice.");
                     return;
                 }
 
                 const data = docSnap.data();
                 if (data.status !== 'waiting') {
-                    showToast("La stanza è già piena o terminata!");
+                    showToast("La stanza è già occupata o terminata!");
                     return;
                 }
 
@@ -932,12 +1080,15 @@
                 listenToRoom(roomId);
             } catch (err) {
                 console.error("Join room error:", err);
-                showToast("Impossibile entrare nella stanza.");
+                showToast("Impossibile accedere alla stanza.");
             }
         }
 
         async function fetchPublicRooms() {
-            if (!isFirebaseInitialized) return;
+            if (!isFirebaseInitialized) {
+                document.getElementById('rooms-list').innerHTML = `<p class="text-xs text-gray-400 text-center py-3">Riconnetti Firebase per vedere le stanze aperte.</p>`;
+                return;
+            }
             try {
                 const roomsCol = getPublicCollection('rooms');
                 const snapshot = await window.getDocs(roomsCol);
@@ -949,7 +1100,7 @@
 
                 const container = document.getElementById('rooms-list');
                 if (list.length === 0) {
-                    container.innerHTML = `<p class="text-xs text-gray-400 text-center py-3">Nessuna stanza pubblica aperta. Creane una!</p>`;
+                    container.innerHTML = `<p class="text-xs text-gray-400 text-center py-3">Nessuna stanza aperta al momento. Creane una tu!</p>`;
                     return;
                 }
 
@@ -984,22 +1135,19 @@
                 if (!docSnap.exists()) return;
                 roomData = docSnap.data();
 
-                // Trigger start when guest joins
                 if (roomData.status === 'playing' && document.getElementById('screen-game').classList.contains('hidden')) {
                     startMultiplayerMatch();
                 }
 
-                // Update Realtime Duel UI
                 if (roomData.status === 'playing') {
                     updateMultiplayerDuelBar();
                 }
 
-                // Check finish state
-                if (roomData.status === 'finished' && !document.getElementById('screen-summary').classList.contains('hidden') === false) {
+                if (roomData.status === 'finished' && document.getElementById('screen-summary').classList.contains('hidden')) {
                     showMultiplayerSummary();
                 }
             }, (err) => {
-                console.error("Room snapshot error:", err);
+                console.error("Room listener error:", err);
             });
         }
 
@@ -1010,6 +1158,7 @@
         };
 
         function startMultiplayerMatch() {
+            currentGameMode = 'multi';
             questionsList = roomData.questions || generateQuestionsArray(10);
             currentQuestionIdx = 0;
             score = 0;
@@ -1017,6 +1166,7 @@
 
             document.getElementById('multiplayer-duel-bar').classList.remove('hidden');
             document.getElementById('monster-banner').classList.add('hidden');
+            document.getElementById('player-turn-indicator').classList.add('hidden');
 
             const p1 = isHost ? roomData.host : roomData.guest;
             const p2 = isHost ? roomData.guest : roomData.host;
@@ -1043,11 +1193,8 @@
                 [`${fieldToUpdate}.progress`]: progress
             });
 
-            // If player answered all questions, check match end
             if (currentQuestionIdx + 1 >= questionsList.length) {
-                await window.updateDoc(roomDocRef, {
-                    status: 'finished'
-                });
+                await window.updateDoc(roomDocRef, { status: 'finished' });
             }
         }
 
@@ -1080,13 +1227,9 @@
             document.getElementById('final-correct').innerText = `${correctCount} risposte`;
 
             const title = document.getElementById('summary-title');
-            if (myScore > opScore) {
-                title.innerText = "🏆 Vittoria Straordinaria!";
-            } else if (myScore < opScore) {
-                title.innerText = "🥈 Buon Tentativo!";
-            } else {
-                title.innerText = "🤝 Pareggio Perfetto!";
-            }
+            if (myScore > opScore) title.innerText = "🏆 Vittoria Straordinaria!";
+            else if (myScore < opScore) title.innerText = "🥈 Buon Tentativo!";
+            else title.innerText = "🤝 Pareggio Perfetto!";
 
             document.getElementById('multiplayer-summary-details').classList.remove('hidden');
             document.getElementById('summary-p1-label').innerText = `Tu: ${myScore} pt`;
@@ -1100,9 +1243,8 @@
 
         window.requestRematch = function() {
             sound.click();
-            if (isHost) {
-                createRoom();
-            } else {
+            if (isHost) createRoom();
+            else {
                 showScreen('screen-menu');
                 switchTab('multi');
             }
@@ -1116,7 +1258,6 @@
             fetchPublicRooms();
         };
 
-        // Initial setup
         document.getElementById('username-input').value = localUser.name;
     </script>
 </body>
