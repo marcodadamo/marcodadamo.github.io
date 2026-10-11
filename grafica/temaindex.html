@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Marco D'Adamo — Digital Enterprise & Open Source</title>
+    <!-- PWA Manifest Link -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0a0b10">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -62,12 +65,19 @@
             </div>
 
             <!-- Navbar Desktop -->
-            <nav class="hidden md:flex items-center space-x-6 text-sm font-medium text-gray-300">
+            <nav class="hidden md:flex items-center space-x-5 text-sm font-medium text-gray-300">
                 <a href="menu.html" class="hover:text-indigo-400 transition-colors">Progetti</a>
+                
                 <!-- Pulsante Giochi -->
                 <button id="openGamesModal" class="hover:text-indigo-400 transition-colors text-indigo-400 flex items-center space-x-1.5 font-semibold bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/20 hover:border-indigo-500/40">
                     <span>🎮 Giochi</span>
                 </button>
+
+                <!-- Pulsante Installa App (Desktop) -->
+                <button id="installAppBtn" class="hidden hover:text-white transition-colors text-emerald-400 flex items-center space-x-1.5 font-semibold bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20 hover:border-emerald-500/40">
+                    <span>📱 Installa App</span>
+                </button>
+
                 <a href="https://www.linkedin.com/in/marco-d-adamo/" target="_blank" class="hover:text-indigo-400 transition-colors">LinkedIn</a>
                 <a href="https://answers.microsoft.com/it-it/profile/d22c7259-b385-4909-8629-70c3ad1008fe" target="_blank" class="hover:text-indigo-400 transition-colors">Microsoft Insider</a>
                 <a href="https://forum.italia.it/u/marco_dadamo/summary" target="_blank" class="hover:text-indigo-400 transition-colors">Developers Italia</a>
@@ -76,7 +86,7 @@
             <!-- Pulsanti Mobile Header -->
             <div class="flex items-center space-x-2 md:hidden">
                 <button id="openGamesModalMobile" class="text-indigo-400 font-semibold bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/25 text-xs flex items-center space-x-1">
-                    <span>🎮 Giochi tabelline</span>
+                    <span>🎮 Giochi</span>
                 </button>
                 <button id="mobileMenuBtn" class="p-2 text-gray-300 hover:text-white rounded-lg hover:bg-white/5 transition-colors focus:outline-none">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,10 +96,16 @@
             </div>
         </div>
 
-        <!-- Menu a tendina Mobile Sbloccato -->
+        <!-- Menu a tendina Mobile -->
         <div id="mobileMenu" class="hidden md:hidden glass-card border-t border-white/5 px-6 py-4 space-y-2 relative z-50 pointer-events-auto">
             <nav class="flex flex-col space-y-1 text-sm font-medium text-gray-300">
                 <a href="menu.html" class="mobile-link block py-2.5 px-3 rounded-lg hover:bg-white/10 hover:text-indigo-400 transition-colors">Progetti</a>
+                
+                <!-- Pulsante Installa App (Mobile) -->
+                <button id="installAppBtnMobile" class="hidden w-full text-left py-2.5 px-3 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold flex items-center space-x-2">
+                    <span>📱 Installa App sul Dispositivo</span>
+                </button>
+
                 <a href="https://www.linkedin.com/in/marco-d-adamo/" target="_blank" class="mobile-link block py-2.5 px-3 rounded-lg hover:bg-white/10 hover:text-indigo-400 transition-colors">LinkedIn</a>
                 <a href="https://answers.microsoft.com/it-it/profile/d22c7259-b385-4909-8629-70c3ad1008fe" target="_blank" class="mobile-link block py-2.5 px-3 rounded-lg hover:bg-white/10 hover:text-indigo-400 transition-colors">Microsoft Insider</a>
                 <a href="https://forum.italia.it/u/marco_dadamo/summary" target="_blank" class="mobile-link block py-2.5 px-3 rounded-lg hover:bg-white/10 hover:text-indigo-400 transition-colors">Developers Italia</a>
@@ -190,7 +206,6 @@
             <p class="text-gray-400 text-sm mb-6">Seleziona una modalità per iniziare a giocare:</p>
             
             <div class="space-y-3">
-                <!-- Link 1 -->
                 <a href="https://marcodadamo.github.io/giocomatematica/giocotabellinebase.html" target="_blank" class="block group glass-card p-4 rounded-xl border border-white/5 hover:border-indigo-500/50 hover:bg-indigo-600/10 transition-all">
                     <div class="flex items-center justify-between">
                         <div>
@@ -203,7 +218,6 @@
                     </div>
                 </a>
 
-                <!-- Link 2 -->
                 <a href="https://marcodadamo.github.io/giocomatematica/giocotabellineround.html" target="_blank" class="block group glass-card p-4 rounded-xl border border-white/5 hover:border-indigo-500/50 hover:bg-indigo-600/10 transition-all">
                     <div class="flex items-center justify-between">
                         <div>
@@ -216,7 +230,6 @@
                     </div>
                 </a>
 
-                <!-- Link 3 -->
                 <a href="https://marcodadamo.github.io/giocomatematica/giocotabellinemultiplayer.html" target="_blank" class="block group glass-card p-4 rounded-xl border border-white/5 hover:border-indigo-500/50 hover:bg-indigo-600/10 transition-all">
                     <div class="flex items-center justify-between">
                         <div>
@@ -232,8 +245,48 @@
         </div>
     </div>
 
-    <!-- JavaScript Aggiornato -->
+    <!-- JavaScript Gestione PWA e Menu -->
     <script>
+        // Gestione PWA (Installazione)
+        let deferredPrompt;
+        const installBtn = document.getElementById('installAppBtn');
+        const installBtnMobile = document.getElementById('installAppBtnMobile');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Mostra i pulsanti di installazione
+            if (installBtn) installBtn.classList.remove('hidden');
+            if (installBtnMobile) installBtnMobile.classList.remove('hidden');
+        });
+
+        const triggerInstall = async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('Utente ha accettato l\'installazione PWA');
+                }
+                deferredPrompt = null;
+                if (installBtn) installBtn.classList.add('hidden');
+                if (installBtnMobile) installBtnMobile.classList.add('hidden');
+                mobileMenu.classList.add('hidden');
+            }
+        };
+
+        if (installBtn) installBtn.addEventListener('click', triggerInstall);
+        if (installBtnMobile) installBtnMobile.addEventListener('click', triggerInstall);
+
+        // Registrazione Service Worker per PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then((reg) => console.log('Service Worker registrato con successo', reg))
+                    .catch((err) => console.log('Registrazione Service Worker fallita', err));
+            });
+        }
+
+        // Gestione Menu Mobile e Modale Giochi
         const modal = document.getElementById('gamesModal');
         const modalContent = document.getElementById('modalContent');
         const openBtn = document.getElementById('openGamesModal');
@@ -244,13 +297,11 @@
         const mobileMenu = document.getElementById('mobileMenu');
         const mobileLinks = document.querySelectorAll('.mobile-link');
 
-        // Toggle del menu hamburger mobile
         mobileMenuBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             mobileMenu.classList.toggle('hidden');
         });
 
-        // Chiudi il menu mobile quando si clicca su un link del menu
         mobileLinks.forEach(link => {
             link.addEventListener('click', () => {
                 mobileMenu.classList.add('hidden');
@@ -278,18 +329,12 @@
         openBtnMobile.addEventListener('click', openModal);
         closeBtn.addEventListener('click', closeModal);
         
-        // Chiudi cliccando sullo sfondo scuro della modale
         modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                closeModal();
-            }
+            if (e.target === modal) closeModal();
         });
 
-        // Chiudi con il tasto ESC
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
-                closeModal();
-            }
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
         });
     </script>
 
