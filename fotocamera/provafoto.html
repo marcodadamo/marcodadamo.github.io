@@ -1,189 +1,536 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>StudioMarco Pro - Fotocamera</title>
+    <title>StudioMarco Pro - Mobile Camera & Video</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        body { 
+            font-family: 'Inter', sans-serif; 
+            touch-action: manipulation;
+            overscroll-behavior: none;
+            background-color: #000;
         }
-
-        body, html {
-            width: 100%;
-            height: 100%;
-            background-color: #0f172a;
-            color: #f8fafc;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.9; }
+            50% { transform: scale(1.12); opacity: 0.4; }
+            100% { transform: scale(0.95); opacity: 0.9; }
         }
-
-        header {
-            padding: 1rem;
-            background: rgba(15, 23, 42, 0.8);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 10;
+        .recording-pulse {
+            animation: pulse-ring 1.2s infinite ease-in-out;
         }
-
-        header h1 {
-            font-size: 1.25rem;
-            font-weight: 600;
+        .mirror-mode {
+            transform: scaleX(-1);
         }
-
-        .camera-container {
-            position: relative;
-            flex: 1;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            background: #000;
-        }
-
-        video, canvas {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            /* Transizione fluida in caso di rotazione o cambio orientamento */
-            transition: transform 0.3s ease;
-        }
-
-        .controls-container {
-            padding: 1.5rem;
-            background: rgba(15, 23, 42, 0.9);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            z-index: 10;
-        }
-
-        .btn-capture {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background-color: #ffffff;
-            border: 4px solid #94a3b8;
-            cursor: pointer;
-            outline: none;
-            transition: transform 0.1s ease;
-        }
-
-        .btn-capture:active {
-            transform: scale(0.95);
-        }
-
-        .gallery-preview {
-            width: 50px;
-            height: 50px;
-            border-radius: 8px;
-            overflow: hidden;
-            background: #1e293b;
-            border: 2px solid #475569;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .gallery-preview img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+        .hardware-accelerated {
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            perspective: 1000px;
         }
     </style>
 </head>
-<body>
+<body class="h-[100dvh] bg-black text-white flex flex-col overflow-hidden relative select-none">
 
-    <header>
-        <div>
-            <h1>StudioMarco Pro</h1>
+    <div class="absolute inset-0 w-full h-full overflow-hidden bg-black z-0 flex items-center justify-center">
+        <video id="videoElement" autoplay playsinline muted class="w-full h-full object-cover mirror-mode hardware-accelerated"></video>
+        <canvas id="canvasElement" class="hidden"></canvas>
+    </div>
+
+    <div id="welcomeOverlay" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/98 p-6 text-center z-50">
+        <div class="w-20 h-20 rounded-3xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-3xl mb-6 shadow-2xl shadow-indigo-500/20 animate-bounce">
+            <i class="fa-solid fa-camera-retro"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white mb-2">StudioMarco Pro</h2>
+        <p class="text-xs text-slate-400 max-w-xs mb-8 leading-relaxed">Applicazione sviluppata da Marco D'Adamo. Cattura foto straordinarie e registra video fluidi in alta definizione con filigrana integrata.</p>
+        <button onclick="requestCameraAccess()" class="w-full max-w-xs py-3.5 px-6 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-sm transition shadow-lg shadow-indigo-600/40 active:scale-95 flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-lock-open text-xs"></i>
+            <span>Avvia Fotocamera</span>
+        </button>
+        <p id="errorMsgBox" class="text-xs text-rose-400 mt-4 max-w-xs hidden"></p>
+    </div>
+
+    <header class="relative z-20 w-full px-5 py-4 flex items-center justify-between bg-gradient-to-b from-black/80 via-black/40 to-transparent">
+        <div class="flex items-center space-x-2">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+                <i class="fa-solid fa-video"></i>
+            </div>
+            <h1 class="text-base font-bold tracking-tight text-white drop-shadow">StudioMarco Pro</h1>
+        </div>
+        <div class="flex items-center space-x-2.5">
+            <button id="toggleMirrorBtn" onclick="toggleMirrorMode()" class="w-10 h-10 rounded-full bg-indigo-600/40 backdrop-blur-md hover:bg-indigo-600/60 active:scale-95 transition text-white border border-indigo-500/50 flex items-center justify-center shadow-lg" title="Specchio">
+                <i class="fa-solid fa-arrows-left-right text-xs"></i>
+            </button>
+            <button id="switchCameraBtn" onclick="switchCamera()" class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md hover:bg-black/60 active:scale-95 transition text-white border border-white/10 flex items-center justify-center shadow-lg" title="Inverti">
+                <i class="fa-solid fa-camera-rotate text-xs"></i>
+            </button>
+            <button id="toggleFlashBtn" onclick="toggleFlash()" class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md hover:bg-black/60 active:scale-95 transition text-white border border-white/10 flex items-center justify-center shadow-lg hidden" title="Torcia">
+                <i class="fa-solid fa-bolt text-xs"></i>
+            </button>
         </div>
     </header>
 
-    <div class="camera-container">
-        <!-- playsinline e muted sono fondamentali per iOS e Android -->
-        <video id="video" autoplay muted playsinline></video>
-        <canvas id="canvas" style="display:none;"></canvas>
+    <div class="relative z-10 flex-1 flex flex-col justify-between pointer-events-none p-5">
+        <div class="flex flex-col items-center pointer-events-auto space-y-3">
+            <div id="recordingBadge" class="hidden items-center space-x-2 bg-rose-500/20 border border-rose-500/40 backdrop-blur-md px-3.5 py-1.5 rounded-full text-rose-400 text-xs font-semibold shadow-lg">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+                <span id="timerText">00:00</span>
+            </div>
+
+            <div class="bg-black/50 backdrop-blur-md p-1 rounded-full border border-white/10 flex shadow-lg">
+                <button onclick="setMode('photo')" id="modePhotoBtn" class="px-5 py-1.5 rounded-full text-xs font-semibold transition bg-indigo-600 text-white shadow">Foto</button>
+                <button onclick="setMode('video')" id="modeVideoBtn" class="px-5 py-1.5 rounded-full text-xs font-semibold transition text-slate-300 hover:text-white">Video</button>
+            </div>
+        </div>
+
+        <div class="pointer-events-auto w-full max-w-md mx-auto flex items-center justify-between pb-6 pt-4 px-2 bg-gradient-to-t from-black/90 via-black/50 to-transparent rounded-b-3xl">
+            <div class="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 overflow-hidden flex items-center justify-center cursor-pointer hover:opacity-90 active:scale-95 transition shadow-lg" onclick="openGalleryDrawer()" id="quickPreviewWrapper">
+                <img id="quickPreviewImg" src="https://placehold.co/100x100/1e293b/475569?text=Media" alt="Gallery" class="w-full h-full object-cover">
+            </div>
+
+            <div class="relative flex items-center justify-center">
+                <div id="shutterRing" class="absolute w-20 h-20 rounded-full border-4 border-indigo-500/40 pointer-events-none transition-all duration-300"></div>
+                <button id="shutterBtn" onclick="handleShutter()" class="w-16 h-16 rounded-full bg-white hover:bg-slate-200 active:scale-90 transition-all duration-200 flex items-center justify-center shadow-2xl relative z-10">
+                    <div id="shutterInner" class="w-13 h-13 rounded-full bg-indigo-600 transition-all duration-300 flex items-center justify-center text-white">
+                        <i id="shutterIcon" class="fa-solid fa-camera text-xl"></i>
+                    </div>
+                </button>
+            </div>
+
+            <div onclick="openGalleryDrawer()" class="w-12 h-12 rounded-2xl bg-black/40 backdrop-blur-md border border-white/10 flex flex-col items-center justify-center cursor-pointer hover:bg-black/60 transition shadow-lg text-white">
+                <i class="fa-solid fa-photo-film text-xs text-indigo-400 mb-0.5"></i>
+                <span id="mediaCountBadge" class="text-[10px] font-bold">0</span>
+            </div>
+        </div>
     </div>
 
-    <div class="controls-container">
-        <div class="gallery-preview" id="galleryBtn">
-            <img id="previewImg" alt="Galleria" src="https://placehold.co/100x100/1e293b/475569?text=Media">
+    <div id="galleryModal" class="fixed inset-0 bg-black/95 backdrop-blur-xl z-50 hidden flex flex-col transition-all duration-300">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
+            <h2 class="text-base font-bold text-white flex items-center space-x-2">
+                <i class="fa-solid fa-photo-film text-indigo-400"></i>
+                <span>Galleria Multimediale</span>
+            </h2>
+            <div class="flex items-center space-x-3">
+                <button onclick="clearGallery()" class="text-xs text-rose-400 hover:text-rose-300 transition font-medium px-3 py-1.5 rounded-lg bg-rose-500/10">Svuota</button>
+                <button onclick="closeGalleryDrawer()" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
         </div>
-        <button class="btn-capture" id="captureBtn" aria-label="Scatta foto"></button>
-        <div style="width: 50px;"></div> <!-- Spaziatore per bilanciare il flexbox -->
+
+        <div id="galleryContainer" class="flex-1 overflow-y-auto p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            <div id="emptyGallery" class="col-span-full h-full flex flex-col items-center justify-center text-center p-6 text-slate-500">
+                <i class="fa-regular fa-images text-4xl mb-2 opacity-40"></i>
+                <p class="text-xs text-slate-400">Nessuna foto o video registrato.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="previewModal" class="fixed inset-0 bg-black z-50 hidden flex flex-col">
+        <div class="absolute top-4 right-4 z-20 flex items-center space-x-2">
+            <a id="modalDownloadBtn" download="media" class="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center transition hover:bg-black">
+                <i class="fa-solid fa-download text-sm"></i>
+            </a>
+            <button onclick="closeModal()" class="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md text-white flex items-center justify-center transition hover:bg-black">
+                <i class="fa-solid fa-xmark text-base"></i>
+            </button>
+        </div>
+        <div id="modalContentWrapper" class="flex-1 w-full h-full flex items-center justify-center relative overflow-hidden bg-black">
+        </div>
     </div>
 
     <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const captureBtn = document.getElementById('captureBtn');
-        const previewImg = document.getElementById('previewImg');
+        let currentMode = 'photo';
+        let mediaStream = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let isRecording = false;
+        let recordingTimer = null;
+        let recordingSeconds = 0;
+        let useFrontCamera = true;
+        let isMirrorActive = true;
+        let itemsList = [];
+        let flashEnabled = false;
 
-        // Funzione per gestire l'orientamento e correggere eventuali ribaltamenti errati
-        function updateOrientation() {
-            // Rileva l'angolo dello schermo per adattare la visualizzazione se necessario
-            const angle = window.screen.orientation ? window.screen.orientation.angle : (window.orientation || 0);
-            
-            // Su alcuni dispositivi, quando si passa in landscape invertito (270 gradi), 
-            // il video nativo mobile potrebbe richiedere una compensazione o bloccarsi dritto.
-            // Applicando o resettando la trasformazione evitiamo che vada a testa in giù.
-            if (Math.abs(angle) === 180) {
-                video.style.transform = 'rotate(180deg)';
+        const videoElement = document.getElementById('videoElement');
+        const canvasElement = document.getElementById('canvasElement');
+        const welcomeOverlay = document.getElementById('welcomeOverlay');
+        const errorMsgBox = document.getElementById('errorMsgBox');
+        const shutterBtn = document.getElementById('shutterBtn');
+        const shutterInner = document.getElementById('shutterInner');
+        const shutterIcon = document.getElementById('shutterIcon');
+        const shutterRing = document.getElementById('shutterRing');
+        const recordingBadge = document.getElementById('recordingBadge');
+        const timerText = document.getElementById('timerText');
+        const galleryContainer = document.getElementById('galleryContainer');
+        const emptyGallery = document.getElementById('emptyGallery');
+        const quickPreviewImg = document.getElementById('quickPreviewImg');
+        const mediaCountBadge = document.getElementById('mediaCountBadge');
+        const galleryModal = document.getElementById('galleryModal');
+        const previewModal = document.getElementById('previewModal');
+        const modalContentWrapper = document.getElementById('modalContentWrapper');
+        const modalDownloadBtn = document.getElementById('modalDownloadBtn');
+        const toggleFlashBtn = document.getElementById('toggleFlashBtn');
+        const toggleMirrorBtn = document.getElementById('toggleMirrorBtn');
+
+        async function requestCameraAccess() {
+            errorMsgBox.classList.add('hidden');
+
+            const constraintsList = [
+                { video: { facingMode: useFrontCamera ? 'user' : 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: true },
+                { video: { facingMode: useFrontCamera ? 'user' : 'environment' }, audio: true },
+                { video: true, audio: true }
+            ];
+
+            let success = false;
+            for (let constraints of constraintsList) {
+                try {
+                    if (mediaStream) {
+                        mediaStream.getTracks().forEach(t => t.stop());
+                    }
+                    mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+                    videoElement.srcObject = mediaStream;
+                    success = true;
+                    break;
+                } catch (e) {
+                    console.warn("Attempt with constraints failed:", constraints, e);
+                }
+            }
+
+            if (success) {
+                welcomeOverlay.classList.add('hidden');
+                checkTorchSupport();
             } else {
-                video.style.transform = 'rotate(0deg)';
+                errorMsgBox.innerText = "Impossibile accedere alla fotocamera. Verifica i permessi del browser o assicurati di usare una connessione sicura (HTTPS).";
+                errorMsgBox.classList.remove('hidden');
             }
         }
 
-        window.addEventListener('orientationchange', updateOrientation);
-        window.addEventListener('resize', updateOrientation);
-
-        // Avvio della fotocamera con vincoli ottimizzati per mobile e desktop
-        async function startCamera() {
+        function checkTorchSupport() {
             try {
-                const constraints = {
-                    video: {
-                        facingMode: { ideal: "environment" }, // Preferisce la fotocamera posteriore, usa "user" per l'anteriore
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    },
-                    audio: false
+                const track = mediaStream.getVideoTracks()[0];
+                const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+                if (capabilities.torch) {
+                    toggleFlashBtn.classList.remove('hidden');
+                } else {
+                    toggleFlashBtn.classList.add('hidden');
+                }
+            } catch(e) {
+                toggleFlashBtn.classList.add('hidden');
+            }
+        }
+
+        function toggleMirrorMode() {
+            isMirrorActive = !isMirrorActive;
+            if (isMirrorActive) {
+                videoElement.classList.add('mirror-mode');
+                toggleMirrorBtn.className = "w-10 h-10 rounded-full bg-indigo-600/40 backdrop-blur-md hover:bg-indigo-600/60 active:scale-95 transition text-white border border-indigo-500/50 flex items-center justify-center shadow-lg";
+            } else {
+                videoElement.classList.remove('mirror-mode');
+                toggleMirrorBtn.className = "w-10 h-10 rounded-full bg-black/40 backdrop-blur-md hover:bg-black/60 active:scale-95 transition text-indigo-300 border border-white/10 flex items-center justify-center shadow-lg";
+            }
+        }
+
+        function setMode(mode) {
+            if (isRecording) return;
+            currentMode = mode;
+            const photoBtn = document.getElementById('modePhotoBtn');
+            const videoBtn = document.getElementById('modeVideoBtn');
+
+            if (mode === 'photo') {
+                photoBtn.className = "px-5 py-1.5 rounded-full text-xs font-semibold transition bg-indigo-600 text-white shadow";
+                videoBtn.className = "px-5 py-1.5 rounded-full text-xs font-semibold transition text-slate-300 hover:text-white";
+                shutterIcon.className = "fa-solid fa-camera text-xl";
+                shutterInner.className = "w-13 h-13 rounded-full bg-indigo-600 transition-all duration-300 flex items-center justify-center text-white";
+                shutterRing.className = "absolute w-20 h-20 rounded-full border-4 border-indigo-500/40 pointer-events-none transition-all duration-300";
+            } else {
+                videoBtn.className = "px-5 py-1.5 rounded-full text-xs font-semibold transition bg-rose-600 text-white shadow";
+                photoBtn.className = "px-5 py-1.5 rounded-full text-xs font-semibold transition text-slate-300 hover:text-white";
+                shutterIcon.className = "fa-solid fa-video text-xl";
+                shutterInner.className = "w-13 h-13 rounded-full bg-rose-600 transition-all duration-300 flex items-center justify-center text-white";
+                shutterRing.className = "absolute w-20 h-20 rounded-full border-4 border-rose-500/40 pointer-events-none transition-all duration-300";
+            }
+        }
+
+        async function switchCamera() {
+            useFrontCamera = !useFrontCamera;
+            await requestCameraAccess();
+        }
+
+        async function toggleFlash() {
+            if (!mediaStream) return;
+            const track = mediaStream.getVideoTracks()[0];
+            const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+            if (capabilities.torch) {
+                flashEnabled = !flashEnabled;
+                try {
+                    await track.applyConstraints({ advanced: [{ torch: flashEnabled }] });
+                    toggleFlashBtn.classList.toggle('bg-amber-500', flashEnabled);
+                    toggleFlashBtn.classList.toggle('text-black', flashEnabled);
+                } catch (e) {
+                    console.error("Torch error:", e);
+                }
+            }
+        }
+
+        function handleShutter() {
+            if (currentMode === 'photo') {
+                takePhoto();
+            } else {
+                toggleRecording();
+            }
+        }
+
+        // Funzione per disegnare la filigrana sul contesto canvas
+        function drawWatermark(ctx, width, height) {
+            ctx.save();
+            const fontSize = Math.max(Math.floor(width * 0.035), 18);
+            ctx.font = `bold ${fontSize}px 'Inter', sans-serif`;
+            ctx.fillStyle = "rgba(255, 255, 255, 0.6)"; // Trasparente ed elegante
+            ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+            ctx.shadowBlur = 4;
+            
+            const text = "StudioMarco Pro";
+            const padding = width * 0.03;
+            const metrics = ctx.measureText(text);
+            const x = width - metrics.width - padding;
+            const y = height - padding;
+            
+            ctx.fillText(text, x, y);
+            ctx.restore();
+        }
+
+        function takePhoto() {
+            if (!mediaStream) return;
+            const width = videoElement.videoWidth || 1280;
+            const height = videoElement.videoHeight || 720;
+
+            canvasElement.width = width;
+            canvasElement.height = height;
+            const ctx = canvasElement.getContext('2d', { alpha: false });
+
+            if (isMirrorActive) {
+                ctx.translate(width, 0);
+                ctx.scale(-1, 1);
+            }
+
+            ctx.drawImage(videoElement, 0, 0, width, height);
+
+            // Ripristina la trasformazione per stampare la filigrana dritta anche in modalità specchio
+            if (isMirrorActive) {
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+            }
+            drawWatermark(ctx, width, height);
+
+            const dataUrl = canvasElement.toDataURL('image/jpeg', 0.92);
+
+            videoElement.classList.add('opacity-30');
+            setTimeout(() => videoElement.classList.remove('opacity-30'), 120);
+
+            addItemToGallery({
+                type: 'photo',
+                url: dataUrl,
+                mirrored: isMirrorActive,
+                date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+        }
+
+        function toggleRecording() {
+            if (!isRecording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+
+        let animationFrameId = null;
+
+        function startRecording() {
+            recordedChunks = [];
+            try {
+                const width = videoElement.videoWidth || 1280;
+                const height = videoElement.videoHeight || 720;
+
+                canvasElement.width = width;
+                canvasElement.height = height;
+                const ctx = canvasElement.getContext('2d', { alpha: false });
+
+                // Cattura lo stream dal canvas modificato in tempo reale con filigrana
+                const canvasStream = canvasElement.captureStream(30);
+                
+                // Aggiungi anche la traccia audio originale se presente
+                const audioTracks = mediaStream.getAudioTracks();
+                if (audioTracks.length > 0) {
+                    canvasStream.addTrack(audioTracks[0]);
+                }
+
+                function drawVideoFrame() {
+                    if (!isRecording) return;
+                    if (isMirrorActive) {
+                        ctx.translate(width, 0);
+                        ctx.scale(-1, 1);
+                    }
+                    ctx.drawImage(videoElement, 0, 0, width, height);
+                    if (isMirrorActive) {
+                        ctx.setTransform(1, 0, 0, 1, 0, 0);
+                    }
+                    drawWatermark(ctx, width, height);
+                    animationFrameId = requestAnimationFrame(drawVideoFrame);
+                }
+                drawVideoFrame();
+
+                const mimeTypes = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=h264,opus', 'video/mp4', 'video/webm'];
+                let selectedMime = '';
+                for (let type of mimeTypes) {
+                    if (MediaRecorder.isTypeSupported(type)) {
+                        selectedMime = type;
+                        break;
+                    }
+                }
+
+                mediaRecorder = new MediaRecorder(canvasStream, selectedMime ? { mimeType: selectedMime } : {});
+
+                mediaRecorder.ondataavailable = e => {
+                    if (e.data && e.data.size > 0) recordedChunks.push(e.data);
                 };
 
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = stream;
-                await video.play();
-                updateOrientation();
+                mediaRecorder.onstop = () => {
+                    cancelAnimationFrame(animationFrameId);
+                    const blob = new Blob(recordedChunks, { type: selectedMime || 'video/webm' });
+                    const videoUrl = URL.createObjectURL(blob);
+                    addItemToGallery({
+                        type: 'video',
+                        url: videoUrl,
+                        mirrored: false, // Già renderizzato correttamente nel canvas
+                        date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    });
+                };
+
+                mediaRecorder.start(250);
+                isRecording = true;
+
+                shutterRing.classList.add('recording-pulse');
+                shutterInner.innerHTML = '<i class="fa-solid fa-stop text-lg"></i>';
+                recordingBadge.classList.remove('hidden');
+                recordingBadge.classList.add('flex');
+
+                recordingSeconds = 0;
+                updateTimerDisplay();
+                recordingTimer = setInterval(() => {
+                    recordingSeconds++;
+                    updateTimerDisplay();
+                }, 1000);
             } catch (err) {
-                console.error("Errore di accesso alla fotocamera: ", err);
-                alert("Impossibile accedere alla fotocamera. Assicurati di aver concesso i permessi.");
+                console.error("Recording error:", err);
             }
         }
 
-        // Scatto della foto
-        captureBtn.addEventListener('click', () => {
-            if (!video.srcObject) return;
-            
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const context = canvas.getContext('2d');
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                isRecording = false;
+                mediaRecorder.stop();
 
-            // Genera l'anteprima dell'immagine catturata
-            const dataUrl = canvas.toDataURL('image/png');
-            previewImg.src = dataUrl;
-        });
+                shutterRing.classList.remove('recording-pulse');
+                shutterInner.innerHTML = '<i class="fa-solid fa-video text-xl"></i>';
+                recordingBadge.classList.add('hidden');
+                recordingBadge.classList.remove('flex');
 
-        // Avvia laa fotocamera all'apertura della pagina
-        window.addEventListener('DOMContentLoaded', startCamera);
+                clearInterval(recordingTimer);
+            }
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(recordingSeconds / 60).toString().padStart(2, '0');
+            const secs = (recordingSeconds % 60).toString().padStart(2, '0');
+            timerText.innerText = `${mins}:${secs}`;
+        }
+
+        function addItemToGallery(item) {
+            itemsList.unshift(item);
+            mediaCountBadge.innerText = itemsList.length;
+            quickPreviewImg.src = item.url;
+            renderGalleryGrid();
+        }
+
+        function renderGalleryGrid() {
+            galleryContainer.innerHTML = '';
+            if (itemsList.length === 0) {
+                galleryContainer.appendChild(emptyGallery);
+                return;
+            }
+
+            itemsList.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = "relative aspect-square rounded-2xl overflow-hidden bg-neutral-900 border border-white/10 cursor-pointer active:scale-95 transition group";
+                const mirrorClass = item.mirrored ? 'mirror-mode' : '';
+
+                if (item.type === 'photo') {
+                    card.innerHTML = `
+                        <img src="${item.url}" class="w-full h-full object-cover ${mirrorClass}">
+                        <div class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 text-[10px] font-medium text-white backdrop-blur-sm">Foto</div>
+                    `;
+                } else {
+                    card.innerHTML = `
+                        <video src="${item.url}" preload="metadata" class="w-full h-full object-cover ${mirrorClass}"></video>
+                        <div class="absolute inset-0 flex items-center justify-center bg-black/30 text-white text-lg">
+                            <i class="fa-solid fa-play drop-shadow-md"></i>
+                        </div>
+                        <div class="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-rose-600/80 text-[10px] font-medium text-white backdrop-blur-sm">Video</div>
+                    `;
+                }
+                card.onclick = () => openModal(index);
+                galleryContainer.appendChild(card);
+            });
+        }
+
+        function openGalleryDrawer() {
+            renderGalleryGrid();
+            galleryModal.classList.remove('hidden');
+        }
+
+        function closeGalleryDrawer() {
+            galleryModal.classList.add('hidden');
+        }
+
+        function clearGallery() {
+            itemsList = [];
+            mediaCountBadge.innerText = '0';
+            quickPreviewImg.src = 'https://placehold.co/100x100/1e293b/475569?text=Media';
+            renderGalleryGrid();
+        }
+
+        function openModal(index) {
+            const item = itemsList[index];
+            modalContentWrapper.innerHTML = '';
+            const mirrorClass = item.mirrored ? 'mirror-mode' : '';
+
+            if (item.type === 'photo') {
+                const img = document.createElement('img');
+                img.src = item.url;
+                img.className = `w-full h-full object-contain ${mirrorClass}`;
+                modalContentWrapper.appendChild(img);
+            } else {
+                const video = document.createElement('video');
+                video.src = item.url;
+                video.controls = true;
+                video.autoplay = true;
+                video.playsInline = true;
+                video.className = `w-full h-full object-contain ${mirrorClass}`;
+                modalContentWrapper.appendChild(video);
+            }
+
+            modalDownloadBtn.href = item.url;
+            modalDownloadBtn.download = `StudioMarco_Pro_${Date.now()}.${item.type === 'photo' ? 'jpg' : 'mp4'}`;
+            previewModal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            previewModal.classList.add('hidden');
+            modalContentWrapper.innerHTML = '';
+        }
     </script>
 </body>
 </html>
