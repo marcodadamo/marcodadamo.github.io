@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marco D'Adamo — Digital Enterprise game</title>
+    <title>Marco D'Adamo — Digital Enterprise & Open Source. Tema</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -56,9 +56,11 @@
                 </div>
                 <div>
                     <span class="font-bold text-lg tracking-tight block text-white">Marco D'Adamo</span>
-                    <span class="text-xs text-indigo-400 font-medium">Digital Enterprise Project game</span>
+                    <span class="text-xs text-indigo-400 font-medium">Digital Enterprise Project</span>
                 </div>
             </div>
+
+            <!-- Navbar Desktop -->
             <nav class="hidden md:flex items-center space-x-6 text-sm font-medium text-gray-300">
                 <a href="menu.html" class="hover:text-indigo-400 transition-colors">Progetti</a>
                 <!-- Pulsante Giochi -->
@@ -68,6 +70,29 @@
                 <a href="https://www.linkedin.com/in/marco-d-adamo/" target="_blank" class="hover:text-indigo-400 transition-colors">LinkedIn</a>
                 <a href="https://answers.microsoft.com/it-it/profile/d22c7259-b385-4909-8629-70c3ad1008fe" target="_blank" class="hover:text-indigo-400 transition-colors">Microsoft Insider</a>
                 <a href="https://forum.italia.it/u/marco_dadamo/summary" target="_blank" class="hover:text-indigo-400 transition-colors">Developers Italia</a>
+            </nav>
+
+            <!-- Pulsante Menu Hamburger Mobile -->
+            <div class="flex items-center space-x-2 md:hidden">
+                <!-- Pulsante Giochi rapido anche in mobile nella navbar principale -->
+                <button id="openGamesModalMobile" class="text-indigo-400 font-semibold bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/25 text-xs flex items-center space-x-1">
+                    <span>🎮 Giochi</span>
+                </button>
+                <button id="mobileMenuBtn" class="p-2 text-gray-300 hover:text-white rounded-lg hover:bg-white/5 transition-colors focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Menu a tendina Mobile -->
+        <div id="mobileMenu" class="hidden md:hidden glass-card border-t border-white/5 px-6 py-6 space-y-4">
+            <nav class="flex flex-col space-y-3 text-sm font-medium text-gray-300">
+                <a href="menu.html" class="hover:text-indigo-400 transition-colors py-1">Progetti</a>
+                <a href="https://www.linkedin.com/in/marco-d-adamo/" target="_blank" class="hover:text-indigo-400 transition-colors py-1">LinkedIn</a>
+                <a href="https://answers.microsoft.com/it-it/profile/d22c7259-b385-4909-8629-70c3ad1008fe" target="_blank" class="hover:text-indigo-400 transition-colors py-1">Microsoft Insider</a>
+                <a href="https://forum.italia.it/u/marco_dadamo/summary" target="_blank" class="hover:text-indigo-400 transition-colors py-1">Developers Italia</a>
             </nav>
         </div>
     </header>
@@ -88,7 +113,7 @@
                 Communication, Design, Marketing & Development
             </h1>
             <p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-                Un percorso strategico progettato per accompagnare le aziende nella loro trasformazione digitale, sviluppo di brand e innovazione organizzativa.
+                Un percorso IT strategico progettato per accompagnare le aziende nella loro trasformazione digitale, sviluppo di brand e innovazione organizzativa.
             </p>
             <div class="flex flex-wrap justify-center gap-4">
                 <a href="menu.html" class="px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 font-semibold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] transition-all">
@@ -123,130 +148,4 @@
                 </div>
                 <div class="bg-dark-900 border border-white/5 rounded-xl p-4 font-mono text-sm text-indigo-300 flex items-center justify-between">
                     <span>git clone https://github.com/digitalenterprise/core.git</span>
-                    <span class="text-xs text-gray-500">bash</span>
-                </div>
-            </div>
-
-        </section>
-
-        <!-- Methodology Section -->
-        <section class="glass-card rounded-2xl p-8 md:p-12 mb-16 glow-effect transition-all duration-300">
-            <div class="max-w-3xl">
-                <div class="text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-3">Methodology & Architecture</div>
-                <h2 class="text-3xl font-bold mb-6 text-white">Gestione Archivi & Struttura Dati</h2>
-                <p class="text-gray-400 leading-relaxed text-lg">
-                    Questa metodologia operativa è studiata per interagire a un alto livello di precisione: dalla memorizzazione dei dati all'organizzazione degli archivi storici, garantendo massima scalabilità e sicurezza per qualsiasi entità aziendale.
-                </p>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Footer -->
-    <footer class="border-t border-white/5 bg-dark-800/50 py-8">
-        <div class="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between text-sm text-gray-500">
-            <p>© Marco D'Adamo. Tutti i diritti riservati.</p>
-            <p class="mt-4 sm:mt-0">Published with <a href="https://pages.github.com" class="text-indigo-400 hover:underline" target="_blank">GitHub Pages</a></p>
-        </div>
-    </footer>
-
-    <!-- Modal Scelta Giochi Matematici -->
-    <div id="gamesModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md hidden transition-opacity duration-300">
-        <div class="glass-card max-w-lg w-full rounded-2xl p-6 md:p-8 border border-white/10 shadow-2xl relative transform transition-all scale-95 opacity-0" id="modalContent">
-            <!-- Pulsante chiusura -->
-            <button id="closeGamesModal" class="absolute top-4 right-4 text-gray-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-            
-            <div class="text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-2">Matematica & Interattività</div>
-            <h3 class="text-2xl font-bold text-white mb-2">Giochi Matematici</h3>
-            <p class="text-gray-400 text-sm mb-6">Seleziona una modalità per iniziare a giocare:</p>
-            
-            <div class="space-y-3">
-                <!-- Link 1 -->
-                <a href="https://marcodadamo.github.io/giocomatematica/giocotabellinebase.html" target="_blank" class="block group glass-card p-4 rounded-xl border border-white/5 hover:border-indigo-500/50 hover:bg-indigo-600/10 transition-all">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h4 class="font-bold text-white group-hover:text-indigo-400 transition-colors">Gioco Tabelline Base</h4>
-                            <p class="text-xs text-gray-400 mt-0.5">Allenati con le tabelline in modalità classica.</p>
-                        </div>
-                        <span class="p-2 rounded-lg bg-indigo-500/20 text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                        </span>
-                    </div>
-                </a>
-
-                <!-- Link 2 -->
-                <a href="https://marcodadamo.github.io/giocomatematica/giocotabellineround.html" target="_blank" class="block group glass-card p-4 rounded-xl border border-white/5 hover:border-indigo-500/50 hover:bg-indigo-600/10 transition-all">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h4 class="font-bold text-white group-hover:text-indigo-400 transition-colors">Gioco Tabelline Round</h4>
-                            <p class="text-xs text-gray-400 mt-0.5">Sfide a round e a tempo per testare la velocità.</p>
-                        </div>
-                        <span class="p-2 rounded-lg bg-indigo-500/20 text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                        </span>
-                    </div>
-                </a>
-
-                <!-- Link 3 -->
-                <a href="https://marcodadamo.github.io/giocomatematica/giocotabellinemultiplayer.html" target="_blank" class="block group glass-card p-4 rounded-xl border border-white/5 hover:border-indigo-500/50 hover:bg-indigo-600/10 transition-all">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h4 class="font-bold text-white group-hover:text-indigo-400 transition-colors">Gioco Tabelline Multiplayer</h4>
-                            <p class="text-xs text-gray-400 mt-0.5">Sfida altri utenti in tempo reale.</p>
-                        </div>
-                        <span class="p-2 rounded-lg bg-indigo-500/20 text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                        </span>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- JavaScript per apertura/chiusura modale -->
-    <script>
-        const modal = document.getElementById('gamesModal');
-        const modalContent = document.getElementById('modalContent');
-        const openBtn = document.getElementById('openGamesModal');
-        const closeBtn = document.getElementById('closeGamesModal');
-
-        function openModal() {
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                modalContent.classList.remove('scale-95', 'opacity-0');
-                modalContent.classList.add('scale-100', 'opacity-100');
-            }, 10);
-        }
-
-        function closeModal() {
-            modalContent.classList.remove('scale-100', 'opacity-100');
-            modalContent.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
-        }
-
-        openBtn.addEventListener('click', openModal);
-        closeBtn.addEventListener('click', closeModal);
-        
-        // Chiudi cliccando sullo sfondo scuro
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                closeModal();
-            }
-        });
-
-        // Chiudi con il tasto ESC
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
-                closeModal();
-            }
-        });
-    </script>
-
-</body>
-</html>
+                    <span class="text-
