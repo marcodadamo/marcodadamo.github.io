@@ -1,0 +1,1002 @@
+```html
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=none">
+    <title>Scopa Napoletana Tradizionale</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Inter:wght@400;600;800&display=swap');
+
+        :root {
+            --felt-green: #14522d;
+            --felt-dark: #0a2e18;
+            --wood-dark: #2c1404;
+            --gold-accent: #f59e0b;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at center, var(--felt-green) 0%, var(--felt-dark) 100%);
+            color: #f3f4f6;
+            min-height: 100vh;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow-x: hidden;
+        }
+
+        .cinzel {
+            font-family: 'Cinzel', serif;
+        }
+
+        /* Felt table border and texture */
+        .felt-table {
+            background: radial-gradient(ellipse at center, #1b6338 0%, #0e3d21 75%, #072412 100%);
+            border: 14px solid var(--wood-dark);
+            box-shadow: inset 0 0 60px rgba(0,0,0,0.7), 0 20px 40px rgba(0,0,0,0.8);
+            border-radius: 28px;
+        }
+
+        /* Card Dimensions & Hover Effects */
+        .nap-card {
+            width: 82px;
+            height: 128px;
+            background: #fffdf5;
+            border: 2px solid #b89762;
+            border-radius: 10px;
+            box-shadow: 0 5px 12px rgba(0,0,0,0.4);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 4px;
+        }
+
+        @media (min-width: 640px) {
+            .nap-card {
+                width: 105px;
+                height: 162px;
+                padding: 6px;
+                border-radius: 12px;
+            }
+        }
+
+        .nap-card:hover:not(.no-hover) {
+            transform: translateY(-10px) scale(1.04);
+            box-shadow: 0 14px 24px rgba(0,0,0,0.6);
+            border-color: #d97706;
+        }
+
+        .nap-card.selected {
+            transform: translateY(-16px) scale(1.06);
+            border: 3px solid #f59e0b;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.9);
+        }
+
+        /* Special highlight for Settebello */
+        .nap-card.settebello-card {
+            background: linear-gradient(135deg, #fffdf2 0%, #fef3c7 100%);
+            border: 2px solid #d97706;
+        }
+
+        /* Card back styling */
+        .card-back {
+            background: linear-gradient(135deg, #991b1b 0%, #450a0a 100%);
+            border: 2px solid #f59e0b;
+            cursor: default;
+        }
+
+        .card-back::after {
+            content: "";
+            position: absolute;
+            inset: 6px;
+            border: 1px dashed rgba(245, 158, 11, 0.5);
+            border-radius: 6px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, transparent 70%);
+        }
+
+        /* Scopa Banner Animation */
+        @keyframes scopaPop {
+            0% { transform: translate(-50%, -50%) scale(0.2) rotate(-10deg); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.15) rotate(3deg); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        .scopa-banner {
+            animation: scopaPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen justify-between p-2 sm:p-4">
+
+    <header class="w-full max-w-5xl mx-auto bg-stone-900/90 border border-amber-600/50 rounded-2xl p-3 shadow-2xl mb-2 backdrop-blur">
+        <div class="flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-stone-950 font-black text-xl shadow-lg border border-amber-300">
+                    🎴
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-bold text-amber-400 cinzel tracking-wider">SCOPA NAPOLETANA</h1>
+                    <p class="text-[11px] text-amber-200/70 font-medium">Carte Tradizionali illustrate in SVG</p>
+                </div>
+            </div>
+
+            <!-- Score board -->
+            <div class="flex items-center space-x-5 bg-stone-950/80 px-5 py-2 rounded-xl border border-amber-500/30">
+                <div class="text-center">
+                    <span class="text-[10px] text-stone-400 block font-semibold uppercase tracking-widest">TU</span>
+                    <span id="playerMatchScore" class="text-2xl font-black text-amber-400">0</span>
+                </div>
+                <div class="text-amber-500 font-black text-xs uppercase tracking-widest">VS</div>
+                <div class="text-center">
+                    <span class="text-[10px] text-stone-400 block font-semibold uppercase tracking-widest">CPU</span>
+                    <span id="cpuMatchScore" class="text-2xl font-black text-rose-400">0</span>
+                </div>
+                <div class="border-l border-stone-800 pl-4 text-center hidden sm:block">
+                    <span class="text-[10px] text-stone-400 block font-semibold uppercase tracking-widest">Traguardo</span>
+                    <span class="text-xs font-bold text-amber-300">11 Punti</span>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <button onclick="toggleAudio()" id="audioBtn" class="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-amber-300 border border-amber-500/30 text-xs font-semibold rounded-lg shadow transition">
+                    🔊 Audio: ON
+                </button>
+                <button onclick="openRulesModal()" class="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-amber-300 border border-amber-500/30 text-xs font-semibold rounded-lg shadow transition">
+                    📖 Regole
+                </button>
+                <button onclick="resetMatch()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-stone-950 text-xs font-bold rounded-lg shadow transition">
+                    🔄 Nuova Partita
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="w-full max-w-5xl mx-auto flex-grow flex flex-col justify-between p-3 sm:p-5 felt-table relative shadow-2xl min-h-[580px]">
+        
+        <!-- Status Banner -->
+        <div id="statusBanner" class="absolute top-3 left-1/2 -translate-x-1/2 bg-stone-900/90 text-amber-300 border border-amber-500/50 px-5 py-1.5 rounded-full text-xs sm:text-sm font-semibold shadow-xl z-20 text-center max-w-md w-11/12">
+            Inizializzazione partita...
+        </div>
+
+        <!-- Animated Scopa Popup -->
+        <div id="scopaNotification" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 scopa-banner bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 text-stone-950 px-8 py-4 rounded-2xl border-4 border-white shadow-2xl text-center">
+            <h2 id="scopaText" class="text-3xl sm:text-4xl font-black cinzel tracking-widest drop-shadow-md">SCOPA!</h2>
+            <p id="scopaSubtext" class="text-xs sm:text-sm font-bold text-stone-900 mt-1">+1 Punto Guadagnato</p>
+        </div>
+
+        <!-- CPU Hand Area -->
+        <div class="flex flex-col items-center mt-6">
+            <div class="w-full flex justify-between items-center mb-2 px-2 text-xs text-stone-300 font-medium">
+                <div class="flex items-center gap-2">
+                    <span class="bg-rose-900/80 border border-rose-500/80 px-2.5 py-0.5 rounded-md text-white font-bold">CPU</span>
+                    <span>Scope: <strong id="cpuScopesCount" class="text-amber-400 font-bold">0</strong></span>
+                </div>
+                <div class="bg-black/40 px-3 py-1 rounded-lg border border-amber-500/20">
+                    Prese: <strong id="cpuCapturedCount" class="text-white font-bold">0</strong> carte
+                </div>
+            </div>
+            <div id="cpuHand" class="flex justify-center gap-2 sm:gap-3 min-h-[130px] sm:min-h-[165px] items-center">
+                <!-- Cards generated via JS -->
+            </div>
+        </div>
+
+        <!-- Table Surface Area -->
+        <div class="my-auto py-4 flex flex-col items-center">
+            <div class="flex flex-wrap justify-between items-center w-full max-w-3xl px-2 gap-4">
+                
+                <!-- Deck Deck Pile -->
+                <div class="flex items-center gap-3">
+                    <div class="relative flex flex-col items-center">
+                        <div id="deckCard" class="nap-card card-back no-hover"></div>
+                        <span id="deckCount" class="absolute -bottom-3.5 text-[11px] font-extrabold text-amber-300 bg-black/80 border border-amber-500/40 px-2.5 py-0.5 rounded-full shadow">40</span>
+                    </div>
+                    <div class="text-xs text-stone-300 flex flex-col gap-0.5">
+                        <span class="text-stone-400 text-[10px] uppercase tracking-wider">Ultima presa</span>
+                        <strong id="lastTakerDisplay" class="text-amber-400 font-bold text-xs">-</strong>
+                    </div>
+                </div>
+
+                <!-- Active Cards on Table -->
+                <div id="tableCards" class="flex flex-wrap gap-2 sm:gap-3 justify-center items-center min-h-[140px] sm:min-h-[175px] p-3 bg-black/25 rounded-2xl border border-amber-500/20 flex-grow max-w-xl">
+                    <!-- Cards generated via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Player Hand Area -->
+        <div class="flex flex-col items-center">
+            
+            <!-- Multi-card capture prompt -->
+            <div id="multiCaptureControls" class="hidden mb-2 flex items-center gap-2 bg-stone-900/95 p-2 rounded-xl border border-amber-500/60 shadow-xl z-20">
+                <span class="text-xs text-amber-200 font-semibold pl-1">Scegli combinazione:</span>
+                <button onclick="confirmPlayerMultiCapture()" class="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-stone-950 font-extrabold text-xs rounded-lg transition shadow">
+                    Prendi Carte
+                </button>
+                <button onclick="cancelPlayerSelection()" class="px-2 py-1 bg-stone-700 text-stone-300 hover:bg-stone-600 text-xs rounded-lg">
+                    Annulla
+                </button>
+            </div>
+
+            <div class="w-full flex justify-between items-center mb-2 px-2 text-xs text-stone-300 font-medium">
+                <div class="flex items-center gap-2">
+                    <span id="playerBadge" class="bg-blue-900/80 border border-blue-500/80 px-2.5 py-0.5 rounded-md text-white font-bold">TU</span>
+                    <span>Scope: <strong id="playerScopesCount" class="text-amber-400 font-bold">0</strong></span>
+                </div>
+                <div class="bg-black/40 px-3 py-1 rounded-lg border border-amber-500/20">
+                    Prese: <strong id="playerCapturedCount" class="text-white font-bold">0</strong> carte
+                </div>
+            </div>
+
+            <!-- Player Cards -->
+            <div id="playerHand" class="flex justify-center gap-2 sm:gap-4 min-h-[130px] sm:min-h-[165px] items-center">
+                <!-- Cards generated via JS -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Rules Modal -->
+    <div id="rulesModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-stone-900 border border-amber-600/60 rounded-2xl max-w-lg w-full p-6 text-stone-200 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 border-b border-amber-600/30 pb-3">
+                <h3 class="text-lg font-bold text-amber-400 cinzel">📖 Regole della Scopa Napoletana</h3>
+                <button onclick="closeRulesModal()" class="text-stone-400 hover:text-white text-lg">✕</button>
+            </div>
+            <div class="space-y-3 text-xs sm:text-sm text-stone-300 leading-relaxed">
+                <p><strong>Carte e Valori:</strong> Mazzo da 40 carte tradizionali. Asso (1), 2, 3, 4, 5, 6, 7, Fante (8), Cavallo (9), Re (10).</p>
+                <p><strong>Presa Obbligatoria:</strong> Se sul tavolo è presente una singola carta di valore pari alla carta giocata, sei <em>obbligato</em> a prendere quella singola carta (non puoi prendere la somma di due o più carte).</p>
+                <p><strong>La Scopa:</strong> Se raccogli tutte le carte dal tavolo fai <strong>Scopa</strong> (+1 punto), eccetto nell'ultima giocata dell'ultima mano.</p>
+                <p><strong>Calcolo dei Punti a Fine Mano:</strong></p>
+                <ul class="list-disc pl-5 space-y-1.5 text-amber-200">
+                    <li><strong>Carte (1 pt):</strong> A chi raccoglie più di 20 carte.</li>
+                    <li><strong>Denari (1 pt):</strong> A chi raccoglie più di 5 carte di Denari.</li>
+                    <li><strong>Settebello (1 pt):</strong> A chi prende il 7 di Denari.</li>
+                    <li><strong>Primiera (1 pt):</strong> A chi ottiene la miglior combinazione con le 4 migliori carte (una per seme). Valori Primiera: 7=21, 6=18, Asso=16, 5=15, 4=14, 3=13, 2=12, Figure=10.</li>
+                    <li><strong>Scope (1 pt ciascuna):</strong> Punti acumulati durante la partita.</li>
+                </ul>
+            </div>
+            <div class="mt-6 text-center">
+                <button onclick="closeRulesModal()" class="px-6 py-2 bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold rounded-xl shadow transition">Chiudi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Round Summary Modal -->
+    <div id="roundSummaryModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-stone-900 border-2 border-amber-600 rounded-2xl max-w-lg w-full p-6 text-stone-200 shadow-2xl">
+            <div class="text-center mb-5">
+                <h3 class="text-2xl font-black text-amber-400 cinzel">Fine Smazzata</h3>
+                <p class="text-xs text-stone-400">Riepilogo e calcolo dei punti della mano</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <!-- Player Score Breakdown -->
+                <div class="bg-stone-800/90 border border-blue-500/40 rounded-xl p-3">
+                    <h4 class="font-bold text-blue-400 mb-2 text-sm text-center">GIOCATORE</h4>
+                    <div class="space-y-1.5 text-xs text-stone-300">
+                        <div class="flex justify-between"><span>Carte (<span id="pCardCount">0</span>):</span> <strong id="pCardPt" class="text-white">+0</strong></div>
+                        <div class="flex justify-between"><span>Denari (<span id="pCoinCount">0</span>):</span> <strong id="pCoinPt" class="text-white">+0</strong></div>
+                        <div class="flex justify-between"><span>Settebello:</span> <strong id="pSettePt" class="text-white">+0</strong></div>
+                        <div class="flex justify-between"><span>Primiera (<span id="pPrimVal">0</span>):</span> <strong id="pPrimPt" class="text-white">+0</strong></div>
+                        <div class="flex justify-between"><span>Scope (<span id="pScopeNum">0</span>):</span> <strong id="pScopePt" class="text-white">+0</strong></div>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-stone-700 flex justify-between font-bold text-sm text-amber-400">
+                        <span>Totale Mano:</span> <span id="pRoundTotal" class="text-base text-white">0</span>
+                    </div>
+                </div>
+
+                <!-- CPU Score Breakdown -->
+                <div class="bg-stone-800/90 border border-rose-500/40 rounded-xl p-3">
+                    <h4 class="font-bold text-rose-400 mb-2 text-sm text-center">CPU</h4>
+                    <div class="space-y-1.5 text-xs text-stone-300">
+                        <div class="flex justify-between"><span>Carte (<span id="cpuCardCount">0</span>):</span> <strong id="cpuCardPt" class="text-white">+0</strong></div>
+                        <div class="flex justify-between"><span>Denari (<span id="cpuCoinCount">0</span>):</span> <strong id="cpuCoinPt" class="text-white">+0</strong></div>
+                        <div class="flex justify-between"><span>Settebello:</span> <strong id="cpuSettePt" class="text-white">+0</strong></div>
+                        <div class="flex justify-between"><span>Primiera (<span id="cpuPrimVal">0</span>):</span> <strong id="cpuPrimPt" class="text-white">+0</strong></div>
+                        <div class="flex justify-between"><span>Scope (<span id="cpuScopeNum">0</span>):</span> <strong id="cpuScopePt" class="text-white">+0</strong></div>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-stone-700 flex justify-between font-bold text-sm text-amber-400">
+                        <span>Totale Mano:</span> <span id="cpuRoundTotal" class="text-base text-white">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <button onclick="continueNextRound()" class="px-8 py-3 bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold rounded-xl shadow-lg transition text-sm">
+                    Prosegui Partita ➔
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Match Game Over Modal -->
+    <div id="matchModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-stone-900 border-2 border-amber-500 rounded-2xl max-w-md w-full p-6 text-center text-stone-200 shadow-2xl">
+            <div class="text-4xl mb-2">🏆</div>
+            <h3 id="matchWinnerText" class="text-2xl font-bold text-amber-400 cinzel mb-1">Vittoria!</h3>
+            <p id="matchWinnerDesc" class="text-xs text-stone-300 mb-5">Hai raggiunto l'obiettivo dei punti!</p>
+            <div class="bg-stone-800 rounded-xl p-4 mb-6 flex justify-around text-sm border border-amber-500/30">
+                <div>
+                    <span class="text-stone-400 text-xs block">Punti Tuoi</span>
+                    <strong id="finalPlayerScore" class="text-2xl text-amber-400">0</strong>
+                </div>
+                <div class="border-r border-stone-700"></div>
+                <div>
+                    <span class="text-stone-400 text-xs block">Punti CPU</span>
+                    <strong id="finalCpuScore" class="text-2xl text-rose-400">0</strong>
+                </div>
+            </div>
+            <button onclick="resetMatch()" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold rounded-xl shadow-lg transition">
+                Ricomincia Nuova Partita
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /* Web Audio API Synthesizer */
+        let audioEnabled = true;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            document.getElementById('audioBtn').innerText = audioEnabled ? '🔊 Audio: ON' : '🔇 Audio: OFF';
+        }
+
+        function playSound(type) {
+            if (!audioEnabled) return;
+            initAudio();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'cardPlay') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.exponentialRampToValueAtTime(80, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'capture') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(320, now);
+                osc.frequency.setValueAtTime(480, now + 0.08);
+                osc.frequency.setValueAtTime(640, now + 0.16);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else if (type === 'scopa') {
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.connect(g);
+                    g.connect(audioCtx.destination);
+                    o.type = 'triangle';
+                    o.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    g.gain.setValueAtTime(0.3, now + idx * 0.08);
+                    g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.08 + 0.3);
+                    o.start(now + idx * 0.08);
+                    o.stop(now + idx * 0.08 + 0.3);
+                });
+            }
+        }
+
+        /* SVG Traditional Neapolitan Card Art Renderer */
+        const SUITS = ['denari', 'coppe', 'spade', 'bastoni'];
+        const PRIMIERA_SCORES = { 7: 21, 6: 18, 1: 16, 5: 15, 4: 14, 3: 13, 2: 12, 8: 10, 9: 10, 10: 10 };
+
+        function getSuitIconSVG(suit, extraClass = '') {
+            if (suit === 'denari') {
+                return `<svg class="${extraClass}" viewBox="0 0 100 100" fill="none">
+                    <circle cx="50" cy="50" r="45" fill="url(#goldGrad)" stroke="#854d0e" stroke-width="4"/>
+                    <circle cx="50" cy="50" r="32" stroke="#b45309" stroke-width="3" stroke-dasharray="6 3"/>
+                    <polygon points="50,22 58,38 74,38 61,48 66,64 50,54 34,66 39,48 26,38 42,38" fill="#d97706"/>
+                    <circle cx="50" cy="50" r="12" fill="#fef08a" stroke="#b45309" stroke-width="2"/>
+                </svg>`;
+            } else if (suit === 'coppe') {
+                return `<svg class="${extraClass}" viewBox="0 0 100 100" fill="none">
+                    <path d="M25 20 H75 L68 55 C68 68 58 75 50 75 C42 75 32 68 32 55 Z" fill="url(#goldGrad)" stroke="#78350f" stroke-width="4"/>
+                    <path d="M20 20 H80 V12 C80 8 70 5 50 5 C30 5 20 8 20 12 Z" fill="#f59e0b" stroke="#78350f" stroke-width="3"/>
+                    <rect x="44" y="75" width="12" height="15" fill="#d97706" stroke="#78350f" stroke-width="2"/>
+                    <path d="M30 90 H70 V96 H30 Z" fill="#f59e0b" stroke="#78350f" stroke-width="3"/>
+                    <circle cx="50" cy="38" r="8" fill="#ef4444"/>
+                </svg>`;
+            } else if (suit === 'spade') {
+                return `<svg class="${extraClass}" viewBox="0 0 100 100" fill="none">
+                    <path d="M50 5 C50 5 62 40 58 70 H42 C38 40 50 5 50 5 Z" fill="#e2e8f0" stroke="#334155" stroke-width="3"/>
+                    <path d="M50 8 V70" stroke="#94a3b8" stroke-width="2"/>
+                    <path d="M25 68 C35 60 65 60 75 68 L70 76 C60 70 40 70 30 76 Z" fill="#f59e0b" stroke="#78350f" stroke-width="3"/>
+                    <rect x="46" y="75" width="8" height="18" fill="#78350f" rx="2"/>
+                    <circle cx="50" cy="95" r="5" fill="#f59e0b"/>
+                </svg>`;
+            } else { // bastoni
+                return `<svg class="${extraClass}" viewBox="0 0 100 100" fill="none">
+                    <path d="M38 10 C45 5 55 5 62 10 L68 85 C68 92 58 96 50 96 C42 96 32 92 32 85 Z" fill="#78350f" stroke="#451a03" stroke-width="4"/>
+                    <path d="M42 20 Q50 18 58 20 Q52 50 58 80 Q50 82 42 80 Z" fill="#b45309"/>
+                    <!-- Leaves -->
+                    <path d="M28 30 C15 25 18 40 32 38 Z" fill="#15803d" stroke="#166534" stroke-width="2"/>
+                    <path d="M72 45 C85 40 82 55 68 53 Z" fill="#15803d" stroke="#166534" stroke-width="2"/>
+                    <path d="M26 65 C12 60 15 75 30 73 Z" fill="#15803d" stroke="#166534" stroke-width="2"/>
+                </svg>`;
+            }
+        }
+
+        function getFigureSVG(value, suit) {
+            let title = value === 8 ? "Fante" : (value === 9 ? "Cavallo" : "Re");
+            let crown = value === 10 ? `<polygon points="35,28 42,15 50,25 58,15 65,28" fill="#f59e0b" stroke="#78350f" stroke-width="2"/>` : '';
+            let horse = value === 9 ? `<path d="M30 65 Q20 50 40 45 Q55 45 60 65 Z" fill="#9a3412" stroke="#451a03" stroke-width="2"/>` : '';
+
+            return `<svg class="w-full h-full" viewBox="0 0 100 100" fill="none">
+                <rect x="15" y="10" width="70" height="80" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+                ${horse}
+                <!-- Body/Robe -->
+                <path d="M30 45 L70 45 L75 85 L25 85 Z" fill="${suit==='denari'||suit==='coppe'?'#dc2626':'#2563eb'}" stroke="#1e293b" stroke-width="3"/>
+                <!-- Head -->
+                <circle cx="50" cy="32" r="12" fill="#fde047" stroke="#78350f" stroke-width="2"/>
+                ${crown}
+                <!-- Mini suit symbol held -->
+                <g transform="translate(38, 52) scale(0.25)">
+                    ${getSuitIconSVG(suit)}
+                </g>
+                <text x="50" y="94" font-size="10" font-weight="bold" fill="#78350f" text-anchor="middle">${title}</text>
+            </svg>`;
+        }
+
+        function renderCardInner(card) {
+            const isFigure = card.value >= 8;
+            const isSettebello = card.id === 'denari_7';
+
+            if (isFigure) {
+                return `
+                    <div class="flex justify-between items-center text-xs font-black text-amber-900 px-1">
+                        <span>${card.display}</span>
+                        <div class="w-4 h-4">${getSuitIconSVG(card.suit)}</div>
+                    </div>
+                    <div class="w-full h-24 sm:h-32 my-auto p-1">
+                        ${getFigureSVG(card.value, card.suit)}
+                    </div>
+                    <div class="flex justify-between items-center text-xs font-black text-amber-900 px-1 rotate-180">
+                        <span>${card.display}</span>
+                        <div class="w-4 h-4">${getSuitIconSVG(card.suit)}</div>
+                    </div>
+                `;
+            }
+
+            // Pip layouts for 1 to 7
+            let pipsCount = card.value;
+            let pipsHTML = '';
+
+            for (let i = 0; i < pipsCount; i++) {
+                pipsHTML += `<div class="w-5 h-5 sm:w-6 sm:h-6 mx-auto">${getSuitIconSVG(card.suit)}</div>`;
+            }
+
+            return `
+                <!-- SVG Gradient Defs -->
+                <svg width="0" height="0" class="absolute">
+                    <defs>
+                        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#fbbf24" />
+                            <stop offset="100%" stop-color="#d97706" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+
+                <div class="flex justify-between items-center text-xs font-black text-amber-900 px-0.5">
+                    <span class="${isSettebello ? 'text-amber-600 font-extrabold text-sm' : ''}">${card.display}</span>
+                    <div class="w-3.5 h-3.5 sm:w-4 sm:h-4">${getSuitIconSVG(card.suit)}</div>
+                </div>
+
+                <div class="grid ${pipsCount === 1 ? 'grid-cols-1' : (pipsCount <= 4 ? 'grid-cols-2' : 'grid-cols-3')} gap-1 my-auto p-1 items-center justify-center">
+                    ${pipsHTML}
+                </div>
+
+                <div class="flex justify-between items-center text-xs font-black text-amber-900 px-0.5 rotate-180">
+                    <span class="${isSettebello ? 'text-amber-600 font-extrabold text-sm' : ''}">${card.display}</span>
+                    <div class="w-3.5 h-3.5 sm:w-4 sm:h-4">${getSuitIconSVG(card.suit)}</div>
+                </div>
+            `;
+        }
+
+        function getRankDisplay(value) {
+            if (value === 1) return 'A';
+            if (value === 8) return '8';
+            if (value === 9) return '9';
+            if (value === 10) return '10';
+            return value.toString();
+        }
+
+        let deck = [];
+        let tableCards = [];
+        let playerHand = [];
+        let cpuHand = [];
+        let playerCaptured = [];
+        let cpuCaptured = [];
+        let playerScopes = 0;
+        let cpuScopes = 0;
+
+        let playerMatchScore = 0;
+        let cpuMatchScore = 0;
+        let currentTurn = 'player';
+        let lastTaker = null;
+
+        let selectedPlayerCard = null;
+        let selectedTableCards = [];
+
+        function createDeck() {
+            let newDeck = [];
+            for (let suit of SUITS) {
+                for (let val = 1; val <= 10; val++) {
+                    newDeck.push({
+                        id: `${suit}_${val}`,
+                        suit: suit,
+                        value: val,
+                        display: getRankDisplay(val)
+                    });
+                }
+            }
+            // Shuffle
+            for (let i = newDeck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newDeck[i], newDeck[j]] = [newDeck[j], newDeck[i]];
+            }
+            return newDeck;
+        }
+
+        function resetMatch() {
+            playerMatchScore = 0;
+            cpuMatchScore = 0;
+            document.getElementById('matchModal').classList.add('hidden');
+            startRound();
+        }
+
+        function startRound() {
+            deck = createDeck();
+            tableCards = [];
+            playerHand = [];
+            cpuHand = [];
+            playerCaptured = [];
+            cpuCaptured = [];
+            playerScopes = 0;
+            cpuScopes = 0;
+            lastTaker = null;
+            selectedPlayerCard = null;
+            selectedTableCards = [];
+
+            document.getElementById('roundSummaryModal').classList.add('hidden');
+
+            // Initial 4 cards on table
+            for (let i = 0; i < 4; i++) {
+                tableCards.push(deck.pop());
+            }
+
+            // Rule: Re-deal if 3 or 4 Kings (value 10) on initial table
+            let kingsOnTable = tableCards.filter(c => c.value === 10).length;
+            if (kingsOnTable >= 3) {
+                return startRound();
+            }
+
+            dealHands();
+            currentTurn = 'player';
+            updateUI();
+            setStatus("Mano iniziata. Tocca a te: seleziona una carta dalla tua mano.");
+        }
+
+        function dealHands() {
+            for (let i = 0; i < 3; i++) {
+                if (deck.length > 0) playerHand.push(deck.pop());
+                if (deck.length > 0) cpuHand.push(deck.pop());
+            }
+            playSound('cardPlay');
+        }
+
+        function updateUI() {
+            document.getElementById('playerMatchScore').innerText = playerMatchScore;
+            document.getElementById('cpuMatchScore').innerText = cpuMatchScore;
+            document.getElementById('playerScopesCount').innerText = playerScopes;
+            document.getElementById('cpuScopesCount').innerText = cpuScopes;
+            document.getElementById('playerCapturedCount').innerText = playerCaptured.length;
+            document.getElementById('cpuCapturedCount').innerText = cpuCaptured.length;
+            document.getElementById('deckCount').innerText = deck.length;
+
+            document.getElementById('lastTakerDisplay').innerText = lastTaker === 'player' ? 'TU' : (lastTaker === 'cpu' ? 'CPU' : '-');
+
+            const playerBadge = document.getElementById('playerBadge');
+            if (currentTurn === 'player') {
+                playerBadge.classList.add('ring-2', 'ring-amber-400');
+            } else {
+                playerBadge.classList.remove('ring-2', 'ring-amber-400');
+            }
+
+            // Render Player Cards
+            const playerHandElem = document.getElementById('playerHand');
+            playerHandElem.innerHTML = '';
+            playerHand.forEach(card => {
+                const isSelected = selectedPlayerCard === card;
+                const isSettebello = card.id === 'denari_7';
+                const cardDiv = document.createElement('div');
+                cardDiv.className = `nap-card ${isSelected ? 'selected' : ''} ${isSettebello ? 'settebello-card' : ''}`;
+                cardDiv.innerHTML = renderCardInner(card);
+                cardDiv.onclick = () => onPlayerCardClick(card);
+                playerHandElem.appendChild(cardDiv);
+            });
+
+            // Render CPU Cards (Facedown)
+            const cpuHandElem = document.getElementById('cpuHand');
+            cpuHandElem.innerHTML = '';
+            cpuHand.forEach(() => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'nap-card card-back';
+                cpuHandElem.appendChild(cardDiv);
+            });
+
+            // Render Table Cards
+            const tableElem = document.getElementById('tableCards');
+            tableElem.innerHTML = '';
+            tableCards.forEach(card => {
+                const isSelected = selectedTableCards.includes(card);
+                const isSettebello = card.id === 'denari_7';
+                const cardDiv = document.createElement('div');
+                cardDiv.className = `nap-card ${isSelected ? 'selected' : ''} ${isSettebello ? 'settebello-card' : ''}`;
+                cardDiv.innerHTML = renderCardInner(card);
+                cardDiv.onclick = () => onTableCardClick(card);
+                tableElem.appendChild(cardDiv);
+            });
+
+            // Multi capture button controls
+            const multiCtrl = document.getElementById('multiCaptureControls');
+            if (selectedPlayerCard && selectedTableCards.length > 1) {
+                multiCtrl.classList.remove('hidden');
+            } else {
+                multiCtrl.classList.add('hidden');
+            }
+        }
+
+        function setStatus(msg) {
+            document.getElementById('statusBanner').innerText = msg;
+        }
+
+        function triggerScopaAnimation(who) {
+            playSound('scopa');
+            const notif = document.getElementById('scopaNotification');
+            document.getElementById('scopaText').innerText = "SCOPA!";
+            document.getElementById('scopaSubtext').innerText = `${who === 'player' ? 'Hai' : 'La CPU ha'} pulito il tavolo! (+1 punto)`;
+            notif.classList.remove('hidden');
+
+            setTimeout(() => {
+                notif.classList.add('hidden');
+            }, 1800);
+        }
+
+        function onPlayerCardClick(card) {
+            if (currentTurn !== 'player') return;
+            playSound('cardPlay');
+
+            if (selectedPlayerCard === card) {
+                selectedPlayerCard = null;
+                selectedTableCards = [];
+            } else {
+                selectedPlayerCard = card;
+                selectedTableCards = [];
+
+                // 1. Mandatory direct single match rule
+                const singleMatch = tableCards.find(c => c.value === card.value);
+                if (singleMatch) {
+                    selectedTableCards = [singleMatch];
+                    executeCapture('player', card, selectedTableCards);
+                    return;
+                }
+
+                // 2. Sum combinations check
+                const sumCombos = findSumCombinations(card.value, tableCards);
+                if (sumCombos.length === 1) {
+                    selectedTableCards = sumCombos[0];
+                    executeCapture('player', card, selectedTableCards);
+                    return;
+                } else if (sumCombos.length > 1) {
+                    setStatus("Più combinazioni di somma disponibili! Clicca le carte sul tavolo che desideri prendere.");
+                } else {
+                    // 3. No capture possible -> Drop card to table
+                    dropCardToTable('player', card);
+                    return;
+                }
+            }
+            updateUI();
+        }
+
+        function onTableCardClick(card) {
+            if (currentTurn !== 'player' || !selectedPlayerCard) return;
+
+            // Mandatory single capture rule check
+            const singleMatch = tableCards.find(c => c.value === selectedPlayerCard.value);
+            if (singleMatch) {
+                setStatus("Regola Obbligatoria: Devi prendere la carta singola dello stesso valore!");
+                selectedTableCards = [singleMatch];
+                executeCapture('player', selectedPlayerCard, selectedTableCards);
+                return;
+            }
+
+            const idx = selectedTableCards.indexOf(card);
+            if (idx > -1) {
+                selectedTableCards.splice(idx, 1);
+            } else {
+                selectedTableCards.push(card);
+            }
+
+            updateUI();
+        }
+
+        function confirmPlayerMultiCapture() {
+            if (!selectedPlayerCard || selectedTableCards.length === 0) return;
+
+            const sum = selectedTableCards.reduce((acc, c) => acc + c.value, 0);
+            if (sum === selectedPlayerCard.value) {
+                executeCapture('player', selectedPlayerCard, selectedTableCards);
+            } else {
+                setStatus("La somma delle carte selezionate non corrisponde al valore della carta giocata!");
+            }
+        }
+
+        function cancelPlayerSelection() {
+            selectedPlayerCard = null;
+            selectedTableCards = [];
+            updateUI();
+        }
+
+        function findSumCombinations(targetValue, cards) {
+            let results = [];
+            function search(index, currentSum, currentCombo) {
+                if (currentSum === targetValue) {
+                    results.push([...currentCombo]);
+                    return;
+                }
+                if (currentSum > targetValue || index >= cards.length) return;
+
+                for (let i = index; i < cards.length; i++) {
+                    currentCombo.push(cards[i]);
+                    search(i + 1, currentSum + cards[i].value, currentCombo);
+                    currentCombo.pop();
+                }
+            }
+            search(0, 0, []);
+            return results;
+        }
+
+        function executeCapture(who, cardPlayed, targetTableCards) {
+            playSound('capture');
+
+            if (who === 'player') {
+                playerHand = playerHand.filter(c => c !== cardPlayed);
+                playerCaptured.push(cardPlayed, ...targetTableCards);
+            } else {
+                cpuHand = cpuHand.filter(c => c !== cardPlayed);
+                cpuCaptured.push(cardPlayed, ...targetTableCards);
+            }
+
+            tableCards = tableCards.filter(c => !targetTableCards.includes(c));
+            lastTaker = who;
+
+            // Check Scopa
+            const isLastPlay = (deck.length === 0 && playerHand.length === 0 && cpuHand.length === 0);
+            let isScopa = false;
+
+            if (tableCards.length === 0 && !isLastPlay) {
+                isScopa = true;
+                if (who === 'player') playerScopes++;
+                else cpuScopes++;
+                triggerScopaAnimation(who);
+            }
+
+            const whoName = who === 'player' ? 'Hai' : 'La CPU ha';
+            if (!isScopa) {
+                setStatus(`${whoName} preso ${targetTableCards.length} carta/e con il ${cardPlayed.display}.`);
+            }
+
+            selectedPlayerCard = null;
+            selectedTableCards = [];
+            finishTurn();
+        }
+
+        function dropCardToTable(who, card) {
+            if (who === 'player') {
+                playerHand = playerHand.filter(c => c !== card);
+            } else {
+                cpuHand = cpuHand.filter(c => c !== card);
+            }
+
+            tableCards.push(card);
+            setStatus(`${who === 'player' ? 'Hai' : 'La CPU ha'} scartato un ${card.display} sul tavolo.`);
+
+            selectedPlayerCard = null;
+            selectedTableCards = [];
+            finishTurn();
+        }
+
+        function playCpuTurn() {
+            if (cpuHand.length === 0) return;
+
+            let chosenCard = null;
+            let chosenTargets = [];
+
+            // 1. Look for direct single rank match (forced rule)
+            for (let card of cpuHand) {
+                let singleMatch = tableCards.find(c => c.value === card.value);
+                if (singleMatch) {
+                    chosenCard = card;
+                    chosenTargets = [singleMatch];
+                    if (singleMatch.id === 'denari_7' || card.id === 'denari_7') break;
+                }
+            }
+
+            // 2. Look for sum captures
+            if (!chosenCard) {
+                for (let card of cpuHand) {
+                    let combos = findSumCombinations(card.value, tableCards);
+                    if (combos.length > 0) {
+                        chosenCard = card;
+                        // Prioritize capturing Settebello and Denari
+                        combos.sort((a, b) => {
+                            let scoreA = a.filter(c => c.suit === 'denari').length + (a.some(c => c.id === 'denari_7') ? 4 : 0);
+                            let scoreB = b.filter(c => c.suit === 'denari').length + (b.some(c => c.id === 'denari_7') ? 4 : 0);
+                            return scoreB - scoreA;
+                        });
+                        chosenTargets = combos[0];
+                        break;
+                    }
+                }
+            }
+
+            // 3. Drop safest card if no capture possible
+            if (!chosenCard) {
+                let sortedHand = [...cpuHand].sort((a, b) => {
+                    let scoreA = (a.suit === 'denari' ? 2 : 0) + (a.id === 'denari_7' ? 5 : 0);
+                    let scoreB = (b.suit === 'denari' ? 2 : 0) + (b.id === 'denari_7' ? 5 : 0);
+                    return scoreA - scoreB;
+                });
+                chosenCard = sortedHand[0];
+            }
+
+            if (chosenTargets.length > 0) {
+                executeCapture('cpu', chosenCard, chosenTargets);
+            } else {
+                dropCardToTable('cpu', chosenCard);
+            }
+        }
+
+        function finishTurn() {
+            updateUI();
+
+            if (playerHand.length === 0 && cpuHand.length === 0) {
+                if (deck.length > 0) {
+                    dealHands();
+                    updateUI();
+                } else {
+                    // End of Round
+                    if (tableCards.length > 0 && lastTaker) {
+                        if (lastTaker === 'player') playerCaptured.push(...tableCards);
+                        else cpuCaptured.push(...tableCards);
+                        tableCards = [];
+                    }
+                    setTimeout(evaluateRoundScores, 700);
+                    return;
+                }
+            }
+
+            currentTurn = currentTurn === 'player' ? 'cpu' : 'player';
+            updateUI();
+
+            if (currentTurn === 'cpu') {
+                setTimeout(playCpuTurn, 1000);
+            }
+        }
+
+        function calculatePrimieraScore(captured) {
+            let suitMax = { 'denari': 0, 'coppe': 0, 'spade': 0, 'bastoni': 0 };
+            captured.forEach(c => {
+                let val = PRIMIERA_SCORES[c.value] || 0;
+                if (val > suitMax[c.suit]) suitMax[c.suit] = val;
+            });
+            if (Object.values(suitMax).some(v => v === 0)) return 0;
+            return Object.values(suitMax).reduce((a, b) => a + b, 0);
+        }
+
+        function evaluateRoundScores() {
+            let pCardNum = playerCaptured.length;
+            let cpuCardNum = cpuCaptured.length;
+
+            let pCoinNum = playerCaptured.filter(c => c.suit === 'denari').length;
+            let cpuCoinNum = cpuCaptured.filter(c => c.suit === 'denari').length;
+
+            let pSette = playerCaptured.some(c => c.id === 'denari_7') ? 1 : 0;
+            let cpuSette = cpuCaptured.some(c => c.id === 'denari_7') ? 1 : 0;
+
+            let pPrimVal = calculatePrimieraScore(playerCaptured);
+            let cpuPrimVal = calculatePrimieraScore(cpuCaptured);
+
+            let pCardPt = pCardNum > 20 ? 1 : 0;
+            let cpuCardPt = cpuCardNum > 20 ? 1 : 0;
+
+            let pCoinPt = pCoinNum > 5 ? 1 : 0;
+            let cpuCoinPt = cpuCoinNum > 5 ? 1 : 0;
+
+            let pPrimPt = (pPrimVal > cpuPrimVal) ? 1 : 0;
+            let cpuPrimPt = (cpuPrimVal > pPrimVal) ? 1 : 0;
+
+            let pRoundTot = pCardPt + pCoinPt + pSette + pPrimPt + playerScopes;
+            let cpuRoundTot = cpuCardPt + cpuCoinPt + cpuSette + cpuPrimPt + cpuScopes;
+
+            playerMatchScore += pRoundTot;
+            cpuMatchScore += cpuRoundTot;
+
+            document.getElementById('pCardCount').innerText = pCardNum;
+            document.getElementById('pCardPt').innerText = `+${pCardPt}`;
+            document.getElementById('pCoinCount').innerText = pCoinNum;
+            document.getElementById('pCoinPt').innerText = `+${pCoinPt}`;
+            document.getElementById('pSettePt').innerText = `+${pSette}`;
+            document.getElementById('pPrimVal').innerText = pPrimVal;
+            document.getElementById('pPrimPt').innerText = `+${pPrimPt}`;
+            document.getElementById('pScopeNum').innerText = playerScopes;
+            document.getElementById('pScopePt').innerText = `+${playerScopes}`;
+            document.getElementById('pRoundTotal').innerText = pRoundTot;
+
+            document.getElementById('cpuCardCount').innerText = cpuCardNum;
+            document.getElementById('cpuCardPt').innerText = `+${cpuCardPt}`;
+            document.getElementById('cpuCoinCount').innerText = cpuCoinNum;
+            document.getElementById('cpuCoinPt').innerText = `+${cpuCoinPt}`;
+            document.getElementById('cpuSettePt').innerText = `+${cpuSette}`;
+            document.getElementById('cpuPrimVal').innerText = cpuPrimVal;
+            document.getElementById('cpuPrimPt').innerText = `+${cpuPrimPt}`;
+            document.getElementById('cpuScopeNum').innerText = cpuScopes;
+            document.getElementById('cpuScopePt').innerText = `+${cpuScopes}`;
+            document.getElementById('cpuRoundTotal').innerText = cpuRoundTot;
+
+            document.getElementById('roundSummaryModal').classList.remove('hidden');
+        }
+
+        function continueNextRound() {
+            document.getElementById('roundSummaryModal').classList.add('hidden');
+            if (playerMatchScore >= 11 || cpuMatchScore >= 11) {
+                const isWinner = playerMatchScore > cpuMatchScore;
+                document.getElementById('matchWinnerText').innerText = isWinner ? "🏆 Vittoria!" : "Sconfitta";
+                document.getElementById('matchWinnerDesc').innerText = isWinner ? "Complimenti, hai vinto la partita!" : "La CPU ha raggiunto per prima il punteggio massimo.";
+                document.getElementById('finalPlayerScore').innerText = playerMatchScore;
+                document.getElementById('finalCpuScore').innerText = cpuMatchScore;
+                document.getElementById('matchModal').classList.remove('hidden');
+            } else {
+                startRound();
+            }
+        }
+
+        function openRulesModal() {
+            document.getElementById('rulesModal').classList.remove('hidden');
+        }
+
+        function closeRulesModal() {
+            document.getElementById('rulesModal').classList.add('hidden');
+        }
+
+        window.onload = function() {
+            startRound();
+        };
+    </script>
+</body>
+</html>
+```
