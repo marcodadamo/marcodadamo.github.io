@@ -426,7 +426,7 @@
     </div>
 
     <footer class="text-center py-4 text-xs text-slate-500 border-t border-slate-800/80 mt-8">
-        Affari Tuoi - Gioco interattivo sviluppato da Marco D'Adamo. Ispirato alla trasmissione di Rai 1.
+        Affari Tuoi - Simulatore Interattivo in HTML & Tailwind CSS. Ispirato alla trasmissione di Rai 1.
     </footer>
 
     <script>
@@ -436,11 +436,19 @@
             10000, 15000, 20000, 30000, 50000, 75000, 100000, 200000, 300000, 300000
         ];
 
+        // All 20 Italian Regions for mapping to boxes
+        const ITALIAN_REGIONS = [
+            "Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Romagna",
+            "Friuli-Venezia Giulia", "Lazio", "Liguria", "Lombardia", "Marche",
+            "Molise", "Piemonte", "Puglia", "Sardegna", "Sicilia",
+            "Toscana", "Trentino-Alto Adige", "Umbria", "Valle d'Aosta", "Veneto"
+        ];
+
         let gameState = {
             playerName: '',
             playerRegion: '',
             myBoxNumber: null,
-            boxes: [], // Array of 20 objects: { number, prize, opened: false }
+            boxes: [], // Array of 20 objects: { number, prize, region, opened: false }
             turnStep: 0, // index in TURNS_SCHEDULE
             boxesOpenedThisTurn: 0,
             lastOpenedBox: null,
@@ -481,17 +489,29 @@
         function startPlayerGame(e) {
             e.preventDefault();
             const name = document.getElementById('input-name').value.trim();
-            const region = document.getElementById('input-region').value;
+            const chosenRegion = document.getElementById('input-region').value;
 
-            if (!name || !region || selectedBoxChoice === null) {
+            if (!name || !chosenRegion || selectedBoxChoice === null) {
                 alert('Inserisci nome, regione e seleziona il tuo pacco!');
                 return;
             }
 
             soundMgr.playClick();
             gameState.playerName = name;
-            gameState.playerRegion = region;
+            gameState.playerRegion = chosenRegion;
             gameState.myBoxNumber = selectedBoxChoice;
+
+            // Prepare regions assignment: ensure player's chosen region is assigned to their selected box,
+            // while remaining 19 regions are randomly assigned to the remaining 19 boxes.
+            let availableRegions = ITALIAN_REGIONS.filter(r => r !== chosenRegion).sort(() => Math.random() - 0.5);
+            let boxRegionsMap = {};
+            for (let i = 1; i <= 20; i++) {
+                if (i === selectedBoxChoice) {
+                    boxRegionsMap[i] = chosenRegion;
+                } else {
+                    boxRegionsMap[i] = availableRegions.pop();
+                }
+            }
 
             // Shuffle prizes and assign to 20 boxes
             let shuffledPrizes = [...PRIZES].sort(() => Math.random() - 0.5);
@@ -500,13 +520,14 @@
                 gameState.boxes.push({
                     number: i,
                     prize: shuffledPrizes[i - 1],
+                    region: boxRegionsMap[i],
                     opened: false
                 });
             }
 
             // Update header display
             document.getElementById('disp-player').innerText = name;
-            document.getElementById('disp-region').innerText = region;
+            document.getElementById('disp-region').innerText = chosenRegion;
             document.getElementById('disp-mybox').innerText = `Pacco n. ${selectedBoxChoice}`;
 
             // Switch screens
@@ -527,26 +548,17 @@
             const board = document.getElementById('prizes-board');
             board.innerHTML = '';
             
-            // Sort prizes for display
-            let sorted = [...PRIZES].sort((a, b) => a - b);
-            // Split into two columns logic (left 10 lower, right 10 higher or mixed as standard Rai 1)
             // Standard Rai 1 board: 0, 1, 5, 10, 20, 50, 100, 200, 500, 5000 on left / 10000, 15000, 20000, 30000, 50000, 75000, 100000, 200000, 300000, 300000 on right
-            
-            // Let's create an ordered array matching standard split
             const leftPrizes = [0, 1, 5, 10, 20, 50, 100, 200, 500, 5000];
             const rightPrizes = [10000, 15000, 20000, 30000, 50000, 75000, 100000, 200000, 300000, 300000];
 
             // Helper to check if prize is opened in gameState
-            // Since duplicate prizes exist (e.g. 300k), we track opened state by checking box objects
             const openedPrizesList = gameState.boxes.filter(b => b.opened).map(b => b.prize);
-            
-            // To properly track duplicates, let's clone opened list
             let consumedOpened = [...openedPrizesList];
 
             function renderColumn(pList, isRed) {
                 let html = '<div class="space-y-1.5">';
                 pList.forEach(p => {
-                    // Check if this prize is consumed in opened boxes
                     let idx = consumedOpened.indexOf(p);
                     let isOpened = false;
                     if (idx !== -1) {
@@ -576,19 +588,31 @@
             gameState.boxes.forEach(box => {
                 const isMyBox = box.number === gameState.myBoxNumber;
                 let btn = document.createElement('button');
-                btn.className = `box-3d h-16 md:h-20 rounded-2xl border flex flex-col items-center justify-center font-black relative shadow-md transition`;
+                btn.className = `box-3d h-20 md:h-24 rounded-2xl border flex flex-col items-center justify-between p-2 font-black relative shadow-md transition`;
                 
                 if (box.opened) {
                     btn.className += ' box-opened';
                     btn.disabled = true;
-                    btn.innerHTML = `<span class="text-xs text-slate-500">${box.number}</span><span class="text-xs text-slate-600 font-bold">${box.prize >= 1000 ? box.prize.toLocaleString()+'€' : box.prize+'€'}</span>`;
+                    btn.innerHTML = `
+                        <span class="text-[10px] text-slate-500 font-semibold truncate w-full text-center">${box.region}</span>
+                        <span class="text-sm font-black text-slate-400">#${box.number}</span>
+                        <span class="text-xs text-slate-500 font-bold">${box.prize >= 1000 ? box.prize.toLocaleString()+'€' : box.prize+'€'}</span>
+                    `;
                 } else {
                     if (isMyBox) {
                         btn.className += ' bg-gradient-to-br from-amber-500 to-yellow-600 border-amber-300 text-white shadow-amber-500/30';
-                        btn.innerHTML = `<span class="text-[10px] uppercase bg-black/30 px-1.5 py-0.5 rounded text-amber-200 font-bold mb-0.5">Il tuo</span><span class="text-lg md:text-xl font-black">${box.number}</span>`;
+                        btn.innerHTML = `
+                            <span class="text-[9px] uppercase bg-black/30 px-1.5 py-0.5 rounded text-amber-200 font-bold leading-none">Il tuo</span>
+                            <span class="text-xl md:text-2xl font-black leading-none text-white my-0.5">#${box.number}</span>
+                            <span class="text-[11px] md:text-xs font-semibold text-amber-100 truncate w-full text-center leading-tight">${box.region}</span>
+                        `;
                     } else {
                         btn.className += ' bg-slate-800 hover:bg-slate-700 border-slate-700 text-white';
-                        btn.innerHTML = `<span class="text-xs text-slate-400">Pacco</span><span class="text-lg md:text-xl font-black text-amber-400">${box.number}</span>`;
+                        btn.innerHTML = `
+                            <span class="text-[10px] text-slate-400 font-medium leading-none">Pacco</span>
+                            <span class="text-xl md:text-2xl font-black text-amber-400 leading-none my-0.5">#${box.number}</span>
+                            <span class="text-[11px] md:text-xs font-bold text-slate-300 truncate w-full text-center leading-tight">${box.region}</span>
+                        `;
                     }
                     btn.onclick = () => openBox(box.number);
                 }
@@ -627,16 +651,16 @@
 
         function showBoxModal(box) {
             const modal = document.getElementById('modal-box-result');
-            document.getElementById('modal-box-number-display').innerText = box.number;
+            document.getElementById('modal-box-number-display').innerText = `#${box.number}`;
             document.getElementById('modal-prize-amount').innerText = box.prize >= 1000 ? box.prize.toLocaleString() + ' €' : box.prize + ' €';
             
             const typeBadge = document.getElementById('modal-prize-type');
             if (box.prize >= 10000) {
                 typeBadge.className = 'text-xs font-bold px-3 py-1 rounded-full inline-block mb-6 bg-red-500/20 text-red-400 border border-red-500/30';
-                typeBadge.innerText = 'PREMIO ROSSO (ALTO)';
+                typeBadge.innerText = `PREMIO ROSSO (${box.region.toUpperCase()})`;
             } else {
                 typeBadge.className = 'text-xs font-bold px-3 py-1 rounded-full inline-block mb-6 bg-blue-500/20 text-blue-400 border border-blue-500/30';
-                typeBadge.innerText = 'PREMIO BLU (BASSO)';
+                typeBadge.innerText = `PREMIO BLU (${box.region.toUpperCase()})`;
             }
 
             modal.classList.remove('hidden');
@@ -673,7 +697,7 @@
             const sum = unopened.reduce((acc, curr) => acc + curr.prize, 0);
             let avg = sum / unopened.length;
 
-            // Doctor offer formula with some realism (between 70% and 110% of average, scaled by turn)
+            // Doctor offer formula with some realism
             let offerMultiplier = 0.65 + (gameState.turnStep * 0.05);
             if (offerMultiplier > 1.05) offerMultiplier = 1.05;
             let offer = Math.round((avg * offerMultiplier) / 500) * 500;
@@ -717,10 +741,10 @@
             const myBox = unopened.find(b => b.number === gameState.myBoxNumber);
             const otherBox = unopened.find(b => b.number !== gameState.myBoxNumber);
 
-            document.getElementById('fin-mybox-num').innerText = myBox.number;
-            document.getElementById('fin-mybox-region').innerText = `${gameState.playerName} (${gameState.playerRegion})`;
-            document.getElementById('fin-otherbox-num').innerText = otherBox.number;
-            document.getElementById('fin-otherbox-label').innerText = otherBox.number;
+            document.getElementById('fin-mybox-num').innerText = `#${myBox.number}`;
+            document.getElementById('fin-mybox-region').innerText = `${gameState.playerName} (${myBox.region})`;
+            document.getElementById('fin-otherbox-num').innerText = `#${otherBox.number}`;
+            document.getElementById('fin-otherbox-label').innerText = `${otherBox.number} (${otherBox.region})`;
 
             // Hide game screen, show finale screen
             document.getElementById('screen-game').classList.add('hidden');
@@ -737,7 +761,7 @@
 
             // Swap my box number
             gameState.myBoxNumber = otherBox.number;
-            alert(`Hai scelto di cambiare il pacco! Ora il tuo pacco è il numero ${gameState.myBoxNumber} (prima era il ${oldMyBoxNum}).`);
+            alert(`Hai scelto di cambiare il pacco! Ora hai il pacco n. ${gameState.myBoxNumber} (${otherBox.region}).`);
             finishFinalOpening();
         }
 
@@ -755,7 +779,7 @@
             gameState.ended = true;
 
             soundMgr.playWin();
-            showGameOverModal(false, myBoxObj.prize, `Il tuo pacco n. ${myBoxObj.number} conteneva la vincita finale!`);
+            showGameOverModal(false, myBoxObj.prize, `Il tuo pacco n. ${myBoxObj.number} (${myBoxObj.region}) conteneva la tua vincita finale!`);
         }
 
         function showGameOverModal(isOffer, amount, message) {
