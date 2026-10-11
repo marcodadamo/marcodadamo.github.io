@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abaco Montessori Premium - Impara Giocando</title>
+    <title>Abaco Tito Premium - Impara Giocando</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
     <style>
@@ -60,7 +60,7 @@
                 🪵
             </div>
             <div>
-                <h1 class="text-2xl md:text-3xl font-black text-amber-900 tracking-tight">Abaco Montessori</h1>
+                <h1 class="text-2xl md:text-3xl font-black text-amber-900 tracking-tight">Abaco Tito</h1>
                 <p class="text-xs md:text-sm text-stone-500 font-medium">Metodo sensoriale e matematico</p>
             </div>
         </div>
@@ -112,7 +112,7 @@
         <!-- Guide Panel -->
         <div id="guide-box" class="hidden w-full bg-amber-50/90 border border-amber-200 rounded-2xl p-4 mb-6 text-sm text-stone-700 relative shadow-sm">
             <button onclick="toggleGuide()" class="absolute top-3 right-3 text-amber-800 font-bold hover:text-stone-900 text-lg">✕</button>
-            <h3 class="font-heading font-extrabold text-amber-900 text-base mb-2 flex items-center gap-1.5">🪵 Guida all'Abaco Montessori</h3>
+            <h3 class="font-heading font-extrabold text-amber-900 text-base mb-2 flex items-center gap-1.5">🪵 Guida all'Abaco Tito</h3>
             <p class="mb-2">Ogni colore rappresenta un ordine di grandezza posizionale:</p>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-semibold mt-2">
                 <div class="bg-white p-2 rounded-xl border border-rose-200 text-rose-700">🔴 Unità (U) = 1</div>
@@ -355,7 +355,7 @@
             if (type === 'upper') {
                 state.upper = !state.upper;
             } else {
-                // Montessori soroban logic for lower beads
+                // Abaco Tito soroban logic for lower beads
                 if (!state.lowers[beadIdx]) {
                     for (let j = 0; j <= beadIdx; j++) state.lowers[j] = true;
                 } else {
