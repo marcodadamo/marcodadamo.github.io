@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>StudioMarco Pro - Fotocamera</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        header {
+            padding: 1rem;
+            background: rgba(15, 23, 42, 0.8);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .camera-container {
+            position: relative;
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            background: #000;
+        }
+
+        video, canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* Transizione fluida in caso di rotazione o cambio orientamento */
+            transition: transform 0.3s ease;
+        }
+
+        .controls-container {
+            padding: 1.5rem;
+            background: rgba(15, 23, 42, 0.9);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .btn-capture {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background-color: #ffffff;
+            border: 4px solid #94a3b8;
+            cursor: pointer;
+            outline: none;
+            transition: transform 0.1s ease;
+        }
+
+        .btn-capture:active {
+            transform: scale(0.95);
+        }
+
+        .gallery-preview {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #1e293b;
+            border: 2px solid #475569;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .gallery-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>StudioMarco Pro</h1>
+        </div>
+    </header>
+
+    <div class="camera-container">
+        <!-- playsinline e muted sono fondamentali per iOS e Android -->
+        <video id="video" autoplay muted playsinline></video>
+        <canvas id="canvas" style="display:none;"></canvas>
+    </div>
+
+    <div class="controls-container">
+        <div class="gallery-preview" id="galleryBtn">
+            <img id="previewImg" alt="Galleria" src="https://placehold.co/100x100/1e293b/475569?text=Media">
+        </div>
+        <button class="btn-capture" id="captureBtn" aria-label="Scatta foto"></button>
+        <div style="width: 50px;"></div> <!-- Spaziatore per bilanciare il flexbox -->
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureBtn = document.getElementById('captureBtn');
+        const previewImg = document.getElementById('previewImg');
+
+        // Funzione per gestire l'orientamento e correggere eventuali ribaltamenti errati
+        function updateOrientation() {
+            // Rileva l'angolo dello schermo per adattare la visualizzazione se necessario
+            const angle = window.screen.orientation ? window.screen.orientation.angle : (window.orientation || 0);
+            
+            // Su alcuni dispositivi, quando si passa in landscape invertito (270 gradi), 
+            // il video nativo mobile potrebbe richiedere una compensazione o bloccarsi dritto.
+            // Applicando o resettando la trasformazione evitiamo che vada a testa in giù.
+            if (Math.abs(angle) === 180) {
+                video.style.transform = 'rotate(180deg)';
+            } else {
+                video.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        window.addEventListener('orientationchange', updateOrientation);
+        window.addEventListener('resize', updateOrientation);
+
+        // Avvio della fotocamera con vincoli ottimizzati per mobile e desktop
+        async function startCamera() {
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: { ideal: "environment" }, // Preferisce la fotocamera posteriore, usa "user" per l'anteriore
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    },
+                    audio: false
+                };
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                await video.play();
+                updateOrientation();
+            } catch (err) {
+                console.error("Errore di accesso alla fotocamera: ", err);
+                alert("Impossibile accedere alla fotocamera. Assicurati di aver concesso i permessi.");
+            }
+        }
+
+        // Scatto della foto
+        captureBtn.addEventListener('click', () => {
+            if (!video.srcObject) return;
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Genera l'anteprima dell'immagine catturata
+            const dataUrl = canvas.toDataURL('image/png');
+            previewImg.src = dataUrl;
+        });
+
+        // Avvia la fotocamera all'apertura della pagina
+        window.addEventListener('DOMContentLoaded', startCamera);
+    </script>
+</body>
+</html>
