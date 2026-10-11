@@ -1,69 +1,69 @@
+```html
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La Festa di Spider-Man con Tito!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Spider-Man: Festa dei Supereroi!</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Fredoka', cursive, sans-serif;
-            touch-action: none;
+            touch-action: manipulation;
             user-select: none;
             -webkit-user-select: none;
+            overflow: hidden;
         }
-        .pop-animation {
+        .pop-in {
             animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
         @keyframes popIn {
-            0% { transform: scale(0); opacity: 0; }
-            80% { transform: scale(1.1); opacity: 1; }
+            0% { transform: scale(0.5); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
         }
-        .floating {
-            animation: floatMsg 1.5s ease-out forwards;
+        .pulse-btn {
+            animation: pulse 1.8s infinite;
         }
-        @keyframes floatMsg {
-            0% { transform: translateY(0) scale(1); opacity: 1; }
-            100% { transform: translateY(-80px) scale(1.3); opacity: 0; }
-        }
-        /* Custom pulse animation for big buttons */
-        .btn-pulse {
-            animation: pulseBtn 2s infinite;
-        }
-        @keyframes pulseBtn {
+        @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
         }
+        .float-anim {
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
     </style>
 </head>
-<body class="bg-gradient-to-b from-sky-400 via-sky-200 to-blue-500 h-screen w-screen overflow-hidden flex flex-col justify-between select-none">
+<body class="bg-gradient-to-b from-sky-400 via-sky-300 to-blue-600 h-screen w-screen flex flex-col justify-between">
 
     <header class="w-full p-3 sm:p-4 flex justify-between items-center z-10 bg-white/90 backdrop-blur-md shadow-lg rounded-b-3xl mx-auto max-w-4xl">
-        <div class="flex items-center gap-2 sm:gap-3">
-            <div class="bg-red-500 text-white font-bold px-3 py-2 sm:px-4 sm:py-2 rounded-2xl shadow-md text-lg sm:text-2xl flex items-center gap-2 border-4 border-yellow-300 pop-animation">
-                <span>🍕</span> <span id="score">0</span>
+        <div class="flex items-center gap-2">
+            <div class="bg-red-500 text-white font-bold px-3 py-2 sm:px-5 sm:py-2 rounded-2xl shadow-md text-lg sm:text-2xl flex items-center gap-2 border-4 border-yellow-300">
+                <span>⭐</span> <span id="scoreText">0</span>
             </div>
-            <div id="encouragement" class="text-red-600 font-extrabold text-lg sm:text-2xl hidden animate-bounce drop-shadow">
+            <div id="encouragement" class="text-red-600 font-black text-lg sm:text-2xl hidden animate-bounce drop-shadow">
                 ¡Super Spidey!
             </div>
         </div>
         
         <div class="text-center flex flex-col items-center">
-            <h1 class="text-lg sm:text-2xl font-black text-red-600 drop-shadow-sm tracking-wide">
-                🕷️ Spider-Party 🎈
+            <h1 class="text-base sm:text-2xl font-black text-red-600 drop-shadow-sm tracking-wide">
+                🕷️ SPIDER-PARTY 🎈
             </h1>
-            <div id="heroBadge" class="hidden bg-yellow-300 text-blue-900 font-black px-3 py-1 rounded-full text-xs sm:text-base border-2 border-white shadow-sm mt-1">
+            <div id="heroBadge" class="bg-yellow-300 text-blue-900 font-black px-3 py-0.5 rounded-full text-xs sm:text-sm border-2 border-white shadow-sm mt-0.5">
                 Supereroe Spidey
             </div>
         </div>
 
         <div class="flex items-center gap-2">
-            <button id="soundBtn" onclick="toggleSound()" class="bg-yellow-400 hover:bg-yellow-500 text-red-700 font-bold p-2 sm:p-3 rounded-2xl shadow-md text-lg sm:text-xl border-4 border-white transition transform active:scale-95">
+            <button id="soundBtn" class="bg-yellow-400 hover:bg-yellow-500 text-red-700 font-bold p-2 sm:p-3 rounded-2xl shadow-md text-lg sm:text-xl border-4 border-white transition transform active:scale-95">
                 🔊
             </button>
-            <button onclick="openNameModal()" class="bg-green-500 hover:bg-green-600 text-white font-bold p-2 sm:p-3 rounded-2xl shadow-md text-lg sm:text-xl border-4 border-white transition transform active:scale-95" title="Cambia Nome">
+            <button id="changeNameBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold p-2 sm:p-3 rounded-2xl shadow-md text-lg sm:text-xl border-4 border-white transition transform active:scale-95">
                 👤
             </button>
         </div>
@@ -72,152 +72,146 @@
     <main class="flex-1 relative w-full max-w-4xl mx-auto overflow-hidden cursor-pointer">
         <canvas id="gameCanvas" class="absolute inset-0 w-full h-full block"></canvas>
         
-        <!-- Welcome & Player Name Input Screen Overlay -->
-        <div id="messageOverlay" class="absolute inset-0 flex items-center justify-center z-20 bg-sky-900/40 backdrop-blur-sm p-4">
-            <div id="msgBox" class="bg-yellow-300 text-red-600 font-extrabold p-6 sm:p-8 rounded-3xl shadow-2xl border-8 border-white pop-animation text-center max-w-md w-full flex flex-col items-center gap-4">
+        <!-- Player Setup Overlay -->
+        <div id="startOverlay" class="absolute inset-0 flex items-center justify-center z-30 bg-sky-900/60 backdrop-blur-md p-4">
+            <div class="bg-yellow-300 text-red-600 font-black p-6 sm:p-8 rounded-3xl shadow-2xl border-8 border-white pop-in text-center max-w-md w-full flex flex-col items-center gap-4">
                 
-                <div class="text-4xl sm:text-600 font-black text-red-600 drop-shadow">
-                    🕷️ Ciao Supereroe! 🦸‍♂️
+                <div class="text-3xl sm:text-4xl font-black text-red-600 drop-shadow float-anim">
+                    🕷️ CIAO SUPEREROE! 🦸‍♂️
                 </div>
 
-                <div class="w-full text-left">
-                    <label for="playerNameInput" class="block text-blue-900 font-bold text-base sm:text-xl mb-2 text-center">
-                        Scrivi il tuo nome da Supereroe:
+                <div class="w-full text-center">
+                    <label for="playerNameInput" class="block text-blue-900 font-bold text-base sm:text-xl mb-2">
+                        Scrivi il tuo nome:
                     </label>
                     <input 
                         type="text" 
                         id="playerNameInput" 
-                        placeholder="Es. Marco, Sofia..." 
+                        value="Spidey"
+                        placeholder="Nome" 
                         maxlength="12"
-                        class="w-full text-center text-2xl sm:text-3xl font-bold py-3 px-4 rounded-2xl border-4 border-red-500 bg-white text-gray-800 shadow-inner focus:outline-none focus:ring-4 focus:ring-yellow-400"
+                        class="w-full text-center text-2xl sm:text-3xl font-black py-3 px-4 rounded-2xl border-4 border-red-500 bg-white text-blue-900 shadow-inner focus:outline-none focus:ring-4 focus:ring-yellow-400"
                     >
                 </div>
 
                 <button 
-                    onclick="handleStartClick()" 
-                    class="btn-pulse bg-red-500 hover:bg-red-600 active:bg-red-700 text-white text-2xl sm:text-3xl font-black py-4 px-8 rounded-2xl shadow-xl border-4 border-white transition transform active:scale-95 flex items-center gap-3 mt-2"
+                    id="playNowBtn" 
+                    type="button"
+                    class="pulse-btn bg-red-500 hover:bg-red-600 active:bg-red-700 text-white text-2xl sm:text-3xl font-black py-4 px-8 rounded-2xl shadow-xl border-4 border-white transition transform active:scale-95 flex items-center justify-center gap-3 mt-2 w-full cursor-pointer"
                 >
                     <span>GIOCA ORA!</span>
-                    <span class="text-3xl">🚀</span>
+                    <span class="text-3xl">🕷️</span>
                 </button>
             </div>
         </div>
     </main>
 
     <footer class="w-full p-4 bg-white/90 backdrop-blur-md shadow-2xl rounded-t-3xl max-w-4xl mx-auto flex justify-around items-center z-10">
-        <button id="leftBtn" class="bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-black text-4xl w-24 h-16 sm:w-32 sm:h-20 rounded-3xl shadow-lg border-4 border-yellow-300 flex items-center justify-center transition transform active:scale-90">
+        <button id="leftBtn" class="bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-black text-4xl w-28 h-18 sm:w-36 sm:h-20 rounded-3xl shadow-lg border-4 border-yellow-300 flex items-center justify-center transition transform active:scale-90">
             ⬅️
         </button>
         <div class="text-center hidden sm:block">
-            <p id="footerInstruction" class="text-blue-900 font-bold text-sm">Usa le frecce per muovere Spider-Man!</p>
-            <p class="text-red-500 font-semibold text-xs">Raccogli pizze, ciambelle e stelle!</p>
+            <p id="playerGreeting" class="text-blue-900 font-bold text-base">Tocca le frecce per muovere Spider-Man!</p>
+            <p class="text-red-500 font-semibold text-xs">Raccogli pizze, stelle e palloncini!</p>
         </div>
-        <button id="rightBtn" class="bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-black text-4xl w-24 h-16 sm:w-32 sm:h-20 rounded-3xl shadow-lg border-4 border-yellow-300 flex items-center justify-center transition transform active:scale-90">
+        <button id="rightBtn" class="bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-black text-4xl w-28 h-18 sm:w-36 sm:h-20 rounded-3xl shadow-lg border-4 border-yellow-300 flex items-center justify-center transition transform active:scale-90">
             ➡️
         </button>
     </footer>
 
     <script>
+        // DOM Elements
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const scoreEl = document.getElementById('score');
+        const scoreText = document.getElementById('scoreText');
         const encouragementEl = document.getElementById('encouragement');
-        const msgBox = document.getElementById('msgBox');
-        const messageOverlay = document.getElementById('messageOverlay');
+        const startOverlay = document.getElementById('startOverlay');
         const playerNameInput = document.getElementById('playerNameInput');
+        const playNowBtn = document.getElementById('playNowBtn');
+        const changeNameBtn = document.getElementById('changeNameBtn');
         const heroBadge = document.getElementById('heroBadge');
+        const soundBtn = document.getElementById('soundBtn');
+        const playerGreeting = document.getElementById('playerGreeting');
 
-        let playerName = "";
+        // State variables
+        let playerName = "Spidey";
         let score = 0;
-        let gameStarted = false;
+        let gameRunning = false;
         let soundEnabled = true;
-        let animationId;
+        let animationFrameId = null;
 
-        function openNameModal() {
-            gameStarted = false;
-            cancelAnimationFrame(animationId);
-            messageOverlay.style.display = 'flex';
-            if (playerName) playerNameInput.value = playerName;
-        }
+        // Audio Context (Synthesizer for kids sounds)
+        let audioCtx = null;
 
-        function handleStartClick() {
-            let inputName = playerNameInput.value.trim();
-            if (!inputName) {
-                inputName = "Campione";
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) {
+                    audioCtx = new AudioContextClass();
+                }
             }
-            playerName = inputName;
-            
-            // Set superhero badge title
-            heroBadge.innerText = `Spider-${playerName} ⚡`;
-            heroBadge.classList.remove('hidden');
-
-            startGame();
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
         }
 
-        // Personalized encouragement list for 5-year-old children
-        function triggerEncouragement() {
-            const praises = [
-                `¡Bravissimo ${playerName}!`,
-                `¡Grande Spider-${playerName}!`,
-                `¡Super ${playerName}!`,
-                `¡Sei un mito, ${playerName}!`,
-                `¡Fantastico ${playerName}!`,
-                `¡Forza ${playerName}!`
-            ];
-            const randomMsg = praises[Math.floor(Math.random() * praises.length)];
-            encouragementEl.innerText = randomMsg;
-            encouragementEl.classList.remove('hidden');
-            setTimeout(() => {
-                encouragementEl.classList.add('hidden');
-            }, 1200);
-        }
-
-        function playSound(type) {
+        function playAudio(type) {
             if (!soundEnabled) return;
-            initAudio();
-            if (!audioCtx) return;
+            const ctxAudio = getAudioContext();
+            if (!ctxAudio) return;
 
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
+            const now = ctxAudio.currentTime;
 
-            const now = audioCtx.currentTime;
-
-            if (type === 'collect') {
+            if (type === 'thwip') {
+                // Web shooting sound
+                const osc = ctxAudio.createOscillator();
+                const gain = ctxAudio.createGain();
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(300, now);
-                osc.frequency.exponentialRampToValueAtTime(800, now + 0.15);
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(200, now + 0.12);
                 gain.gain.setValueAtTime(0.3, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+                osc.connect(gain);
+                gain.connect(ctxAudio.destination);
                 osc.start(now);
-                osc.stop(now + 0.15);
-            } else if (type === 'bonus') {
+                osc.stop(now + 0.12);
+            } else if (type === 'collect') {
+                // Happy chime sound
+                const osc = ctxAudio.createOscillator();
+                const gain = ctxAudio.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(500, now);
-                osc.frequency.setValueAtTime(750, now + 0.1);
-                osc.frequency.setValueAtTime(1000, now + 0.2);
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.connect(gain);
+                gain.connect(ctxAudio.destination);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else if (type === 'star') {
+                // Extra cheerful sound
+                const osc = ctxAudio.createOscillator();
+                const gain = ctxAudio.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.3);
                 gain.gain.setValueAtTime(0.3, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.connect(gain);
+                gain.connect(ctxAudio.destination);
                 osc.start(now);
                 osc.stop(now + 0.3);
-            } else if (type === 'start') {
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(250, now);
-        // Audio Context Setup
-        let audioCtx = null;
-        function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
         }
 
-        function toggleSound() {
+        // Toggle sound
+        soundBtn.addEventListener('click', () => {
             soundEnabled = !soundEnabled;
-            document.getElementById('soundBtn').innerText = soundEnabled ? '🔊' : '🔇';
-        }
+            soundBtn.innerText = soundEnabled ? '🔊' : '🔇';
+        });
 
-        // Resize Canvas
         function resizeCanvas() {
             canvas.width = canvas.parentElement.clientWidth;
             canvas.height = canvas.parentElement.clientHeight;
@@ -227,13 +221,12 @@
         }
         window.addEventListener('resize', resizeCanvas);
 
-        // Spider-Man Character Object
         class SpiderMan {
             constructor() {
                 this.width = 90;
                 this.height = 100;
-                this.x = window.innerWidth / 2 - 45;
-                this.y = 0; // set in resize
+                this.x = canvas.width / 2 - 45;
+                this.y = canvas.height - 110;
                 this.speed = 12;
                 this.vx = 0;
                 this.targetX = null;
@@ -243,66 +236,51 @@
                 ctx.save();
                 ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
 
-                // Chibi Spider-Man Body (Cute & Round)
-                // Legs / Feet
-                ctx.fillStyle = '#1e3a8a';
+                // Cute Chibi Spider-Man Rendering
+                // Legs
+                ctx.fillStyle = '#1d4ed8';
                 ctx.beginPath();
-                ctx.arc(-20, 35, 14, 0, Math.PI * 2);
-                ctx.arc(20, 35, 14, 0, Math.PI * 2);
+                ctx.arc(-20, 36, 14, 0, Math.PI * 2);
+                ctx.arc(20, 36, 14, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Torso Suit
-                ctx.fillStyle = '#dc2626';
+                // Suit Torso
+                ctx.fillStyle = '#ef4444';
                 ctx.beginPath();
-                ctx.roundRect(-25, 0, 50, 45, 12);
+                ctx.roundRect(-25, 0, 50, 46, 14);
                 ctx.fill();
 
-                // Spider Logo on chest
-                ctx.fillStyle = '#000';
+                // Spider Chest Symbol
+                ctx.fillStyle = '#000000';
                 ctx.beginPath();
-                ctx.arc(0, 20, 8, 0, Math.PI * 2);
+                ctx.arc(0, 22, 7, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Arms holding web basket
-                ctx.strokeStyle = '#dc2626';
-                ctx.lineWidth = 10;
-                ctx.lineCap = 'round';
-                ctx.beginPath();
-                ctx.moveTo(-20, 15);
-                ctx.lineTo(-40, 25);
-                ctx.moveTo(20, 15);
-                ctx.lineTo(40, 25);
-                ctx.stroke();
-
-                // Huge Cute Head
-                ctx.fillStyle = '#dc2626';
+                // Huge Head
+                ctx.fillStyle = '#ef4444';
                 ctx.beginPath();
                 ctx.arc(0, -25, 38, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Web lines on mask
-                ctx.strokeStyle = '#991b1b';
-                ctx.lineWidth = 2;
+                // Mask Web Lines
+                ctx.strokeStyle = '#b91c1c';
+                ctx.lineWidth = 2.5;
                 ctx.beginPath();
                 ctx.moveTo(0, -63); ctx.lineTo(0, 13);
                 ctx.moveTo(-38, -25); ctx.lineTo(38, -25);
                 ctx.stroke();
 
-                // Big Expressive White Eyes with thick black outline
-                ctx.fillStyle = '#000';
-                // Left Eye background
+                // Big Friendly Eyes
+                ctx.fillStyle = '#000000';
                 ctx.beginPath();
-                ctx.ellipse(-14, -28, 14, 9, -0.2, 0, Math.PI * 2);
-                ctx.fill();
-                // Right Eye background
-                ctx.beginPath();
-                ctx.ellipse(14, -28, 14, 9, 0.2, 0, Math.PI * 2);
+                ctx.ellipse(-14, -28, 14, 10, -0.15, 0, Math.PI * 2);
+                ctx.ellipse(14, -28, 14, 10, 0.15, 0, Math.PI * 2);
                 ctx.fill();
 
                 ctx.fillStyle = '#ffffff';
                 ctx.beginPath();
-                ctx.ellipse(-14, -28, 11, 6, -0.2, 0, Math.PI * 2);
-                ctx.ellipse(14, -28, 11, 6, 0.2, 0, Math.PI * 2);
+                ctx.ellipse(-14, -28, 11, 7, -0.15, 0, Math.PI * 2);
+                ctx.ellipse(14, -28, 11, 7, 0.15, 0, Math.PI * 2);
                 ctx.fill();
 
                 ctx.restore();
@@ -321,7 +299,7 @@
                     this.x += this.vx;
                 }
 
-                // Boundaries
+                // Keep inside screen screen borders
                 if (this.x < 10) this.x = 10;
                 if (this.x > canvas.width - this.width - 10) {
                     this.x = canvas.width - this.width - 10;
@@ -329,70 +307,59 @@
             }
         }
 
-        let spidey = new SpiderMan();
-        resizeCanvas();
+        const spidey = new SpiderMan();
 
-        // Falling Items Array
         let items = [];
         let particles = [];
+        let spawnTimer = 0;
+
         const itemTypes = [
-            { emoji: '🍕', type: 'pizza', points: 1, name: 'Pizza!' },
-            { emoji: '🍩', type: 'donut', points: 1, name: 'Ciambella!' },
-            { emoji: '⭐', type: 'star', points: 2, name: 'Stella Magica!' },
-            { emoji: '❤️', type: 'heart', points: 2, name: 'Cuore!' },
-            { emoji: '🎈', type: 'balloon', points: 3, name: 'Palloncino!' },
-            { emoji: '🦹‍♂️', type: 'goblin', points: 5, name: 'Super Bonus Goblin!' }
+            { emoji: '🍕', points: 1, name: 'Pizza!' },
+            { emoji: '🍩', points: 1, name: 'Ciambella!' },
+            { emoji: '⭐', points: 2, name: 'Stella!' },
+            { emoji: '🎈', points: 2, name: 'Palloncino!' },
+            { emoji: '🎁', points: 3, name: 'Regalo!' }
         ];
 
-        class FallingItem {
+        class Item {
             constructor() {
-                this.radius = 28;
                 this.x = Math.random() * (canvas.width - 80) + 40;
                 this.y = -50;
                 this.speed = Math.random() * 2 + 2.5;
-                const rand = Math.random();
-                if (rand < 0.3) this.data = itemTypes[0]; // pizza
-                else if (rand < 0.5) this.data = itemTypes[1]; // donut
-                else if (rand < 0.7) this.data = itemTypes[2]; // star
-                else if (rand < 0.85) this.data = itemTypes[3]; // heart
-                else if (rand < 0.95) this.data = itemTypes[4]; // balloon
-                else this.data = itemTypes[5]; // goblin
+                this.type = itemTypes[Math.floor(Math.random() * itemTypes.length)];
                 this.wobble = Math.random() * Math.PI * 2;
-                this.wobbleSpeed = Math.random() * 0.08 + 0.04;
             }
 
             draw() {
                 ctx.save();
-                ctx.font = '42px sans-serif';
+                ctx.font = '46px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                // Slight bounce effect
-                let renderY = this.y + Math.sin(this.wobble) * 4;
-                ctx.fillText(this.data.emoji, this.x, renderY);
+                let renderY = this.y + Math.sin(this.wobble) * 5;
+                ctx.fillText(this.type.emoji, this.x, renderY);
                 ctx.restore();
             }
 
             update() {
                 this.y += this.speed;
-                this.wobble += this.wobbleSpeed;
+                this.wobble += 0.05;
             }
         }
 
-        // Floating particle effect on collection
         class Particle {
             constructor(x, y, text) {
                 this.x = x;
                 this.y = y;
                 this.text = text;
                 this.alpha = 1;
-                this.vy = -3;
+                this.vy = -2.5;
             }
             draw() {
                 ctx.save();
                 ctx.globalAlpha = this.alpha;
-                ctx.font = 'bold 26px Fredoka, sans-serif';
-                ctx.fillStyle = '#fbbf24';
-                ctx.strokeStyle = '#dc2626';
+                ctx.font = '900 24px Fredoka, sans-serif';
+                ctx.fillStyle = '#f59e0b';
+                ctx.strokeStyle = '#ffffff';
                 ctx.lineWidth = 4;
                 ctx.strokeText(this.text, this.x, this.y);
                 ctx.fillText(this.text, this.x, this.y);
@@ -400,60 +367,60 @@
             }
             update() {
                 this.y += this.vy;
-                this.alpha -= 0.02;
+                this.alpha -= 0.025;
             }
         }
 
-        // Encouragement phrases for 5yo kids
-        const encouragements = [
-            "¡Fantastico!", "¡Bravo Spidey!", "¡Super!", "¡Evviva!", "¡Campione!", "¡Meraviglioso!"
-        ];
-
+        // Encouragement popup
         function triggerEncouragement() {
-            const randomMsg = encouragements[Math.floor(Math.random() * encouragements.length)];
-            encouragementEl.innerText = randomMsg;
+            const praises = [
+                `¡BRAVO ${playerName.toUpperCase()}!`,
+                `¡SUPER ${playerName.toUpperCase()}!`,
+                `¡CAMPIONE!`,
+                `¡FANTASTICO!`,
+                `¡EVVIVA!`
+            ];
+            const msg = praises[Math.floor(Math.random() * praises.length)];
+            encouragementEl.innerText = msg;
             encouragementEl.classList.remove('hidden');
             setTimeout(() => {
                 encouragementEl.classList.add('hidden');
             }, 1000);
         }
 
-        // Spawning items timer
-        let spawnTimer = 0;
-
         function gameLoop() {
-            if (!gameStarted) return;
+            if (!gameRunning) return;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw background decorative clouds / buildings
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            // Draw clouds
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
             ctx.beginPath();
-            ctx.arc(100, 80, 50, 0, Math.PI * 2);
-            ctx.arc(150, 70, 60, 0, Math.PI * 2);
-            ctx.arc(200, 90, 40, 0, Math.PI * 2);
-            ctx.arc(canvas.width - 120, 150, 70, 0, Math.PI * 2);
-            ctx.arc(canvas.width - 60, 160, 50, 0, Math.PI * 2);
+            ctx.arc(90, 70, 45, 0, Math.PI * 2);
+            ctx.arc(140, 60, 55, 0, Math.PI * 2);
+            ctx.arc(180, 80, 35, 0, Math.PI * 2);
+            ctx.arc(canvas.width - 100, 120, 60, 0, Math.PI * 2);
+            ctx.arc(canvas.width - 50, 130, 45, 0, Math.PI * 2);
             ctx.fill();
 
-            // Update & Draw Spiderman
+            // Update Spider-Man
             spidey.update();
             spidey.draw();
 
             // Spawn items
             spawnTimer++;
-            if (spawnTimer > 40) {
-                items.push(new FallingItem());
+            if (spawnTimer > 35) {
+                items.push(new Item());
                 spawnTimer = 0;
             }
 
-            // Update & Draw Falling Items
+            // Items loop
             for (let i = items.length - 1; i >= 0; i--) {
                 let item = items[i];
                 item.update();
                 item.draw();
 
-                // Collision detection with Spider-Man
+                // Collision Check
                 let spideyCenterX = spidey.x + spidey.width / 2;
                 let spideyCenterY = spidey.y + spidey.height / 2;
                 let distX = item.x - spideyCenterX;
@@ -461,30 +428,32 @@
                 let distance = Math.sqrt(distX * distX + distY * distY);
 
                 if (distance < 55) {
-                    // Collected!
-                    score += item.data.points;
-                    scoreEl.innerText = score;
-                    
-                    if (item.data.type === 'goblin') {
-                        playSound('bonus');
+                    score += item.type.points;
+                    scoreText.innerText = score;
+
+                    if (item.type.emoji === '⭐' || item.type.emoji === '🎁') {
+                        playAudio('star');
                     } else {
-                        playSound('collect');
+                        playAudio('collect');
                     }
 
-                    particles.push(new Particle(item.x, item.y, `+${item.data.points} ${this.name || item.data.name}`));
-                    triggerEncouragement();
+                    particles.push(new Particle(item.x, item.y, `+${item.type.points} ${item.type.name}`));
+                    
+                    if (score % 5 === 0) {
+                        triggerEncouragement();
+                    }
 
                     items.splice(i, 1);
                     continue;
                 }
 
-                // Remove off-screen items
-                if (item.y > canvas.height + 50) {
+                // Remove offscreen items
+                if (item.y > canvas.height + 60) {
                     items.splice(i, 1);
                 }
             }
 
-            // Update & Draw Particles
+            // Particles loop
             for (let i = particles.length - 1; i >= 0; i--) {
                 let p = particles[i];
                 p.update();
@@ -494,80 +463,115 @@
                 }
             }
 
-            animationId = requestAnimationFrame(gameLoop);
+            animationFrameId = requestAnimationFrame(gameLoop);
         }
 
-        // Start / Reset Game
         function startGame() {
-            initAudio();
-            playSound('start');
-            gameStarted = true;
-            messageOverlay.style.display = 'none';
+            // Read and format player name
+            let inputName = playerNameInput.value.trim();
+            if (!inputName) {
+                inputName = "Spidey";
+            }
+            playerName = inputName;
+
+            // Update badges and texts
+            heroBadge.innerText = `Super ${playerName} ⚡`;
+            playerGreeting.innerText = `Muovi Super ${playerName} e cattura tutto!`;
+
+            // Hide overlay
+            startOverlay.style.display = 'none';
+
+            // Reset score & state
             score = 0;
-            scoreEl.innerText = score;
+            scoreText.innerText = "0";
             items = [];
             particles = [];
-            spidey.y = canvas.height - 110;
             spidey.x = canvas.width / 2 - spidey.width / 2;
-            cancelAnimationFrame(animationId);
+
+            // Sound activation
+            playAudio('thwip');
+
+            // Start loop
+            gameRunning = true;
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
             gameLoop();
         }
 
-        function resetGame() {
-            openNameModal();
+        // Direct Event Listener Bindings (Ensures start works 100%)
+        playNowBtn.addEventListener('click', startGame);
+        playNowBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startGame();
+        });
+
+        changeNameBtn.addEventListener('click', () => {
+            gameRunning = false;
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            startOverlay.style.display = 'flex';
+        });
+
+        // Touch & Movement Controls
+        const leftBtn = document.getElementById('leftBtn');
+        const rightBtn = document.getElementById('rightBtn');
+
+        function moveLeft(e) {
+            if (e) e.preventDefault();
+            spidey.vx = -12;
         }
 
-        // Controls: Keyboard
+        function moveRight(e) {
+            if (e) e.preventDefault();
+            spidey.vx = 12;
+        }
+
+        function stopMove(e) {
+            if (e) e.preventDefault();
+            spidey.vx = 0;
+        }
+
+        leftBtn.addEventListener('mousedown', moveLeft);
+        leftBtn.addEventListener('mouseup', stopMove);
+        leftBtn.addEventListener('touchstart', moveLeft);
+        leftBtn.addEventListener('touchend', stopMove);
+
+        rightBtn.addEventListener('mousedown', moveRight);
+        rightBtn.addEventListener('mouseup', stopMove);
+        rightBtn.addEventListener('touchstart', moveRight);
+        rightBtn.addEventListener('touchend', stopMove);
+
+        // Keyboard Controls
         window.addEventListener('keydown', (e) => {
-            if (!gameStarted && messageOverlay.style.display === 'none') startGame();
-            if (e.key === 'ArrowLeft') spidey.vx = -12;
-            if (e.key === 'ArrowRight') spidey.vx = 12;
-            if (e.key === 'Enter' && messageOverlay.style.display !== 'none') {
-                handleStartClick();
+            if (e.key === 'ArrowLeft') moveLeft();
+            if (e.key === 'ArrowRight') moveRight();
+            if (e.key === 'Enter' && startOverlay.style.display !== 'none') {
+                startGame();
             }
         });
 
         window.addEventListener('keyup', (e) => {
-            if (e.key === 'ArrowLeft' && spidey.vx < 0) spidey.vx = 0;
-            if (e.key === 'ArrowRight' && spidey.vx > 0) spidey.vx = 0;
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') stopMove();
         });
 
-        // Controls: On-screen buttons
-        const leftBtn = document.getElementById('leftBtn');
-        const rightBtn = document.getElementById('rightBtn');
+        // Canvas drag / touch follow
+        canvas.addEventListener('touchmove', (e) => {
+            if (!gameRunning) return;
+            const rect = canvas.getBoundingClientRect();
+            spidey.targetX = e.touches[0].clientX - rect.left;
+        }, { passive: true });
 
-        const pressLeft = (e) => { e.preventDefault(); if (!gameStarted && messageOverlay.style.display === 'none') startGame(); spidey.vx = -12; };
-        const releaseLeft = (e) => { e.preventDefault(); if (spidey.vx < 0) spidey.vx = 0; };
-        const pressRight = (e) => { e.preventDefault(); if (!gameStarted && messageOverlay.style.display === 'none') startGame(); spidey.vx = 12; };
-        const releaseRight = (e) => { e.preventDefault(); if (spidey.vx > 0) spidey.vx = 0; };
-
-        leftBtn.addEventListener('mousedown', pressLeft);
-        leftBtn.addEventListener('mouseup', releaseLeft);
-        leftBtn.addEventListener('touchstart', pressLeft);
-        leftBtn.addEventListener('touchend', releaseLeft);
-
-        rightBtn.addEventListener('mousedown', pressRight);
-        rightBtn.addEventListener('mouseup', releaseRight);
-        rightBtn.addEventListener('touchstart', pressRight);
-        rightBtn.addEventListener('touchend', releaseRight);
-
-        // Controls: Mouse / Touch drag on canvas
         canvas.addEventListener('mousemove', (e) => {
-            if (!gameStarted) return;
+            if (!gameRunning) return;
             const rect = canvas.getBoundingClientRect();
             spidey.targetX = e.clientX - rect.left;
         });
 
-        canvas.addEventListener('touchmove', (e) => {
-            if (!gameStarted) return;
-            const rect = canvas.getBoundingClientRect();
-            spidey.targetX = e.touches[0].clientX - rect.left;
-            e.preventDefault();
-        }, { passive: false });
-
-        // Initial render before start
-        spidey.y = canvas.height - 110;
-        spidey.draw();
+        // Initial setup on window load
+        window.onload = () => {
+            resizeCanvas();
+            spidey.draw();
+        };
     </script>
 </body>
 </html>
