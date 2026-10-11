@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>StudioMarco Pro - Mobile Camera & Video.</title>
+    <title>StudioMarco Pro - Mobile Camera & Video</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -155,17 +155,9 @@
         let itemsList = [];
         let flashEnabled = false;
 
-        // Inizializzazione immagine filigrana dal logo inviato
+        // Configurazione sicura del logo filigrana fornito[span_1](start_span)[span_1](end_span)
         const watermarkImg = new Image();
-        let isWatermarkLoaded = false;
-        watermarkImg.onload = () => {
-            isWatermarkLoaded = true;
-        };
-        // Logo convertito in base64 integrato direttamente
-        watermarkImg.src = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAAMAB8BAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA="; // (Nota: immagine caricata tramite il tuo allegato)
-
-        // Caricamento diretto sicuro tramite l'oggetto image fornito
-        watermarkImg.src = [span_0](start_span)"[span_0](end_span)"; // Sostituito dinamicamente dal file allegato
+        watermarkImg.src = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAAMAB8BAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=";
 
         const videoElement = document.getElementById('videoElement');
         const canvasElement = document.getElementById('canvasElement');
@@ -208,7 +200,7 @@
                     success = true;
                     break;
                 } catch (e) {
-                    console.warn("Attempt with constraints failed:", constraints, e);
+                    console.warn("Tentativo vincoli fallito:", constraints, e);
                 }
             }
 
@@ -216,7 +208,7 @@
                 welcomeOverlay.classList.add('hidden');
                 checkTorchSupport();
             } else {
-                errorMsgBox.innerText = "Impossibile accedere alla fotocamera. Verifica i permessi del browser o assicurati di usare una connessione sicura (HTTPS).";
+                errorMsgBox.innerText = "Impossibile accedere alla fotocamera. Assicurati di aprire la pagina tramite HTTPS o localhost e di aver consentito i permessi.";
                 errorMsgBox.classList.remove('hidden');
             }
         }
@@ -283,7 +275,7 @@
                     toggleFlashBtn.classList.toggle('bg-amber-500', flashEnabled);
                     toggleFlashBtn.classList.toggle('text-black', flashEnabled);
                 } catch (e) {
-                    console.error("Torch error:", e);
+                    console.error("Errore torcia:", e);
                 }
             }
         }
@@ -296,19 +288,17 @@
             }
         }
 
-        // Funzione per applicare l'immagine caricata come filigrana trasparente in basso a destra
         function drawWatermark(ctx, width, height) {
             if (!watermarkImg.complete || watermarkImg.naturalWidth === 0) return;
             
             ctx.save();
-            ctx.globalAlpha = 0.65; // Regola la trasparenza della filigrana (da 0.0 a 1.0)
+            ctx.globalAlpha = 0.7; // Trasparenza filigrana
             
-            // Calcola le proporzioni dell'immagine filigrana (es. larghezza pari al 28% dello schermo)
             const targetWidth = width * 0.28;
             const aspectRatio = watermarkImg.naturalHeight / watermarkImg.naturalWidth;
-            const targetHeight = targetWidth * aspectRatio;
+            const targetHeight = targetWidth * (isNaN(aspectRatio) || aspectRatio === 0 ? 0.3 : aspectRatio);
             
-            const padding = width * 0.03; // Margine dai bordi
+            const padding = width * 0.03;
             const x = width - targetWidth - padding;
             const y = height - targetHeight - padding;
             
@@ -434,7 +424,7 @@
                     updateTimerDisplay();
                 }, 1000);
             } catch (err) {
-                console.error("Recording error:", err);
+                console.error("Errore registrazione:", err);
             }
         }
 
