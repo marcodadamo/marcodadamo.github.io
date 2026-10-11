@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marco D'Adamo - Digital Enterprise Project</title>
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+    <link rel="stylesheet" href="style.css"> <!-- Sostituisci con il nome del tuo file CSS se diverso -->
+    
+    <!-- STILI DEDICATI ESCLUSIVAMENTE ALLA SCHERMATA GIOCHI MATEMATICI -->
+    <style>
+        .math-theme-modal {
+            background: linear-gradient(135deg, #0b0f19 0%, #1e1b4b 100%) !important;
+            color: #f8fafc !important;
+            border: 2px solid #3b82f6 !important;
+            box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.4) !important;
+            border-radius: 16px;
+        }
+
+        .math-theme-modal h3 {
+            color: #60a5fa !important;
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .math-theme-modal p {
+            color: #cbd5e1 !important;
+        }
+
+        /* Stile delle singole schede gioco all'interno del modale */
+        .math-theme-modal a {
+            text-decoration: none;
+        }
+
+        .math-theme-modal a > div {
+            background: rgba(30, 41, 59, 0.8) !important;
+            border: 1px solid rgba(59, 130, 246, 0.3) !important;
+            border-left: 5px solid #10b981 !important; /* Dettaglio verde matematico/interattivo */
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .math-theme-modal a > div:hover {
+            background: rgba(51, 65, 85, 0.95) !important;
+            border-color: #3b82f6 !important;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+
+        .math-theme-modal h4 {
+            color: #34d399 !important; /* Verde brillante per i titoli dei giochi */
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <div>
+                <div>M</div>
+                <div>
+                    <span>Marco D'Adamo</span>
+                    <span>Digital Enterprise Project</span>
+                </div>
+            </div>
+
+            <nav>
+                <a href="menu.html">Progetti</a>
+                <a href="https://www.linkedin.com/in/marco-d-adamo/" target="_blank">LinkedIn</a>
+                <a href="https://answers.microsoft.com/it-it/profile/d22c7259-b385-4909-8629-70c3ad1008fe" target="_blank">Microsoft Insider</a>
+                <a href="https://forum.italia.it/u/marco_dadamo/summary" target="_blank">Developers Italia</a>
+            </nav>
+        </div>
+
+        <div>
+            <nav>
+                <a href="menu.html">Progetti</a>
+                <a href="https://www.linkedin.com/in/marco-d-adamo/" target="_blank">LinkedIn</a>
+                <a href="https://answers.microsoft.com/it-it/profile/d22c7259-b385-4909-8629-70c3ad1008fe" target="_blank">Microsoft Insider</a>
+                <a href="https://forum.italia.it/u/marco_dadamo/summary" target="_blank">Developers Italia</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section>
+            <div>
+                <div></div>
+            </div>
+            <span>
+                <span></span>
+                <span>Digital Enterprise Project</span>
+            </span>
+            <h1>
+                Communication, Design, Marketing &amp; Development
+            </h1>
+            <p>
+                Un percorso IT strategico progettato per accompagnare le aziende nella loro trasformazione digitale, sviluppo di brand e innovazione organizzativa.
+            </p>
+            <div>
+                <a href="menu.html">Esplora i Progetti</a>
+                <a href="https://www.linkedin.com/in/marco-d-adamo/" target="_blank">Contattami su LinkedIn</a>
+            </div>
+        </section>
+
+        <section>
+            <div>
+                <div>Section 01 // Creative</div>
+                <h2>Graphic &amp; Marketing</h2>
+                <p>
+                    Curiamo ogni dettaglio visuale e strategico della brand identity, utilizzando i più avanzati strumenti di grafica e design per dare valore comunicativo e commerciale al tuo business.
+                </p>
+            </div>
+
+            <div>
+                <div>
+                    <div>Section 02 // Engineering</div>
+                    <h2>Open Source Development</h2>
+                    <p>
+                        Realizziamo progetti software trasparenti e modulari. Sviluppiamo soluzioni Open Source gestite tramite repository GitHub e workflow in riga di comando.
+                    </p>
+                </div>
+                <div>
+                    <span>bash</span>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div>
+                <div>Methodology &amp; Architecture</div>
+                <h2>Gestione Archivi &amp; Struttura Dati</h2>
+                <p>
+                    Questa metodologia operativa è studiata per interagire a un alto livello di precisione: dalla memorizzazione dei dati all'organizzazione degli archivi storici, garantendo massima scalabilità e sicurezza per qualsiasi entità aziendale.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div>
+            <p>© Marco D'Adamo. Tutti i diritti riservati.</p>
+            <p>Published with <a href="https://marcodadamo.github.io" target="_blank">Marco D'Adamo</a></p>
+        </div>
+    </footer>
+
+    <!-- SCHERMATA / MODALE GIOCHI MATEMATICI (Aggiornata con la classe 'math-theme-modal') -->
+    <div class="math-theme-modal-container"> <!-- Eventuale wrapper esterno -->
+        <div class="math-theme-modal" style="padding: 30px; max-width: 600px; margin: 40px auto;">
+            <div>Marco D'Adamo Developer</div>
+            <div>Matematica &amp; Interattività</div>
+            <h3>Giochi Matematici</h3>
+            <p>Seleziona una modalità per iniziare a giocare:</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+                <a href="https://marcodadamo.github.io/giocomatematica/giocotabellinebase.html" target="_blank">
+                    <div>
+                        <div>
+                            <h4>Gioco Tabelline Base</h4>
+                            <p>Allenati con le tabelline in modalità classica.</p>
+                        </div>
+                        <span></span>
+                    </div>
+                </a>
+
+                <a href="https://marcodadamo.github.io/giocomatematica/giocotabellineround.html" target="_blank">
+                    <div>
+                        <div>
+                            <h4>Gioco Tabelline Round</h4>
+                            <p>Sfide a round e a tempo per testare la velocità.</p>
+                        </div>
+                        <span></span>
+                    </div>
+                </a>
+
+                <a href="https://marcodadamo.github.io/giocomatematica/giocotabellinemultiplayer.html" target="_blank">
+                    <div>
+                        <div>
+                            <h4>Gioco Tabelline Multiplayer</h4>
+                            <p>Sfida altri utenti in tempo reale.</p>
+                        </div>
+                        <span></span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
