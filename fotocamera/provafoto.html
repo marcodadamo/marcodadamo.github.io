@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>StudioMarco Pro - Mobile Camera & Video.</title>
+    <title>StudioMarco Pro - Mobile Camera & Video</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -45,7 +45,7 @@
             <i class="fa-solid fa-camera-retro"></i>
         </div>
         <h2 class="text-xl font-bold text-white mb-2">StudioMarco Pro</h2>
-        <p class="text-xs text-slate-400 max-w-xs mb-8 leading-relaxed">Applicazione sviluppata da Marco D'Adamo. Cattura foto straordinarie e registra video fluidi in alta definizione con logo filigrana personalizzato.</p>
+        <p class="text-xs text-slate-400 max-w-xs mb-8 leading-relaxed">Applicazione sviluppata da Marco D'Adamo. Cattura foto straordinarie e registra video fluidi in alta definizione con filigrana trasparente integrata.</p>
         <button onclick="requestCameraAccess()" class="w-full max-w-xs py-3.5 px-6 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-sm transition shadow-lg shadow-indigo-600/40 active:scale-95 flex items-center justify-center space-x-2">
             <i class="fa-solid fa-lock-open text-xs"></i>
             <span>Avvia Fotocamera</span>
@@ -155,10 +155,6 @@
         let itemsList = [];
         let flashEnabled = false;
 
-        // Configurazione sicura del logo filigrana fornito[span_1](start_span)[span_1](end_span)
-        const watermarkImg = new Image();
-        watermarkImg.src = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAAMAB8BAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=";
-
         const videoElement = document.getElementById('videoElement');
         const canvasElement = document.getElementById('canvasElement');
         const welcomeOverlay = document.getElementById('welcomeOverlay');
@@ -200,7 +196,7 @@
                     success = true;
                     break;
                 } catch (e) {
-                    console.warn("Tentativo vincoli fallito:", constraints, e);
+                    console.warn("Tentativo fallito:", constraints, e);
                 }
             }
 
@@ -208,7 +204,7 @@
                 welcomeOverlay.classList.add('hidden');
                 checkTorchSupport();
             } else {
-                errorMsgBox.innerText = "Impossibile accedere alla fotocamera. Assicurati di aprire la pagina tramite HTTPS o localhost e di aver consentito i permessi.";
+                errorMsgBox.innerText = "Impossibile accedere alla fotocamera. Assicurati di usare HTTPS e concedere i permessi.";
                 errorMsgBox.classList.remove('hidden');
             }
         }
@@ -288,21 +284,72 @@
             }
         }
 
-        function drawWatermark(ctx, width, height) {
-            if (!watermarkImg.complete || watermarkImg.naturalWidth === 0) return;
-            
+        // Funzione per disegnare il logo esatto della foto vettorialmente in trasparenza
+        function drawWatermark(ctx, canvasWidth, canvasHeight) {
             ctx.save();
-            ctx.globalAlpha = 0.7; // Trasparenza filigrana
-            
-            const targetWidth = width * 0.28;
-            const aspectRatio = watermarkImg.naturalHeight / watermarkImg.naturalWidth;
-            const targetHeight = targetWidth * (isNaN(aspectRatio) || aspectRatio === 0 ? 0.3 : aspectRatio);
-            
-            const padding = width * 0.03;
-            const x = width - targetWidth - padding;
-            const y = height - targetHeight - padding;
-            
-            ctx.drawImage(watermarkImg, x, y, targetWidth, targetHeight);
+            ctx.globalAlpha = 0.75; // Trasparenza della filigrana
+
+            const scale = Math.max(canvasWidth / 1280, 0.6);
+            const iconSize = 42 * scale;
+            const fontSize = 26 * scale;
+            const padding = 25 * scale;
+
+            ctx.font = `700 ${fontSize}px 'Inter', sans-serif`;
+            const text = "StudioMarco Pro";
+            const textMetrics = ctx.measureText(text);
+
+            const totalWidth = iconSize + (12 * scale) + textMetrics.width;
+            const x = canvasWidth - totalWidth - padding;
+            const y = canvasHeight - padding - iconSize;
+
+            // Disegna icona sfumata con angoli arrotondati (Camera)
+            const radius = 12 * scale;
+            const gradient = ctx.createLinearGradient(x, y, x + iconSize, y + iconSize);
+            gradient.addColorStop(0, '#ec4899');
+            gradient.addColorStop(0.5, '#8b5cf6');
+            gradient.addColorStop(1, '#6366f1');
+
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + iconSize - radius, y);
+            ctx.quadraticCurveTo(x + iconSize, y, x + iconSize, y + radius);
+            ctx.lineTo(x + iconSize, y + iconSize - radius);
+            ctx.quadraticCurveTo(x + iconSize, y + iconSize, x + iconSize - radius, y + iconSize);
+            ctx.lineTo(x + radius, y + iconSize);
+            ctx.quadraticCurveTo(x, y + iconSize, x, y + iconSize - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            // Disegna sagoma videocamera nell'icona
+            ctx.fillStyle = '#ffffff';
+            const cx = x + iconSize / 2;
+            const cy = y + iconSize / 2;
+            const bodyW = 16 * scale;
+            const bodyH = 11 * scale;
+
+            ctx.fillRect(cx - bodyW / 2 - (2 * scale), cy - bodyH / 2, bodyW, bodyH);
+
+            ctx.beginPath();
+            ctx.moveTo(cx + bodyW / 2 - (1 * scale), cy - (2 * scale));
+            ctx.lineTo(cx + bodyW / 2 + (5 * scale), cy - (5 * scale));
+            ctx.lineTo(cx + bodyW / 2 + (5 * scale), cy + (5 * scale));
+            ctx.lineTo(cx + bodyW / 2 - (1 * scale), cy + (2 * scale));
+            ctx.closePath();
+            ctx.fill();
+
+            // Disegna il testo "StudioMarco Pro"
+            const textX = x + iconSize + (12 * scale);
+            const textY = y + (iconSize / 2) + (fontSize / 3.2);
+
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+            ctx.shadowBlur = 6 * scale;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(text, textX, textY);
+
             ctx.restore();
         }
 
@@ -325,9 +372,11 @@
             if (isMirrorActive) {
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
             }
+
+            // Stampa filigrana trasparente
             drawWatermark(ctx, width, height);
 
-            const dataUrl = canvasElement.toDataURL('image/jpeg', 0.92);
+            const dataUrl = canvasElement.toDataURL('image/jpeg', 0.95);
 
             videoElement.classList.add('opacity-30');
             setTimeout(() => videoElement.classList.remove('opacity-30'), 120);
