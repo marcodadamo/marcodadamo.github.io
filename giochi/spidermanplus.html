@@ -1,0 +1,942 @@
+```html
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Spider-Man Volante: Super Hero Adventure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            touch-action: none;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            background-color: #0f172a;
+        }
+        .font-game {
+            font-family: 'Fredoka One', cursive;
+        }
+        .btn-action {
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            transition: transform 0.1s, opacity 0.2s, background-color 0.2s;
+        }
+        .btn-action:active {
+            transform: scale(0.88);
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 16px rgba(245, 158, 11, 0.6); }
+            50% { box-shadow: 0 0 28px rgba(245, 158, 11, 0.95); }
+        }
+        .pulse-bomb {
+            animation: pulse-glow 1.5s infinite;
+        }
+        @keyframes heart-beat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+        .animate-heart {
+            animation: heart-beat 1.2s infinite;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen flex flex-col items-center justify-center bg-slate-900 text-white">
+
+    <!-- START / LOGIN OVERLAY -->
+    <div id="startModal" class="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/95 p-4">
+        <div class="bg-slate-800 border-4 border-red-500 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl relative overflow-hidden">
+            <div class="text-7xl mb-2 animate-bounce">🕷️✈️</div>
+            <h1 class="text-3xl sm:text-4xl font-game text-red-500 tracking-wider mb-2 drop-shadow-md">SPIDER-MAN VOLANTE</h1>
+            <p class="text-yellow-400 font-bold mb-6 text-lg">Ruota, Vola e Spara le Ragnatele!</p>
+            
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-left text-sm font-bold text-slate-300 mb-1 ml-1">Il tuo Nome da Super Eroe:</label>
+                    <input type="text" id="playerNameInput" value="Peter" maxlength="12" class="w-full text-center font-game text-2xl py-3 px-4 rounded-2xl bg-slate-700 text-yellow-300 border-2 border-red-400 focus:outline-none focus:border-yellow-400 shadow-inner">
+                </div>
+            </div>
+
+            <button id="startGameBtn" class="w-full py-4 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-game text-2xl rounded-2xl border-b-4 border-red-800 shadow-lg active:translate-y-1 transform transition">
+                GIOCA ORA! 🚀
+            </button>
+        </div>
+    </div>
+
+    <!-- LEVEL / GAMEOVER MODAL -->
+    <div id="levelModal" class="hidden absolute inset-0 z-40 flex items-center justify-center bg-slate-950/85 p-4">
+        <div class="bg-gradient-to-b from-slate-800 to-slate-900 border-4 border-yellow-400 rounded-3xl p-6 text-center max-w-sm w-full shadow-2xl transform scale-100">
+            <div id="levelModalEmoji" class="text-7xl mb-3">🌟</div>
+            <h2 id="levelModalTitle" class="text-3xl font-game text-yellow-400 mb-2">LIVELLO SUPERATO!</h2>
+            <p id="levelModalDesc" class="text-lg text-slate-200 mb-6 font-bold">Complimenti Volatore!</p>
+            <button id="nextLevelBtn" class="w-full py-3 bg-green-500 hover:bg-green-400 text-white font-game text-xl rounded-2xl border-b-4 border-green-700 shadow-lg">
+                CONTINUA ➡️
+            </button>
+        </div>
+    </div>
+
+    <!-- GAME CONTAINER & HUD -->
+    <div id="gameContainer" class="relative w-full h-full max-w-5xl max-h-[900px] flex flex-col justify-between overflow-hidden bg-slate-950 sm:rounded-2xl sm:m-2 border-slate-800 sm:border-4 shadow-2xl">
+        
+        <!-- TOP HUD -->
+        <div class="relative z-20 flex justify-between items-center p-3 sm:p-4 bg-slate-900/80 backdrop-blur border-b border-slate-700/50">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-red-600 border-2 border-yellow-400 flex items-center justify-center text-xl sm:text-2xl shadow-md">
+                    🕷️
+                </div>
+                <div>
+                    <div id="hudPlayerName" class="font-game text-sm sm:text-base text-yellow-400 leading-tight">Super Eroe Peter</div>
+                    <div class="flex items-center space-x-2">
+                        <span id="hudLevel" class="text-xs sm:text-sm font-bold text-slate-300">LIVELLO 1</span>
+                        <div class="flex items-center text-red-500 font-game text-sm sm:text-base ml-1">
+                            <span class="animate-heart mr-0.5">❤️</span>
+                            <span id="hudLives" class="text-yellow-300">10/10</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col items-end">
+                <div class="font-game text-lg sm:text-2xl text-yellow-300 tracking-wider">
+                    PUNTI: <span id="hudScore">0</span>
+                </div>
+                <div class="w-28 sm:w-40 bg-slate-700 h-3 rounded-full overflow-hidden border border-slate-500 mt-1">
+                    <div id="hudProgressBar" class="bg-gradient-to-r from-yellow-400 to-green-400 h-full w-0 transition-all duration-300"></div>
+                </div>
+                <div id="hudTargetText" class="text-[10px] sm:text-xs text-slate-400 mt-0.5">Obiettivo: 1000 pt</div>
+            </div>
+        </div>
+
+        <!-- CANVAS GAME WORLD -->
+        <canvas id="gameCanvas" class="w-full h-full absolute inset-0 z-0"></canvas>
+
+        <!-- TOUCH CONTROLS OVERLAY -->
+        <div class="relative z-20 flex justify-between items-end p-4 sm:p-6 pointer-events-none select-none h-full">
+            
+            <!-- LEFT 360 DEGREE JOYSTICK ZONE (BOTTOM-LEFT) -->
+            <div id="joystickZone" class="pointer-events-auto relative w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-slate-800/40 border-2 border-white/20 backdrop-blur-md flex items-center justify-center shadow-xl mb-2">
+                <div id="joystickBase" class="w-full h-full rounded-full flex items-center justify-center">
+                    <div id="joystickStick" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-b from-red-500 to-red-700 border-2 border-yellow-300 shadow-2xl flex items-center justify-center text-xl transform transition-transform duration-75">
+                        🕹️
+                    </div>
+                </div>
+                <div class="absolute -top-6 text-[10px] font-bold text-slate-200 bg-slate-900/80 px-2.5 py-0.5 rounded-full border border-slate-700 shadow">
+                    🕹️ RUOTA & VOLA
+                </div>
+            </div>
+
+            <!-- RIGHT ACTION BUTTONS (HIGH UP ON THE SCREEN, VERTICALLY STACKED) -->
+            <div class="pointer-events-auto flex flex-col items-center space-y-4 mb-28 sm:mb-32">
+                
+                <!-- BOMBA BUTTON (TOP RIGHT) -->
+                <div class="relative flex flex-col items-center">
+                    <button id="btnBomb" class="btn-action relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-amber-500/40 hover:bg-amber-500/60 border-4 border-amber-300/80 text-white flex flex-col items-center justify-center shadow-2xl active:scale-90 pulse-bomb">
+                        <span class="text-3xl sm:text-4xl filter drop-shadow">💣</span>
+                        <span class="font-game text-[11px] sm:text-xs text-yellow-200 tracking-wider">BOMBA</span>
+                    </button>
+                    <div id="bombBadge" class="absolute -top-2 -right-2 bg-red-600 border-2 border-yellow-300 font-game text-xs sm:text-sm px-2.5 py-0.5 rounded-full shadow-lg text-yellow-300">
+                        💣 2/2
+                    </div>
+                </div>
+
+                <!-- SPARA RAGNATELE BUTTON (BOTTOM RIGHT) -->
+                <button id="btnWebShoot" class="btn-action w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-red-600/40 hover:bg-red-600/60 border-4 border-red-300/80 text-white flex flex-col items-center justify-center shadow-2xl active:scale-90">
+                    <span class="text-3xl sm:text-4xl filter drop-shadow">🕸️</span>
+                    <span class="font-game text-[10px] sm:text-xs text-red-100 tracking-wider">TELA</span>
+                </button>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- GAME LOGIC SCRIPT -->
+    <script>
+        const AudioFX = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            playShoot() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(700, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(180, this.ctx.currentTime + 0.12);
+                gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.12);
+            },
+            playBombExplosion() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(240, now);
+                osc.frequency.exponentialRampToValueAtTime(20, now + 0.75);
+
+                gain.gain.setValueAtTime(0.7, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.75);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.75);
+            },
+            playHurt() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(180, now);
+                osc.frequency.linearRampToValueAtTime(80, now + 0.25);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            },
+            playPop() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(450, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(900, this.ctx.currentTime + 0.09);
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.09);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.09);
+            },
+            playWin() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const notes = [261.63, 329.63, 392.00, 523.25, 659.25];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.2, now + idx * 0.08);
+                    gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.08 + 0.2);
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 0.2);
+                });
+            }
+        };
+
+        const LEVEL_THRESHOLDS = [
+            { level: 1, targetScore: 1000, name: "Cielo Azzurro ☁️", bg: "#0284c7", sky: "#38bdf8" },
+            { level: 2, targetScore: 2000, name: "Volo al Tramonto 🌅", bg: "#c2410c", sky: "#fb923c" },
+            { level: 3, targetScore: 3000, name: "Volo Spaziale 🌙", bg: "#090d16", sky: "#1e1b4b" },
+            { level: 4, targetScore: 5000, name: "Tempesta Elettrica ⚡", bg: "#3b0764", sky: "#6b21a8" },
+            { level: 5, targetScore: 5000, name: "Eroe Volante Supremo! 🏆", bg: "#064e3b", sky: "#047857" }
+        ];
+
+        const state = {
+            playerName: "Peter",
+            score: 0,
+            lives: 10,
+            maxLives: 10,
+            currentLevel: 1,
+            bombsRemaining: 2,
+            maxBombsPerLevel: 2,
+            isRunning: false,
+            isPaused: false,
+            lastWebShootTime: 0,
+            bombExplosionWave: null
+        };
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const hudPlayerName = document.getElementById('hudPlayerName');
+        const hudLevel = document.getElementById('hudLevel');
+        const hudLives = document.getElementById('hudLives');
+        const hudScore = document.getElementById('hudScore');
+        const hudProgressBar = document.getElementById('hudProgressBar');
+        const hudTargetText = document.getElementById('hudTargetText');
+        const bombBadge = document.getElementById('bombBadge');
+        const btnBomb = document.getElementById('btnBomb');
+        const btnWebShoot = document.getElementById('btnWebShoot');
+
+        // FLYING SPIDER-MAN CHARACTER (ROTATING 360°)
+        const player = {
+            x: 120,
+            y: 200,
+            width: 55,
+            height: 55,
+            vx: 0,
+            vy: 0,
+            flySpeed: 7,
+            angle: 0, // In radians
+            hoverOffset: 0
+        };
+
+        let webs = [];
+        let enemies = [];
+        let collectibles = [];
+        let floatingTexts = [];
+        let bombParticles = [];
+        let clouds = [];
+
+        const ENEMY_TYPES = [
+            { type: 'drone', emoji: '🤖', points: 150, radius: 24, speed: 2.2 },
+            { type: 'dragon', emoji: '🐉', points: 200, radius: 26, speed: 2.8 },
+            { type: 'saucer', emoji: '🛸', points: 250, radius: 22, speed: 3.2 }
+        ];
+
+        const COLLECTIBLE_TYPES = [
+            { emoji: '⭐', points: 100, radius: 18 },
+            { emoji: '🕷️', points: 150, radius: 18 },
+            { emoji: '💎', points: 200, radius: 18 }
+        ];
+
+        function resizeCanvas() {
+            const container = document.getElementById('gameContainer');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            if (player.y > canvas.height - 100) player.y = canvas.height / 2;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function initClouds() {
+            clouds = [];
+            for (let i = 0; i < 8; i++) {
+                clouds.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * (canvas.height * 0.7),
+                    size: 30 + Math.random() * 40,
+                    speed: 0.8 + Math.random() * 1.5
+                });
+            }
+        }
+        initClouds();
+
+        function getCurrentLevelConfig() {
+            return LEVEL_THRESHOLDS[Math.min(state.currentLevel - 1, LEVEL_THRESHOLDS.length - 1)];
+        }
+
+        const joystickZone = document.getElementById('joystickZone');
+        const joystickStick = document.getElementById('joystickStick');
+        let joystickActive = false;
+        let joystickTouchId = null;
+        let joystickCenter = { x: 0, y: 0 };
+
+        function handleJoystickStart(e) {
+            AudioFX.init();
+            if (e.changedTouches) {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const t = e.changedTouches[i];
+                    const rect = joystickZone.getBoundingClientRect();
+                    if (t.clientX >= rect.left && t.clientX <= rect.right &&
+                        t.clientY >= rect.top && t.clientY <= rect.bottom) {
+                        joystickActive = true;
+                        joystickTouchId = t.identifier;
+                        joystickCenter = {
+                            x: rect.left + rect.width / 2,
+                            y: rect.top + rect.height / 2
+                        };
+                        updateJoystickPosition(t.clientX, t.clientY);
+                        break;
+                    }
+                }
+            } else {
+                joystickActive = true;
+                joystickTouchId = 'mouse';
+                const rect = joystickZone.getBoundingClientRect();
+                joystickCenter = {
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2
+                };
+                updateJoystickPosition(e.clientX, e.clientY);
+            }
+        }
+
+        function updateJoystickPosition(clientX, clientY) {
+            const dx = clientX - joystickCenter.x;
+            const dy = clientY - joystickCenter.y;
+            const dist = Math.hypot(dx, dy);
+            const maxDist = 50;
+
+            const angle = Math.atan2(dy, dx);
+            const clampDist = Math.min(dist, maxDist);
+
+            const stickX = Math.cos(angle) * clampDist;
+            const stickY = Math.sin(angle) * clampDist;
+
+            joystickStick.style.transform = `translate(${stickX}px, ${stickY}px)`;
+
+            const normX = stickX / maxDist;
+            const normY = stickY / maxDist;
+
+            player.vx = normX * player.flySpeed;
+            player.vy = normY * player.flySpeed;
+
+            // Link Spider-Man's rotation angle directly to joystick displacement
+            if (dist > 6) {
+                player.angle = angle;
+            }
+        }
+
+        function handleJoystickMove(e) {
+            if (!joystickActive) return;
+
+            if (e.changedTouches) {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === joystickTouchId) {
+                        updateJoystickPosition(e.changedTouches[i].clientX, e.changedTouches[i].clientY);
+                        break;
+                    }
+                }
+            } else if (joystickTouchId === 'mouse') {
+                updateJoystickPosition(e.clientX, e.clientY);
+            }
+        }
+
+        function handleJoystickEnd(e) {
+            if (!joystickActive) return;
+
+            let released = false;
+            if (e.changedTouches) {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === joystickTouchId) {
+                        released = true;
+                        break;
+                    }
+                }
+            } else {
+                released = true;
+            }
+
+            if (released) {
+                joystickActive = false;
+                joystickTouchId = null;
+                joystickStick.style.transform = `translate(0px, 0px)`;
+                player.vx = 0;
+                player.vy = 0;
+            }
+        }
+
+        joystickZone.addEventListener('touchstart', handleJoystickStart, { passive: false });
+        window.addEventListener('touchmove', handleJoystickMove, { passive: false });
+        window.addEventListener('touchend', handleJoystickEnd);
+        window.addEventListener('touchcancel', handleJoystickEnd);
+
+        joystickZone.addEventListener('mousedown', handleJoystickStart);
+        window.addEventListener('mousemove', (e) => { if (joystickActive) handleJoystickMove(e); });
+        window.addEventListener('mouseup', handleJoystickEnd);
+
+        // Keyboard navigation fallback
+        const keys = {};
+        window.addEventListener('keydown', (e) => {
+            AudioFX.init();
+            keys[e.key] = true;
+            if (e.key === 'b' || e.key === 'B') triggerBomb();
+            if (e.key === ' ' || e.key === 'f' || e.key === 'F') shootWeb();
+        });
+        window.addEventListener('keyup', (e) => { keys[e.key] = false; });
+
+        function shootWeb() {
+            const now = Date.now();
+            if (now - state.lastWebShootTime < 180) return;
+            state.lastWebShootTime = now;
+
+            const speed = 17;
+            const vx = Math.cos(player.angle) * speed;
+            const vy = Math.sin(player.angle) * speed;
+
+            const startX = player.x + player.width / 2 + Math.cos(player.angle) * 25;
+            const startY = player.y + player.height / 2 + Math.sin(player.angle) * 25;
+
+            webs.push({
+                x: startX,
+                y: startY,
+                vx: vx,
+                vy: vy,
+                radius: 9,
+                life: 65
+            });
+
+            AudioFX.playShoot();
+        }
+
+        function triggerBomb() {
+            if (state.bombsRemaining <= 0) return;
+
+            state.bombsRemaining--;
+            updateHUD();
+
+            AudioFX.playBombExplosion();
+
+            state.bombExplosionWave = {
+                x: player.x + player.width / 2,
+                y: player.y + player.height / 2,
+                radius: 10,
+                maxRadius: Math.max(canvas.width, canvas.height) * 1.3,
+                alpha: 1.0
+            };
+
+            for (let i = 0; i < 50; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 5 + Math.random() * 12;
+                bombParticles.push({
+                    x: state.bombExplosionWave.x,
+                    y: state.bombExplosionWave.y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: 5 + Math.random() * 7,
+                    life: 50,
+                    maxLife: 50
+                });
+            }
+
+            let totalDestroyed = 0;
+            enemies.forEach((enemy) => {
+                totalDestroyed++;
+                state.score += enemy.points;
+                spawnFloatingText(`+${enemy.points} 💣`, enemy.x, enemy.y, '#f59e0b');
+            });
+
+            if (totalDestroyed > 0) {
+                spawnFloatingText(`BOOM RAGNATELA! 💥`, canvas.width / 2, canvas.height / 3, '#ef4444');
+            } else {
+                spawnFloatingText(`ONDA MAGICA! 🕸️`, player.x, player.y - 40, '#38bdf8');
+            }
+
+            enemies = [];
+            checkLevelProgress();
+        }
+
+        // Multi-touch friendly listeners for action buttons
+        let isWebHolding = false;
+        let webHoldInterval = null;
+
+        function startWebShooting(e) {
+            if (e) e.preventDefault();
+            AudioFX.init();
+            shootWeb();
+            if (!isWebHolding) {
+                isWebHolding = true;
+                webHoldInterval = setInterval(() => {
+                    if (isWebHolding) shootWeb();
+                }, 200);
+            }
+        }
+
+        function stopWebShooting(e) {
+            isWebHolding = false;
+            if (webHoldInterval) {
+                clearInterval(webHoldInterval);
+                webHoldInterval = null;
+            }
+        }
+
+        btnWebShoot.addEventListener('touchstart', startWebShooting, { passive: false });
+        btnWebShoot.addEventListener('touchend', stopWebShooting);
+        btnWebShoot.addEventListener('touchcancel', stopWebShooting);
+        btnWebShoot.addEventListener('mousedown', startWebShooting);
+        window.addEventListener('mouseup', stopWebShooting);
+
+        btnBomb.addEventListener('touchstart', (e) => { e.preventDefault(); triggerBomb(); }, { passive: false });
+        btnBomb.addEventListener('click', triggerBomb);
+
+        function spawnFloatingText(text, x, y, color = '#facc15') {
+            floatingTexts.push({
+                text, x, y, color, opacity: 1, vy: -1.5
+            });
+        }
+
+        function loseLife() {
+            state.lives--;
+            AudioFX.playHurt();
+            spawnFloatingText(`-1 ❤️`, player.x, player.y - 30, '#ef4444');
+            updateHUD();
+
+            if (state.lives <= 0) {
+                state.isPaused = true;
+                document.getElementById('levelModalTitle').innerText = `RIPROVA SUPER EROE! 💔`;
+                document.getElementById('levelModalDesc').innerText = `Hai finito le vite. Riapri il volo e riprova il livello!`;
+                document.getElementById('nextLevelBtn').innerText = `RICOMINCIA 🔄`;
+                document.getElementById('nextLevelBtn').onclick = () => {
+                    state.lives = state.maxLives;
+                    state.bombsRemaining = state.maxBombsPerLevel;
+                    enemies = [];
+                    webs = [];
+                    collectibles = [];
+                    state.isPaused = false;
+                    document.getElementById('levelModal').classList.add('hidden');
+                    updateHUD();
+                };
+                document.getElementById('levelModal').classList.remove('hidden');
+            }
+        }
+
+        function checkLevelProgress() {
+            const currentConfig = getCurrentLevelConfig();
+            
+            // Progression target scores:
+            // Level 1 -> 2: 1000pt
+            // Level 2 -> 3: 2000pt
+            // Level 3 -> 4: 3000pt
+            // Level 4 -> 5: 5000pt
+            if (state.score >= currentConfig.targetScore && state.currentLevel < 5) {
+                state.isPaused = true;
+                AudioFX.playWin();
+
+                const nextLvlNum = state.currentLevel + 1;
+                document.getElementById('levelModalTitle').innerText = `LIVELLO ${state.currentLevel} COMPLETATO! 🎉`;
+                document.getElementById('levelModalDesc').innerText = `Bravo Super Eroe ${state.playerName}! Prossimo obiettivo: ${LEVEL_THRESHOLDS[nextLvlNum - 1].targetScore} Punti!`;
+                document.getElementById('nextLevelBtn').innerText = `CONTINUA ➡️`;
+                document.getElementById('nextLevelBtn').onclick = advanceToNextLevel;
+                document.getElementById('levelModal').classList.remove('hidden');
+            }
+            updateHUD();
+        }
+
+        function advanceToNextLevel() {
+            if (state.currentLevel < 5) {
+                state.currentLevel++;
+                state.lives = state.maxLives; // Restore 10 lives
+                state.bombsRemaining = state.maxBombsPerLevel;
+                enemies = [];
+                webs = [];
+                collectibles = [];
+                state.isPaused = false;
+                document.getElementById('levelModal').classList.add('hidden');
+                updateHUD();
+                spawnFloatingText(`LIVELLO ${state.currentLevel}! 🚀`, canvas.width / 2, canvas.height / 3, '#38bdf8');
+            } else {
+                document.getElementById('levelModalTitle').innerText = `CAMPIONE DEI CIELI! 🏆`;
+                document.getElementById('levelModalDesc').innerText = `Sei il più grande Spider-Man Volante! Punteggio Finale: ${state.score}`;
+                document.getElementById('nextLevelBtn').innerText = `VOLA ANCORA 🔄`;
+                document.getElementById('nextLevelBtn').onclick = () => window.location.reload();
+            }
+        }
+
+        function updateHUD() {
+            const currentConfig = getCurrentLevelConfig();
+            hudScore.innerText = state.score;
+            hudLevel.innerText = `LIVELLO ${state.currentLevel}`;
+            hudLives.innerText = `${state.lives}/${state.maxLives}`;
+            hudTargetText.innerText = `Obiettivo: ${currentConfig.targetScore} pt`;
+
+            const prevTarget = state.currentLevel > 1 ? LEVEL_THRESHOLDS[state.currentLevel - 2].targetScore : 0;
+            const progress = Math.min(100, Math.max(0, ((state.score - prevTarget) / (currentConfig.targetScore - prevTarget)) * 100));
+            hudProgressBar.style.width = `${progress}%`;
+
+            bombBadge.innerText = `💣 ${state.bombsRemaining}/${state.maxBombsPerLevel}`;
+            if (state.bombsRemaining <= 0) {
+                btnBomb.classList.add('opacity-40');
+                btnBomb.classList.remove('pulse-bomb');
+            } else {
+                btnBomb.classList.remove('opacity-40');
+                btnBomb.classList.add('pulse-bomb');
+            }
+        }
+
+        let lastSpawnTime = 0;
+        function updateSpawns(timestamp) {
+            if (timestamp - lastSpawnTime > 1600 - (state.currentLevel * 180)) {
+                lastSpawnTime = timestamp;
+
+                if (enemies.length < 4 + state.currentLevel) {
+                    const template = ENEMY_TYPES[Math.floor(Math.random() * ENEMY_TYPES.length)];
+                    enemies.push({
+                        ...template,
+                        x: canvas.width + 50,
+                        y: 80 + Math.random() * (canvas.height - 200),
+                        vx: -(template.speed + Math.random() * 1.5 + state.currentLevel * 0.4),
+                        vy: Math.sin(timestamp / 300) * 1.5
+                    });
+                }
+
+                if (collectibles.length < 4) {
+                    const cTemplate = COLLECTIBLE_TYPES[Math.floor(Math.random() * COLLECTIBLE_TYPES.length)];
+                    collectibles.push({
+                        ...cTemplate,
+                        x: canvas.width + 40,
+                        y: 70 + Math.random() * (canvas.height - 180),
+                        vx: -2.5
+                    });
+                }
+            }
+        }
+
+        function update() {
+            if (!state.isRunning || state.isPaused) return;
+
+            if (!joystickActive) {
+                player.vx = 0;
+                player.vy = 0;
+                if (keys['ArrowRight'] || keys['d'] || keys['D']) { player.vx = player.flySpeed; player.angle = 0; }
+                if (keys['ArrowLeft'] || keys['a'] || keys['A']) { player.vx = -player.flySpeed; player.angle = Math.PI; }
+                if (keys['ArrowUp'] || keys['w'] || keys['W']) { player.vy = -player.flySpeed; player.angle = -Math.PI / 2; }
+                if (keys['ArrowDown'] || keys['s'] || keys['S']) { player.vy = player.flySpeed; player.angle = Math.PI / 2; }
+            }
+
+            player.hoverOffset += 0.08;
+            const floatY = Math.sin(player.hoverOffset) * 0.8;
+
+            player.x += player.vx;
+            player.y += player.vy + floatY;
+
+            const topMargin = 60;
+            const bottomMargin = canvas.height - 100;
+            player.x = Math.max(10, Math.min(canvas.width - player.width - 10, player.x));
+            player.y = Math.max(topMargin, Math.min(bottomMargin, player.y));
+
+            clouds.forEach((cloud) => {
+                cloud.x -= cloud.speed;
+                if (cloud.x < -100) cloud.x = canvas.width + 100;
+            });
+
+            for (let i = webs.length - 1; i >= 0; i--) {
+                const w = webs[i];
+                w.x += w.vx;
+                w.y += w.vy;
+                w.life--;
+
+                if (w.life <= 0 || w.x < -20 || w.x > canvas.width + 20 || w.y < 0 || w.y > canvas.height) {
+                    webs.splice(i, 1);
+                }
+            }
+
+            for (let cIdx = collectibles.length - 1; cIdx >= 0; cIdx--) {
+                const col = collectibles[cIdx];
+                col.x += col.vx;
+
+                const dist = Math.hypot((player.x + player.width / 2) - col.x, (player.y + player.height / 2) - col.y);
+                if (dist < col.radius + 28) {
+                    AudioFX.playPop();
+                    state.score += col.points;
+                    spawnFloatingText(`+${col.points} ${col.emoji}`, col.x, col.y, '#facc15');
+                    collectibles.splice(cIdx, 1);
+                    checkLevelProgress();
+                } else if (col.x < -40) {
+                    collectibles.splice(cIdx, 1);
+                }
+            }
+
+            for (let eIdx = enemies.length - 1; eIdx >= 0; eIdx--) {
+                const e = enemies[eIdx];
+                e.x += e.vx;
+                e.y += e.vy;
+
+                // Hit test with web shots
+                for (let wIdx = webs.length - 1; wIdx >= 0; wIdx--) {
+                    const w = webs[wIdx];
+                    const dist = Math.hypot(e.x - w.x, e.y - w.y);
+                    if (dist < e.radius + w.radius) {
+                        AudioFX.playPop();
+                        state.score += e.points;
+                        spawnFloatingText(`+${e.points}`, e.x, e.y);
+                        enemies.splice(eIdx, 1);
+                        webs.splice(wIdx, 1);
+                        checkLevelProgress();
+                        break;
+                    }
+                }
+
+                // If enemy escapes past the screen without being shot, lose 1 life
+                if (e && e.x < -50) {
+                    enemies.splice(eIdx, 1);
+                    loseLife();
+                }
+            }
+
+            if (state.bombExplosionWave) {
+                state.bombExplosionWave.radius += 28;
+                state.bombExplosionWave.alpha -= 0.025;
+                if (state.bombExplosionWave.alpha <= 0) {
+                    state.bombExplosionWave = null;
+                }
+            }
+
+            for (let pIdx = bombParticles.length - 1; pIdx >= 0; pIdx--) {
+                const p = bombParticles[pIdx];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                if (p.life <= 0) bombParticles.splice(pIdx, 1);
+            }
+
+            for (let tIdx = floatingTexts.length - 1; tIdx >= 0; tIdx--) {
+                const t = floatingTexts[tIdx];
+                t.y += t.vy;
+                t.opacity -= 0.02;
+                if (t.opacity <= 0) floatingTexts.splice(tIdx, 1);
+            }
+        }
+
+        function render() {
+            const lvlConfig = getCurrentLevelConfig();
+
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            skyGrad.addColorStop(0, lvlConfig.sky);
+            skyGrad.addColorStop(1, lvlConfig.bg);
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+            clouds.forEach((cloud) => {
+                ctx.beginPath();
+                ctx.arc(cloud.x, cloud.y, cloud.size, 0, Math.PI * 2);
+                ctx.arc(cloud.x + cloud.size * 0.6, cloud.y - cloud.size * 0.2, cloud.size * 0.7, 0, Math.PI * 2);
+                ctx.arc(cloud.x - cloud.size * 0.6, cloud.y - cloud.size * 0.2, cloud.size * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.5)';
+            const buildingWidth = 80;
+            const numBuildings = Math.ceil(canvas.width / buildingWidth) + 1;
+            for (let i = 0; i < numBuildings; i++) {
+                const h = 80 + ((i * 43) % 120);
+                const x = i * buildingWidth;
+                const y = canvas.height - h;
+                ctx.fillRect(x, y, buildingWidth - 6, h);
+            }
+
+            // RENDER 360-DEGREE ROTATING SPIDER-MAN
+            ctx.save();
+            ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+            ctx.rotate(player.angle);
+
+            // Web cape / trail
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.beginPath();
+            ctx.moveTo(-15, 0);
+            ctx.lineTo(-35, 15);
+            ctx.lineTo(-10, 20);
+            ctx.fill();
+
+            // Head / Mask
+            ctx.fillStyle = '#dc2626';
+            ctx.beginPath();
+            ctx.roundRect(-22, -22, 44, 44, 14);
+            ctx.fill();
+
+            // Suit
+            ctx.fillStyle = '#2563eb';
+            ctx.fillRect(-14, 2, 28, 18);
+
+            // Spider eye mask
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.ellipse(6, -8, 8, 12, Math.PI / 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Spider symbol
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(0, -2, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+
+            // Web Shots
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#e2e8f0';
+            webs.forEach((w) => {
+                ctx.beginPath();
+                ctx.arc(w.x, w.y, w.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
+
+            // Collectibles
+            ctx.font = '28px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            collectibles.forEach((c) => {
+                ctx.fillText(c.emoji, c.x, c.y);
+            });
+
+            // Flying Spaceships / Enemies
+            ctx.font = '36px sans-serif';
+            enemies.forEach((e) => {
+                ctx.fillText(e.emoji, e.x, e.y);
+            });
+
+            // Bomb Wave Explosions
+            if (state.bombExplosionWave) {
+                const wave = state.bombExplosionWave;
+                ctx.save();
+                ctx.strokeStyle = `rgba(255, 255, 255, ${wave.alpha})`;
+                ctx.lineWidth = 10;
+                ctx.beginPath();
+                ctx.arc(wave.x, wave.y, wave.radius, 0, Math.PI * 2);
+                ctx.stroke();
+
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = `rgba(245, 158, 11, ${wave.alpha})`;
+                for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+                    ctx.beginPath();
+                    ctx.moveTo(wave.x, wave.y);
+                    ctx.lineTo(wave.x + Math.cos(a) * wave.radius, wave.y + Math.sin(a) * wave.radius);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            bombParticles.forEach((p) => {
+                ctx.fillStyle = `rgba(251, 191, 36, ${p.life / p.maxLife})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            floatingTexts.forEach((t) => {
+                ctx.save();
+                ctx.font = '900 22px Fredoka One, cursive';
+                ctx.fillStyle = t.color;
+                ctx.globalAlpha = Math.max(0, t.opacity);
+                ctx.fillText(t.text, t.x, t.y);
+                ctx.restore();
+            });
+        }
+
+        function gameLoop(timestamp) {
+            update();
+            updateSpawns(timestamp);
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        document.getElementById('startGameBtn').addEventListener('click', () => {
+            const input = document.getElementById('playerNameInput').value.trim();
+            if (input) state.playerName = input;
+            
+            hudPlayerName.innerText = `Super Eroe ${state.playerName}`;
+            document.getElementById('startModal').classList.add('hidden');
+            
+            state.isRunning = true;
+            state.lives = state.maxLives;
+            state.bombsRemaining = state.maxBombsPerLevel;
+            updateHUD();
+            AudioFX.init();
+        });
+
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
+```
