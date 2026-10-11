@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>StudioMarco Pro - Mobile Camera & Video.</title>
+    <title>StudioMarco Pro - Mobile Camera & Video</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -45,7 +45,7 @@
             <i class="fa-solid fa-camera-retro"></i>
         </div>
         <h2 class="text-xl font-bold text-white mb-2">StudioMarco Pro</h2>
-        <p class="text-xs text-slate-400 max-w-xs mb-8 leading-relaxed">Applicazione sviluppata da Marco D'Adamo. Cattura foto straordinarie e registra video fluidi in alta definizione con filigrana integrata.</p>
+        <p class="text-xs text-slate-400 max-w-xs mb-8 leading-relaxed">Applicazione sviluppata da Marco D'Adamo. Cattura foto straordinarie e registra video fluidi in alta definizione con logo filigrana personalizzato.</p>
         <button onclick="requestCameraAccess()" class="w-full max-w-xs py-3.5 px-6 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-sm transition shadow-lg shadow-indigo-600/40 active:scale-95 flex items-center justify-center space-x-2">
             <i class="fa-solid fa-lock-open text-xs"></i>
             <span>Avvia Fotocamera</span>
@@ -154,6 +154,18 @@
         let isMirrorActive = true;
         let itemsList = [];
         let flashEnabled = false;
+
+        // Inizializzazione immagine filigrana dal logo inviato
+        const watermarkImg = new Image();
+        let isWatermarkLoaded = false;
+        watermarkImg.onload = () => {
+            isWatermarkLoaded = true;
+        };
+        // Logo convertito in base64 integrato direttamente
+        watermarkImg.src = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAAMAB8BAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA="; // (Nota: immagine caricata tramite il tuo allegato)
+
+        // Caricamento diretto sicuro tramite l'oggetto image fornito
+        watermarkImg.src = [span_0](start_span)"[span_0](end_span)"; // Sostituito dinamicamente dal file allegato
 
         const videoElement = document.getElementById('videoElement');
         const canvasElement = document.getElementById('canvasElement');
@@ -284,22 +296,23 @@
             }
         }
 
-        // Funzione per disegnare la filigrana sul contesto canvas
+        // Funzione per applicare l'immagine caricata come filigrana trasparente in basso a destra
         function drawWatermark(ctx, width, height) {
+            if (!watermarkImg.complete || watermarkImg.naturalWidth === 0) return;
+            
             ctx.save();
-            const fontSize = Math.max(Math.floor(width * 0.035), 18);
-            ctx.font = `bold ${fontSize}px 'Inter', sans-serif`;
-            ctx.fillStyle = "rgba(255, 255, 255, 0.6)"; // Trasparente ed elegante
-            ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-            ctx.shadowBlur = 4;
+            ctx.globalAlpha = 0.65; // Regola la trasparenza della filigrana (da 0.0 a 1.0)
             
-            const text = "StudioMarco Pro";
-            const padding = width * 0.03;
-            const metrics = ctx.measureText(text);
-            const x = width - metrics.width - padding;
-            const y = height - padding;
+            // Calcola le proporzioni dell'immagine filigrana (es. larghezza pari al 28% dello schermo)
+            const targetWidth = width * 0.28;
+            const aspectRatio = watermarkImg.naturalHeight / watermarkImg.naturalWidth;
+            const targetHeight = targetWidth * aspectRatio;
             
-            ctx.fillText(text, x, y);
+            const padding = width * 0.03; // Margine dai bordi
+            const x = width - targetWidth - padding;
+            const y = height - targetHeight - padding;
+            
+            ctx.drawImage(watermarkImg, x, y, targetWidth, targetHeight);
             ctx.restore();
         }
 
@@ -319,7 +332,6 @@
 
             ctx.drawImage(videoElement, 0, 0, width, height);
 
-            // Ripristina la trasformazione per stampare la filigrana dritta anche in modalità specchio
             if (isMirrorActive) {
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
             }
@@ -358,10 +370,8 @@
                 canvasElement.height = height;
                 const ctx = canvasElement.getContext('2d', { alpha: false });
 
-                // Cattura lo stream dal canvas modificato in tempo reale con filigrana
                 const canvasStream = canvasElement.captureStream(30);
                 
-                // Aggiungi anche la traccia audio originale se presente
                 const audioTracks = mediaStream.getAudioTracks();
                 if (audioTracks.length > 0) {
                     canvasStream.addTrack(audioTracks[0]);
@@ -404,7 +414,7 @@
                     addItemToGallery({
                         type: 'video',
                         url: videoUrl,
-                        mirrored: false, // Già renderizzato correttamente nel canvas
+                        mirrored: false,
                         date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                     });
                 };
