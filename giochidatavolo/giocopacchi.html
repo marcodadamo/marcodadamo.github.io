@@ -1,4 +1,3 @@
-Gioco sviluppato da Marco D'Adamo.
 <!DOCTYPE html>
 <html lang="it" class="h-full">
 <head>
@@ -35,6 +34,11 @@ Gioco sviluppato da Marco D'Adamo.
             color: #94a3b8 !important;
             cursor: not-allowed;
             transform: scale(0.95);
+        }
+        .pacco-nero-box {
+            background: linear-gradient(135deg, #1e1b4b 0%, #09090b 100%) !important;
+            border-color: #7c3aed !important;
+            box-shadow: 0 0 15px rgba(124, 58, 237, 0.4);
         }
         @keyframes phoneRing {
             0% { transform: rotate(0deg); }
@@ -282,7 +286,7 @@ Gioco sviluppato da Marco D'Adamo.
                     </div>
                     <div>
                         <p class="text-xs text-slate-400 uppercase font-semibold">Fase di Gioco</p>
-                        <h3 id="game-phase-title" class="text-lg font-black text-white">Apri pacchi</h3>
+                        <h3 id="game-phase-title" class="text-lg font-black text-white">Apri 6 pacchi</h3>
                     </div>
                 </div>
                 <div class="flex items-center space-x-3 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-700">
@@ -342,7 +346,7 @@ Gioco sviluppato da Marco D'Adamo.
             </div>
 
             <div class="flex flex-col sm:flex-row justify-center gap-4">
-                <button onclick="proposeSwapFinal()" class="px-6 py-4 bg-amber-600 hover:bg-amber-500 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center space-x-2">
+                <button onclick="proposeSwap()" class="px-6 py-4 bg-amber-600 hover:bg-amber-500 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center space-x-2">
                     <i class="fa-solid fa-right-left"></i>
                     <span>ACCETTA IL CAMBIO PACCO</span>
                 </button>
@@ -372,7 +376,7 @@ Gioco sviluppato da Marco D'Adamo.
         </div>
     </div>
 
-    <!-- Doctor Call Modal (Standard Offer or Swap Offer) -->
+    <!-- Doctor Call Modal -->
     <div id="modal-doctor" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4">
         <div class="bg-slate-900 border border-amber-500/40 rounded-3xl p-8 max-w-lg w-full text-center shadow-2xl doctor-glow relative overflow-hidden">
             <div class="absolute -top-10 -right-10 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl"></div>
@@ -382,16 +386,24 @@ Gioco sviluppato da Marco D'Adamo.
             </div>
             
             <span class="text-xs font-black uppercase tracking-widest text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30">IL DOTTORE CHIAMA</span>
-            <h3 id="doctor-modal-title" class="text-2xl md:text-3xl font-black text-white mt-3">Offerta del Dottore</h3>
+            <h3 class="text-2xl md:text-3xl font-black text-white mt-3">Offerta del Dottore</h3>
             
-            <div class="my-6 bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-inner" id="doctor-content-container">
-                <!-- Dynamic content: Money Offer or Swap Proposal -->
+            <div class="my-6 bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-inner">
+                <p class="text-sm text-slate-400 mb-1">Il Dottore ti offre:</p>
+                <div id="doctor-offer-amount" class="text-4xl md:text-5xl font-black text-amber-400 tracking-tight">15.000 €</div>
             </div>
 
-            <p id="doctor-modal-desc" class="text-slate-300 text-sm mb-8 font-medium">Vuoi accettare l'offerta e chiudere la partita o rifiutare e andare avanti?</p>
+            <p class="text-slate-300 text-sm mb-8 font-medium">Vuoi accettare l'offerta e chiudere la partita o rifiutare e andare avanti?</p>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="doctor-buttons-container">
-                <!-- Dynamic buttons -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button onclick="acceptDoctorOffer()" class="py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-check"></i>
+                    <span>ACCETTA OFFERTA</span>
+                </button>
+                <button onclick="refuseDoctorOffer()" class="py-4 bg-red-600 hover:bg-red-500 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-xmark"></i>
+                    <span>RIFIUTA (VADO AVANTI)</span>
+                </button>
             </div>
         </div>
     </div>
@@ -422,10 +434,10 @@ Gioco sviluppato da Marco D'Adamo.
     </footer>
 
     <script>
-        // Official 20 standard prizes of Affari Tuoi (Euro scale) - Single 300.000 (replaced duplicate with 250.000)
+        // Official 20 standard prizes of Affari Tuoi (Euro scale) - No 300k duplicate, added Pacco Nero ("Pacco Nero" represented as special string/value or custom object)
         const PRIZES = [
             0, 1, 5, 10, 20, 50, 100, 200, 500, 5000,
-            10000, 15000, 20000, 30000, 50000, 75000, 100000, 200000, 250000, 300000
+            10000, 15000, 20000, 30000, 50000, 75000, 100000, 200000, 300000, "Pacco Nero"
         ];
 
         // All 20 Italian Regions for mapping to boxes
@@ -440,18 +452,18 @@ Gioco sviluppato da Marco D'Adamo.
             playerName: '',
             playerRegion: '',
             myBoxNumber: null,
-            boxes: [],
-            totalOpenedCount: 0, // Keeps track of total opened boxes across turns
+            boxes: [], // Array of 20 objects: { number, prize, region, opened: false }
+            turnStep: 0, // index in TURNS_SCHEDULE
             boxesOpenedThisTurn: 0,
             lastOpenedBox: null,
             ended: false,
-            swapOfferCount: 0 // Tracks how many times the swap offer has been made (target: 2)
+            finalOfferAccepted: false
         };
 
-        // Turn schedule: 6, 2, 2, 4, 2, 2, 4 (Total: 8 + 8 + 4 = 20 boxes)
-        // Swap offers happen exactly after 8 boxes opened (end of step index 1) and after 16 boxes opened (end of step index 3).
-        const TURNS_SCHEDULE = [6, 2, 2, 4, 2, 2, 4];
+        // Turn schedule: how many boxes to open per session
+        const TURNS_SCHEDULE = [6, 3, 3, 2, 2, 1, 1, 1]; // Remaining 2 boxes at final
 
+        // Initialize setup box grid selector
         function initSetupBoxes() {
             const container = document.getElementById('setup-box-grid');
             container.innerHTML = '';
@@ -536,7 +548,7 @@ Gioco sviluppato da Marco D'Adamo.
             board.innerHTML = '';
             
             const leftPrizes = [0, 1, 5, 10, 20, 50, 100, 200, 500, 5000];
-            const rightPrizes = [10000, 15000, 20000, 30000, 50000, 75000, 100000, 200000, 250000, 300000];
+            const rightPrizes = [10000, 15000, 20000, 30000, 50000, 75000, 100000, 200000, 300000, "Pacco Nero"];
 
             const openedPrizesList = gameState.boxes.filter(b => b.opened).map(b => b.prize);
             let consumedOpened = [...openedPrizesList];
@@ -552,11 +564,15 @@ Gioco sviluppato da Marco D'Adamo.
                     }
 
                     let bgClass = isRed ? 'bg-red-600/20 border-red-500/40 text-red-400' : 'bg-blue-600/20 border-blue-500/40 text-blue-400';
+                    if (p === "Pacco Nero") {
+                        bgClass = 'bg-purple-600/20 border-purple-500/40 text-purple-300 font-extrabold';
+                    }
+
                     if (isOpened) {
                         bgClass = 'bg-slate-800/40 border-slate-700/40 text-slate-600 line-through opacity-40';
                     }
 
-                    let formattedPrice = p >= 1000 ? (p.toLocaleString() + ' €') : (p + ' €');
+                    let formattedPrice = typeof p === 'number' ? (p >= 1000 ? (p.toLocaleString() + ' €') : (p + ' €')) : p;
                     html += `<div class="p-2 rounded-xl border text-center font-bold text-xs md:text-sm ${bgClass}">${formattedPrice}</div>`;
                 });
                 html += '</div>';
@@ -578,36 +594,39 @@ Gioco sviluppato da Marco D'Adamo.
                 if (box.opened) {
                     btn.className += ' box-opened';
                     btn.disabled = true;
+                    let displayPrize = typeof box.prize === 'number' ? (box.prize >= 1000 ? box.prize.toLocaleString()+'€' : box.prize+'€') : box.prize;
                     btn.innerHTML = `
                         <span class="text-[10px] text-slate-500 font-semibold truncate w-full text-center">${box.region}</span>
                         <span class="text-sm font-black text-slate-400">#${box.number}</span>
-                        <span class="text-xs text-slate-500 font-bold">${box.prize >= 1000 ? box.prize.toLocaleString()+'€' : box.prize+'€'}</span>
+                        <span class="text-xs text-slate-500 font-bold">${displayPrize}</span>
                     `;
                 } else {
-                    if (isMyBox) {
+                    if (box.prize === "Pacco Nero" && isMyBox) {
+                        btn.className += ' pacco-nero-box text-white';
+                    } else if (isMyBox) {
                         btn.className += ' bg-gradient-to-br from-amber-500 to-yellow-600 border-amber-300 text-white shadow-amber-500/30';
-                        btn.innerHTML = `
-                            <span class="text-[9px] uppercase bg-black/30 px-1.5 py-0.5 rounded text-amber-200 font-bold leading-none">Il tuo</span>
-                            <span class="text-xl md:text-2xl font-black leading-none text-white my-0.5">#${box.number}</span>
-                            <span class="text-[11px] md:text-xs font-semibold text-amber-100 truncate w-full text-center leading-tight">${box.region}</span>
-                        `;
                     } else {
                         btn.className += ' bg-slate-800 hover:bg-slate-700 border-slate-700 text-white';
-                        btn.innerHTML = `
-                            <span class="text-[10px] text-slate-400 font-medium leading-none">Pacco</span>
-                            <span class="text-xl md:text-2xl font-black text-amber-400 leading-none my-0.5">#${box.number}</span>
-                            <span class="text-[11px] md:text-xs font-bold text-slate-300 truncate w-full text-center leading-tight">${box.region}</span>
-                        `;
                     }
-                    btn.onclick = () => openBox(box.number);
+
+                    let badgeText = isMyBox ? 'Il tuo' : 'Pacco';
+                    let badgeClass = isMyBox ? 'bg-black/30 px-1.5 py-0.5 rounded text-amber-200 font-bold leading-none text-[9px]' : 'text-[10px] text-slate-400 font-medium leading-none';
+
+                    btn.innerHTML = `
+                        <span class="${badgeClass}">${badgeText}</span>
+                        <span class="text-xl md:text-2xl font-black leading-none text-amber-400 my-0.5">#${box.number}</span>
+                        <span class="text-[11px] md:text-xs font-semibold text-slate-300 truncate w-full text-center leading-tight">${box.region}</span>
+                    `;
                 }
+                btn.onclick = () => openBox(box.number);
                 grid.appendChild(btn);
             });
         }
 
         function updateTurnInfo() {
             const boxesToOpen = TURNS_SCHEDULE[gameState.turnStep] || 1;
-            const remainingThisTurn = boxesToOpen - gameState.boxesOpenedThisTurn;
+            const currentOpenedInTurn = gameState.boxesOpenedThisTurn;
+            const remainingThisTurn = boxesToOpen - currentOpenedInTurn;
 
             document.getElementById('game-phase-title').innerText = `Turno ${gameState.turnStep + 1}: Apri ${boxesToOpen} pacco/i`;
             document.getElementById('boxes-to-open-count').innerText = remainingThisTurn;
@@ -627,7 +646,6 @@ Gioco sviluppato da Marco D'Adamo.
             box.opened = true;
             gameState.lastOpenedBox = box;
             gameState.boxesOpenedThisTurn++;
-            gameState.totalOpenedCount++;
 
             showBoxModal(box);
         }
@@ -635,10 +653,15 @@ Gioco sviluppato da Marco D'Adamo.
         function showBoxModal(box) {
             const modal = document.getElementById('modal-box-result');
             document.getElementById('modal-box-number-display').innerText = `#${box.number}`;
-            document.getElementById('modal-prize-amount').innerText = box.prize >= 1000 ? box.prize.toLocaleString() + ' €' : box.prize + ' €';
+            
+            let prizeFormatted = typeof box.prize === 'number' ? (box.prize >= 1000 ? box.prize.toLocaleString() + ' €' : box.prize + ' €') : box.prize;
+            document.getElementById('modal-prize-amount').innerText = prizeFormatted;
             
             const typeBadge = document.getElementById('modal-prize-type');
-            if (box.prize >= 10000) {
+            if (box.prize === "Pacco Nero") {
+                typeBadge.className = 'text-xs font-bold px-3 py-1 rounded-full inline-block mb-6 bg-purple-500/20 text-purple-300 border border-purple-500/30';
+                typeBadge.innerText = `PACCO NERO (${box.region.toUpperCase()})`;
+            } else if (box.prize >= 10000) {
                 typeBadge.className = 'text-xs font-bold px-3 py-1 rounded-full inline-block mb-6 bg-red-500/20 text-red-400 border border-red-500/30';
                 typeBadge.innerText = `PREMIO ROSSO (${box.region.toUpperCase()})`;
             } else {
@@ -673,78 +696,22 @@ Gioco sviluppato da Marco D'Adamo.
             soundMgr.playTension();
             soundMgr.playPhoneRing();
 
+            const unopened = gameState.boxes.filter(b => !b.opened);
+            // Treat Pacco Nero as 0 or small nominal value for calculation average if present
+            const sum = unopened.reduce((acc, curr) => acc + (typeof curr.prize === 'number' ? curr.prize : 5000), 0);
+            let avg = sum / unopened.length;
+
+            let offerMultiplier = 0.65 + (gameState.turnStep * 0.05);
+            if (offerMultiplier > 1.05) offerMultiplier = 1.05;
+            let offer = Math.round((avg * offerMultiplier) / 500) * 500;
+            if (offer < 500) offer = 500;
+
+            window.currentDoctorOffer = offer;
+
+            document.getElementById('doctor-offer-amount').innerText = offer.toLocaleString() + ' €';
             const docModal = document.getElementById('modal-doctor');
-            const titleEl = document.getElementById('doctor-modal-title');
-            const contentEl = document.getElementById('doctor-content-container');
-            const descEl = document.getElementById('doctor-modal-desc');
-            const btnEl = document.getElementById('doctor-buttons-container');
-
-            // Check if we need to offer a package swap (every 8 opened boxes, up to 2 times total)
-            if (gameState.totalOpenedCount % 8 === 0 && gameState.swapOfferCount < 2) {
-                gameState.swapOfferCount++;
-                titleEl.innerText = "Il Dottore ti propone il Cambio Pacco!";
-                contentEl.innerHTML = `
-                    <p class="text-sm text-slate-300 mb-2">Il Dottore ti offre la possibilità di cambiare il tuo pacco attuale con uno dei pacchi ancora rimasti chiusi in gioco.</p>
-                    <div class="text-2xl font-black text-amber-400">Vuoi effettuare il cambio?</div>
-                `;
-                descEl.innerText = "Accettando prenderai un nuovo pacco casuale tra quelli disponibili, rifiutando terrai il tuo pacco attuale.";
-                btnEl.innerHTML = `
-                    <button onclick="acceptSwapOffer()" class="py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center space-x-2">
-                        <i class="fa-solid fa-right-left"></i>
-                        <span>SÌ, ACCETTA IL CAMBIO</span>
-                    </button>
-                    <button onclick="refuseDoctorOffer()" class="py-4 bg-red-600 hover:bg-red-500 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center space-x-2">
-                        <i class="fa-solid fa-xmark"></i>
-                        <span>NO, TENGO IL MIO</span>
-                    </button>
-                `;
-            } else {
-                // Standard money offer
-                titleEl.innerText = "Offerta del Dottore";
-                const unopened = gameState.boxes.filter(b => !b.opened);
-                const sum = unopened.reduce((acc, curr) => acc + curr.prize, 0);
-                let avg = sum / unopened.length;
-                let offerMultiplier = 0.65 + (gameState.turnStep * 0.05);
-                if (offerMultiplier > 1.05) offerMultiplier = 1.05;
-                let offer = Math.round((avg * offerMultiplier) / 500) * 500;
-                if (offer < 500) offer = 500;
-                window.currentDoctorOffer = offer;
-
-                contentEl.innerHTML = `
-                    <p class="text-sm text-slate-400 mb-1">Il Dottore ti offre:</p>
-                    <div id="doctor-offer-amount" class="text-4xl md:text-5xl font-black text-amber-400 tracking-tight">${offer.toLocaleString()} €</div>
-                `;
-                descEl.innerText = "Vuoi accettare l'offerta e chiudere la partita o rifiutare e andare avanti?";
-                btnEl.innerHTML = `
-                    <button onclick="acceptDoctorOffer()" class="py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center space-x-2">
-                        <i class="fa-solid fa-check"></i>
-                        <span>ACCETTA OFFERTA</span>
-                    </button>
-                    <button onclick="refuseDoctorOffer()" class="py-4 bg-red-600 hover:bg-red-500 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center space-x-2">
-                        <i class="fa-solid fa-xmark"></i>
-                        <span>RIFIUTA (VADO AVANTI)</span>
-                    </button>
-                `;
-            }
-
             docModal.classList.remove('hidden');
             docModal.classList.add('flex');
-        }
-
-        function acceptSwapOffer() {
-            soundMgr.playClick();
-            closeDoctorModal();
-
-            // Find unopened boxes other than player's current box
-            let availableBoxes = gameState.boxes.filter(b => !b.opened && b.number !== gameState.myBoxNumber);
-            if (availableBoxes.length > 0) {
-                let randomNewBox = availableBoxes[Math.floor(Math.random() * availableBoxes.length)];
-                gameState.myBoxNumber = randomNewBox.number;
-                document.getElementById('disp-mybox').innerText = `Pacco n. ${gameState.myBoxNumber}`;
-                alert(`Hai cambiato pacco! Il tuo nuovo pacco è il numero ${gameState.myBoxNumber} (${randomNewBox.region}).`);
-            }
-
-            advanceTurnAfterDoctor();
         }
 
         function acceptDoctorOffer() {
@@ -759,10 +726,7 @@ Gioco sviluppato da Marco D'Adamo.
         function refuseDoctorOffer() {
             soundMgr.playClick();
             closeDoctorModal();
-            advanceTurnAfterDoctor();
-        }
 
-        function advanceTurnAfterDoctor() {
             gameState.turnStep++;
             gameState.boxesOpenedThisTurn = 0;
             renderGameScreen();
@@ -790,7 +754,7 @@ Gioco sviluppato da Marco D'Adamo.
             document.getElementById('screen-finale').classList.add('block');
         }
 
-        function proposeSwapFinal() {
+        function proposeSwap() {
             soundMgr.playClick();
             const unopened = gameState.boxes.filter(b => !b.opened);
             const oldMyBoxNum = gameState.myBoxNumber;
@@ -815,13 +779,17 @@ Gioco sviluppato da Marco D'Adamo.
             gameState.ended = true;
 
             soundMgr.playWin();
-            showGameOverModal(false, myBoxObj.prize, `Il tuo pacco n. ${myBoxObj.number} (${myBoxObj.region}) conteneva la tua vincita finale!`);
+            let finalVal = myBoxObj.prize;
+            let msg = `Il tuo pacco n. ${myBoxObj.number} (${myBoxObj.region}) conteneva: ${typeof finalVal === 'number' ? finalVal.toLocaleString() + ' €' : finalVal}!`;
+            showGameOverModal(false, finalVal, msg);
         }
 
         function showGameOverModal(isOffer, amount, message) {
             document.getElementById('gameover-title').innerText = isOffer ? "Offerta Accettata!" : "La Scoperta Finale!";
             document.getElementById('gameover-message').innerText = message;
-            document.getElementById('gameover-amount').innerText = amount.toLocaleString() + ' €';
+            
+            let displayAmount = typeof amount === 'number' ? (amount.toLocaleString() + ' €') : amount;
+            document.getElementById('gameover-amount').innerText = displayAmount;
 
             const modal = document.getElementById('modal-gameover');
             modal.classList.remove('hidden');
