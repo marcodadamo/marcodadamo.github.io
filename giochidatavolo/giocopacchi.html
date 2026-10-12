@@ -1,0 +1,851 @@
+Gioco sviluppato da Marco D'Adamo
+<!DOCTYPE html>
+<html lang="it" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Affari Tuoi - Il Gioco dei Pacchi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        .rai-gradient {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1d4ed8 100%);
+        }
+        .gold-gradient {
+            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #d97706 100%);
+        }
+        .box-3d {
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+            transform-style: preserve-3d;
+        }
+        .box-3d:hover:not(.opened) {
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.4), 0 10px 10px -5px rgba(59, 130, 246, 0.2);
+        }
+        .box-opened {
+            background: linear-gradient(135deg, #334155 0%, #1e293b 100%) !important;
+            border-color: #475569 !important;
+            color: #94a3b8 !important;
+            cursor: not-allowed;
+            transform: scale(0.95);
+        }
+        @keyframes phoneRing {
+            0% { transform: rotate(0deg); }
+            15% { transform: rotate(14deg); }
+            30% { transform: rotate(-14deg); }
+            45% { transform: rotate(14deg); }
+            60% { transform: rotate(-14deg); }
+            75% { transform: rotate(6deg); }
+            90% { transform: rotate(-6deg); }
+            100% { transform: rotate(0deg); }
+        }
+        .animate-phone {
+            animation: phoneRing 1.2s infinite ease-in-out;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(245, 158, 11, 0.5); }
+            50% { box-shadow: 0 0 35px rgba(245, 158, 11, 0.9); }
+        }
+        .doctor-glow {
+            animation: pulseGlow 2s infinite;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col justify-between min-h-screen">
+
+    <script>
+        // Web Audio API Sound Synthesizer for Immersive Audio
+        class SoundManager {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+            playClick() {
+                if (!this.enabled) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            }
+            playOpenBox() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.3);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            }
+            playPhoneRing() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                for (let i = 0; i < 2; i++) {
+                    const startTime = now + (i * 0.15);
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(950, startTime);
+                    osc.frequency.setValueAtTime(1400, startTime + 0.07);
+                    gain.gain.setValueAtTime(0.1, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.14);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(startTime);
+                    osc.stop(startTime + 0.14);
+                }
+            }
+            playTension() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(110, now);
+                osc.frequency.linearRampToValueAtTime(125, now + 1.5);
+                gain.gain.setValueAtTime(0.05, now);
+                gain.gain.linearRampToValueAtTime(0.15, now + 1.5);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 1.5);
+            }
+            playWin() {
+                if (!this.enabled) return;
+                this.init();
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const now = this.ctx.currentTime + (idx * 0.18);
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                });
+            }
+        }
+        const soundMgr = new SoundManager();
+    </script>
+
+    <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-4 py-3 shadow-xl">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-1.5 rounded-xl font-black text-xl tracking-wider text-white shadow-lg border border-blue-400/30 flex items-center space-x-2">
+                    <i class="fa-solid fa-tv text-amber-400"></i>
+                    <span>RAI 1</span>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">GIOCO DEI PACCHI</h1>
+                    <p class="text-xs text-slate-400 font-medium hidden sm:block">Developer Marco D'Adamo</p>
+                </div>
+            </div>
+            <div id="header-status" class="hidden md:flex items-center space-x-4 bg-slate-800/80 px-4 py-2 rounded-2xl border border-slate-700/60 shadow-inner">
+                <div class="text-right">
+                    <p class="text-xs text-slate-400">Concorrente</p>
+                    <p id="disp-player" class="font-bold text-sm text-amber-300">-</p>
+                </div>
+                <div class="h-8 w-px bg-slate-700"></div>
+                <div class="text-right">
+                    <p class="text-xs text-slate-400">Regione</p>
+                    <p id="disp-region" class="font-bold text-sm text-blue-300">-</p>
+                </div>
+                <div class="h-8 w-px bg-slate-700"></div>
+                <div class="text-center bg-blue-600/30 px-3 py-1 rounded-xl border border-blue-500/40">
+                    <p class="text-[10px] text-blue-200 uppercase font-semibold">Il tuo pacco</p>
+                    <p id="disp-mybox" class="font-black text-base text-amber-400">-</p>
+                </div>
+            </div>
+            <div>
+                <button onclick="toggleAudio()" id="audio-toggle" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-xl text-sm font-semibold border border-slate-700 transition flex items-center space-x-2">
+                    <i class="fa-solid fa-volume-high text-amber-400"></i>
+                    <span class="hidden sm:inline">Audio</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col justify-center">
+
+        <!-- SCREEN 1: Setup & Configuration -->
+        <div id="screen-setup" class="max-w-2xl mx-auto w-full bg-slate-800/90 backdrop-blur-xl rounded-3xl p-6 md:p-10 border border-slate-700/80 shadow-2xl">
+            <div class="text-center mb-8">
+                <div class="inline-flex p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 mb-4 text-3xl shadow-inner">
+                    <i class="fa-solid fa-gift"></i>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-black tracking-tight text-white">Benvenuto ad Affari Tuoi</h2>
+                <p class="text-slate-400 text-sm mt-1">Inserisci i tuoi dati, scegli la tua regione e il pacco fortunato!</p>
+            </div>
+
+            <form id="setup-form" onsubmit="startPlayerGame(event)" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-2">Nome del Concorrente</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                        <input type="text" id="input-name" required placeholder="Es. Mario Rossi" 
+                            class="w-full pl-11 pr-4 py-3 bg-slate-900/90 border border-slate-700 rounded-2xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 font-medium">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-2">Regione Rappresentata</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 pointer-events-none">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                        </span>
+                        <select id="input-region" required
+                            class="w-full pl-11 pr-4 py-3 bg-slate-900/90 border border-slate-700 rounded-2xl text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 font-medium appearance-none">
+                            <option value="" disabled selected>Seleziona la tua regione</option>
+                            <option value="Abruzzo">Abruzzo</option>
+                            <option value="Basilicata">Basilicata</option>
+                            <option value="Calabria">Calabria</option>
+                            <option value="Campania">Campania</option>
+                            <option value="Emilia-Romagna">Emilia-Romagna</option>
+                            <option value="Friuli-Venezia Giulia">Friuli-Venezia Giulia</option>
+                            <option value="Lazio">Lazio</option>
+                            <option value="Liguria">Liguria</option>
+                            <option value="Lombardia">Lombardia</option>
+                            <option value="Marche">Marche</option>
+                            <option value="Molise">Molise</option>
+                            <option value="Piemonte">Piemonte</option>
+                            <option value="Puglia">Puglia</option>
+                            <option value="Sardegna">Sardegna</option>
+                            <option value="Sicilia">Sicilia</option>
+                            <option value="Toscana">Toscana</option>
+                            <option value="Trentino-Alto Adige">Trentino-Alto Adige</option>
+                            <option value="Umbria">Umbria</option>
+                            <option value="Valle d'Aosta">Valle d'Aosta</option>
+                            <option value="Veneto">Veneto</option>
+                        </select>
+                        <span class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 pointer-events-none">
+                            <i class="fa-solid fa-chevron-down text-xs"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-300 mb-2">Scegli il tuo Pacco (da 1 a 20)</label>
+                    <div class="grid grid-cols-5 gap-2 sm:gap-3 max-h-48 overflow-y-auto p-2 bg-slate-900/60 rounded-2xl border border-slate-700/80" id="setup-box-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-600 text-white font-black rounded-2xl shadow-xl shadow-blue-600/30 transform hover:-translate-y-0.5 transition duration-200 flex items-center justify-center space-x-3 text-lg border border-blue-400/30">
+                    <span>ACCETTA LA PARTITA</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- SCREEN 2: Main Game Arena -->
+        <div id="screen-game" class="hidden flex-col space-y-6">
+            
+            <!-- Game Status & Instruction Banner -->
+            <div class="bg-slate-800/90 backdrop-blur-md rounded-2xl p-4 border border-slate-700/80 shadow-xl flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-600/30 border border-blue-500/40 flex items-center justify-center text-blue-400 font-bold">
+                        <i class="fa-solid fa-bullhorn text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 uppercase font-semibold">Fase di Gioco</p>
+                        <h3 id="game-phase-title" class="text-lg font-black text-white">Apri pacchi</h3>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3 bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-700">
+                    <span class="text-sm text-slate-300 font-medium">Pacchi da aprire in questo turno:</span>
+                    <span id="boxes-to-open-count" class="text-lg font-black text-amber-400 bg-amber-500/10 px-3 py-0.5 rounded-lg border border-amber-500/30">6</span>
+                </div>
+            </div>
+
+            <!-- Main Grid layout: Left Prize Board, Center Boxes, Right Info -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+                <!-- Left Column: Prizes Board (Blue & Red) -->
+                <div class="lg:col-span-4 bg-slate-900/90 backdrop-blur-xl rounded-3xl p-4 border border-slate-800 shadow-2xl">
+                    <h4 class="text-center font-black text-sm uppercase tracking-wider text-slate-400 mb-3 pb-2 border-b border-slate-800">Tabellone Premi</h4>
+                    <div class="grid grid-cols-2 gap-2" id="prizes-board">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Center Column: The 20 Boxes Grid -->
+                <div class="lg:col-span-8 bg-slate-900/90 backdrop-blur-xl rounded-3xl p-6 border border-slate-800 shadow-2xl flex flex-col justify-center">
+                    <div class="text-center mb-6">
+                        <h4 class="text-lg font-bold text-slate-200">Scegli un pacco da aprire</h4>
+                        <p class="text-xs text-slate-400 mt-1">Clicca su uno dei pacchi disponibili sul tabellone</p>
+                    </div>
+                    <div class="grid grid-cols-4 sm:grid-cols-5 gap-3 md:gap-4" id="game-boxes-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SCREEN 3: Final Phase (Last 2 boxes) -->
+        <div id="screen-finale" class="hidden max-w-3xl mx-auto w-full bg-slate-800/95 backdrop-blur-2xl rounded-3xl p-8 border border-slate-700 shadow-2xl text-center">
+            <div class="inline-flex p-4 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 mb-4 text-4xl shadow-lg">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <h2 class="text-3xl font-black text-white">Fase Finale</h2>
+            <p id="finale-subtitle" class="text-slate-300 mt-2 text-base">Sono rimasti solo due pacchi: il tuo e un altro!</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-8">
+                <div class="bg-slate-900/90 p-6 rounded-2xl border border-blue-500/40 shadow-xl flex flex-col items-center">
+                    <span class="text-xs uppercase font-bold text-blue-400 mb-1">Il Tuo Pacco</span>
+                    <div class="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center text-3xl font-black text-white shadow-lg my-3 border border-blue-400">
+                        <span id="fin-mybox-num">-</span>
+                    </div>
+                    <p id="fin-mybox-region" class="font-semibold text-slate-300 text-sm">-</p>
+                </div>
+                <div class="bg-slate-900/90 p-6 rounded-2xl border border-amber-500/40 shadow-xl flex flex-col items-center">
+                    <span class="text-xs uppercase font-bold text-amber-400 mb-1">L'Ultimo Pacco In Gioco</span>
+                    <div class="w-20 h-20 bg-amber-600 rounded-2xl flex items-center justify-center text-3xl font-black text-white shadow-lg my-3 border border-amber-400">
+                        <span id="fin-otherbox-num">-</span>
+                    </div>
+                    <p class="font-semibold text-slate-300 text-sm">Pacco n. <span id="fin-otherbox-label">-</span></p>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <button onclick="proposeSwapFinal()" class="px-6 py-4 bg-amber-600 hover:bg-amber-500 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-right-left"></i>
+                    <span>ACCETTA IL CAMBIO PACCO</span>
+                </button>
+                <button onclick="keepMyBoxFinal()" class="px-6 py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>TIENI IL MIO PACCO ORIGINALE</span>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Box Result Modal -->
+    <div id="modal-box-result" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl transform scale-95 transition-transform duration-300" id="modal-box-content">
+            <div class="w-20 h-20 mx-auto rounded-2xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 text-3xl font-black mb-4 shadow-inner" id="modal-box-number-display">
+                12
+            </div>
+            <p class="text-sm uppercase tracking-wider text-slate-400 font-semibold mb-1">Contenuto del Pacco</p>
+            <h3 id="modal-prize-amount" class="text-4xl md:text-5xl font-black my-4 text-amber-400">0 €</h3>
+            <p id="modal-prize-type" class="text-xs font-bold px-3 py-1 rounded-full inline-block mb-6 bg-red-500/20 text-red-400 border border-red-500/30">PREMIO ROSSO</p>
+            <div>
+                <button onclick="closeBoxModal()" class="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-2xl shadow-lg transition">
+                    CONTINUA LA PARTITA
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Doctor Call Modal (Standard Offer or Swap Offer) -->
+    <div id="modal-doctor" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-amber-500/40 rounded-3xl p-8 max-w-lg w-full text-center shadow-2xl doctor-glow relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl"></div>
+            
+            <div class="w-24 h-24 mx-auto rounded-3xl bg-gradient-to-tr from-amber-600 to-yellow-500 flex items-center justify-center text-white text-4xl mb-6 shadow-xl animate-phone border border-amber-300/40">
+                <i class="fa-solid fa-phone-volume"></i>
+            </div>
+            
+            <span class="text-xs font-black uppercase tracking-widest text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30">IL DOTTORE CHIAMA</span>
+            <h3 id="doctor-modal-title" class="text-2xl md:text-3xl font-black text-white mt-3">Offerta del Dottore</h3>
+            
+            <div class="my-6 bg-slate-950 p-6 rounded-2xl border border-slate-800 shadow-inner" id="doctor-content-container">
+                <!-- Dynamic content: Money Offer or Swap Proposal -->
+            </div>
+
+            <p id="doctor-modal-desc" class="text-slate-300 text-sm mb-8 font-medium">Vuoi accettare l'offerta e chiudere la partita o rifiutare e andare avanti?</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="doctor-buttons-container">
+                <!-- Dynamic buttons -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over / Victory Modal -->
+    <div id="modal-gameover" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-lg hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl p-8 max-w-lg w-full text-center shadow-2xl">
+            <div class="w-20 h-20 mx-auto rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 text-4xl mb-4 shadow-inner" id="gameover-icon">
+                <i class="fa-solid fa-trophy"></i>
+            </div>
+            <h3 id="gameover-title" class="text-3xl font-black text-white">Partita Conclusa</h3>
+            <p id="gameover-message" class="text-slate-300 text-sm mt-2 mb-6">Hai vinto una fantastica somma!</p>
+
+            <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 mb-8">
+                <p class="text-xs uppercase text-slate-400 font-bold mb-1">Vincita Finale</p>
+                <div id="gameover-amount" class="text-4xl md:text-5xl font-black text-amber-400">0 €</div>
+            </div>
+
+            <button onclick="restartGame()" class="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black rounded-2xl shadow-xl transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-rotate-right"></i>
+                <span>GIOCA DI NUOVO</span>
+            </button>
+        </div>
+    </div>
+
+    <footer class="text-center py-4 text-xs text-slate-500 border-t border-slate-800/80 mt-8">
+        Affari Tuoi - Gioco sviluppato da Marco D'Adamo. Ispirato alla trasmissione di Rai 1.
+    </footer>
+
+    <script>
+        // Official 20 standard prizes of Affari Tuoi (Euro scale) - Single 300.000 (replaced duplicate with 250.000)
+        const PRIZES = [
+            0, 1, 5, 10, 20, 50, 100, 200, 500, 5000,
+            10000, 15000, 20000, 30000, 50000, 75000, 100000, 200000, 250000, 300000
+        ];
+
+        // All 20 Italian Regions for mapping to boxes
+        const ITALIAN_REGIONS = [
+            "Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Romagna",
+            "Friuli-Venezia Giulia", "Lazio", "Liguria", "Lombardia", "Marche",
+            "Molise", "Piemonte", "Puglia", "Sardegna", "Sicilia",
+            "Toscana", "Trentino-Alto Adige", "Umbria", "Valle d'Aosta", "Veneto"
+        ];
+
+        let gameState = {
+            playerName: '',
+            playerRegion: '',
+            myBoxNumber: null,
+            boxes: [],
+            totalOpenedCount: 0, // Keeps track of total opened boxes across turns
+            boxesOpenedThisTurn: 0,
+            lastOpenedBox: null,
+            ended: false,
+            swapOfferCount: 0 // Tracks how many times the swap offer has been made (target: 2)
+        };
+
+        // Turn schedule: 6, 2, 2, 4, 2, 2, 4 (Total: 8 + 8 + 4 = 20 boxes)
+        // Swap offers happen exactly after 8 boxes opened (end of step index 1) and after 16 boxes opened (end of step index 3).
+        const TURNS_SCHEDULE = [6, 2, 2, 4, 2, 2, 4];
+
+        function initSetupBoxes() {
+            const container = document.getElementById('setup-box-grid');
+            container.innerHTML = '';
+            for (let i = 1; i <= 20; i++) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'py-2.5 rounded-xl bg-slate-800 hover:bg-blue-600 hover:text-white border border-slate-700 font-bold text-sm transition text-slate-300';
+                btn.innerText = i;
+                btn.id = `setup-box-btn-${i}`;
+                btn.onclick = () => selectMyBox(i);
+                container.appendChild(btn);
+            }
+        }
+
+        let selectedBoxChoice = null;
+        function selectMyBox(num) {
+            soundMgr.playClick();
+            if (selectedBoxChoice !== null) {
+                const prev = document.getElementById(`setup-box-btn-${selectedBoxChoice}`);
+                if (prev) prev.className = 'py-2.5 rounded-xl bg-slate-800 hover:bg-blue-600 hover:text-white border border-slate-700 font-bold text-sm transition text-slate-300';
+            }
+            selectedBoxChoice = num;
+            const curr = document.getElementById(`setup-box-btn-${num}`);
+            if (curr) curr.className = 'py-2.5 rounded-xl bg-amber-600 text-white border border-amber-400 font-black text-sm shadow-lg scale-105';
+        }
+
+        function startPlayerGame(e) {
+            e.preventDefault();
+            const name = document.getElementById('input-name').value.trim();
+            const chosenRegion = document.getElementById('input-region').value;
+
+            if (!name || !chosenRegion || selectedBoxChoice === null) {
+                alert('Inserisci nome, regione e seleziona il tuo pacco!');
+                return;
+            }
+
+            soundMgr.playClick();
+            gameState.playerName = name;
+            gameState.playerRegion = chosenRegion;
+            gameState.myBoxNumber = selectedBoxChoice;
+
+            let availableRegions = ITALIAN_REGIONS.filter(r => r !== chosenRegion).sort(() => Math.random() - 0.5);
+            let boxRegionsMap = {};
+            for (let i = 1; i <= 20; i++) {
+                if (i === selectedBoxChoice) {
+                    boxRegionsMap[i] = chosenRegion;
+                } else {
+                    boxRegionsMap[i] = availableRegions.pop();
+                }
+            }
+
+            let shuffledPrizes = [...PRIZES].sort(() => Math.random() - 0.5);
+            gameState.boxes = [];
+            for (let i = 1; i <= 20; i++) {
+                gameState.boxes.push({
+                    number: i,
+                    prize: shuffledPrizes[i - 1],
+                    region: boxRegionsMap[i],
+                    opened: false
+                });
+            }
+
+            document.getElementById('disp-player').innerText = name;
+            document.getElementById('disp-region').innerText = chosenRegion;
+            document.getElementById('disp-mybox').innerText = `Pacco n. ${selectedBoxChoice}`;
+
+            document.getElementById('screen-setup').classList.add('hidden');
+            document.getElementById('screen-game').classList.remove('hidden');
+            document.getElementById('screen-game').classList.add('flex');
+
+            renderGameScreen();
+        }
+
+        function renderGameScreen() {
+            renderPrizesBoard();
+            renderGameBoxes();
+            updateTurnInfo();
+        }
+
+        function renderPrizesBoard() {
+            const board = document.getElementById('prizes-board');
+            board.innerHTML = '';
+            
+            const leftPrizes = [0, 1, 5, 10, 20, 50, 100, 200, 500, 5000];
+            const rightPrizes = [10000, 15000, 20000, 30000, 50000, 75000, 100000, 200000, 250000, 300000];
+
+            const openedPrizesList = gameState.boxes.filter(b => b.opened).map(b => b.prize);
+            let consumedOpened = [...openedPrizesList];
+
+            function renderColumn(pList, isRed) {
+                let html = '<div class="space-y-1.5">';
+                pList.forEach(p => {
+                    let idx = consumedOpened.indexOf(p);
+                    let isOpened = false;
+                    if (idx !== -1) {
+                        isOpened = true;
+                        consumedOpened.splice(idx, 1);
+                    }
+
+                    let bgClass = isRed ? 'bg-red-600/20 border-red-500/40 text-red-400' : 'bg-blue-600/20 border-blue-500/40 text-blue-400';
+                    if (isOpened) {
+                        bgClass = 'bg-slate-800/40 border-slate-700/40 text-slate-600 line-through opacity-40';
+                    }
+
+                    let formattedPrice = p >= 1000 ? (p.toLocaleString() + ' €') : (p + ' €');
+                    html += `<div class="p-2 rounded-xl border text-center font-bold text-xs md:text-sm ${bgClass}">${formattedPrice}</div>`;
+                });
+                html += '</div>';
+                return html;
+            }
+
+            board.innerHTML = renderColumn(leftPrizes, false) + renderColumn(rightPrizes, true);
+        }
+
+        function renderGameBoxes() {
+            const grid = document.getElementById('game-boxes-grid');
+            grid.innerHTML = '';
+
+            gameState.boxes.forEach(box => {
+                const isMyBox = box.number === gameState.myBoxNumber;
+                let btn = document.createElement('button');
+                btn.className = `box-3d h-20 md:h-24 rounded-2xl border flex flex-col items-center justify-between p-2 font-black relative shadow-md transition`;
+                
+                if (box.opened) {
+                    btn.className += ' box-opened';
+                    btn.disabled = true;
+                    btn.innerHTML = `
+                        <span class="text-[10px] text-slate-500 font-semibold truncate w-full text-center">${box.region}</span>
+                        <span class="text-sm font-black text-slate-400">#${box.number}</span>
+                        <span class="text-xs text-slate-500 font-bold">${box.prize >= 1000 ? box.prize.toLocaleString()+'€' : box.prize+'€'}</span>
+                    `;
+                } else {
+                    if (isMyBox) {
+                        btn.className += ' bg-gradient-to-br from-amber-500 to-yellow-600 border-amber-300 text-white shadow-amber-500/30';
+                        btn.innerHTML = `
+                            <span class="text-[9px] uppercase bg-black/30 px-1.5 py-0.5 rounded text-amber-200 font-bold leading-none">Il tuo</span>
+                            <span class="text-xl md:text-2xl font-black leading-none text-white my-0.5">#${box.number}</span>
+                            <span class="text-[11px] md:text-xs font-semibold text-amber-100 truncate w-full text-center leading-tight">${box.region}</span>
+                        `;
+                    } else {
+                        btn.className += ' bg-slate-800 hover:bg-slate-700 border-slate-700 text-white';
+                        btn.innerHTML = `
+                            <span class="text-[10px] text-slate-400 font-medium leading-none">Pacco</span>
+                            <span class="text-xl md:text-2xl font-black text-amber-400 leading-none my-0.5">#${box.number}</span>
+                            <span class="text-[11px] md:text-xs font-bold text-slate-300 truncate w-full text-center leading-tight">${box.region}</span>
+                        `;
+                    }
+                    btn.onclick = () => openBox(box.number);
+                }
+                grid.appendChild(btn);
+            });
+        }
+
+        function updateTurnInfo() {
+            const boxesToOpen = TURNS_SCHEDULE[gameState.turnStep] || 1;
+            const remainingThisTurn = boxesToOpen - gameState.boxesOpenedThisTurn;
+
+            document.getElementById('game-phase-title').innerText = `Turno ${gameState.turnStep + 1}: Apri ${boxesToOpen} pacco/i`;
+            document.getElementById('boxes-to-open-count').innerText = remainingThisTurn;
+        }
+
+        function openBox(num) {
+            if (gameState.ended) return;
+            const box = gameState.boxes.find(b => b.number === num);
+            if (!box || box.opened) return;
+
+            if (num === gameState.myBoxNumber) {
+                alert('Questo è il tuo pacco! Non puoi aprirlo durante la partita.');
+                return;
+            }
+
+            soundMgr.playOpenBox();
+            box.opened = true;
+            gameState.lastOpenedBox = box;
+            gameState.boxesOpenedThisTurn++;
+            gameState.totalOpenedCount++;
+
+            showBoxModal(box);
+        }
+
+        function showBoxModal(box) {
+            const modal = document.getElementById('modal-box-result');
+            document.getElementById('modal-box-number-display').innerText = `#${box.number}`;
+            document.getElementById('modal-prize-amount').innerText = box.prize >= 1000 ? box.prize.toLocaleString() + ' €' : box.prize + ' €';
+            
+            const typeBadge = document.getElementById('modal-prize-type');
+            if (box.prize >= 10000) {
+                typeBadge.className = 'text-xs font-bold px-3 py-1 rounded-full inline-block mb-6 bg-red-500/20 text-red-400 border border-red-500/30';
+                typeBadge.innerText = `PREMIO ROSSO (${box.region.toUpperCase()})`;
+            } else {
+                typeBadge.className = 'text-xs font-bold px-3 py-1 rounded-full inline-block mb-6 bg-blue-500/20 text-blue-400 border border-blue-500/30';
+                typeBadge.innerText = `PREMIO BLU (${box.region.toUpperCase()})`;
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeBoxModal() {
+            soundMgr.playClick();
+            const modal = document.getElementById('modal-box-result');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+
+            renderGameScreen();
+
+            const boxesToOpen = TURNS_SCHEDULE[gameState.turnStep] || 1;
+            if (gameState.boxesOpenedThisTurn >= boxesToOpen) {
+                const unopenedBoxes = gameState.boxes.filter(b => !b.opened);
+                if (unopenedBoxes.length === 2) {
+                    triggerFinalPhase();
+                } else {
+                    triggerDoctorCall();
+                }
+            }
+        }
+
+        function triggerDoctorCall() {
+            soundMgr.playTension();
+            soundMgr.playPhoneRing();
+
+            const docModal = document.getElementById('modal-doctor');
+            const titleEl = document.getElementById('doctor-modal-title');
+            const contentEl = document.getElementById('doctor-content-container');
+            const descEl = document.getElementById('doctor-modal-desc');
+            const btnEl = document.getElementById('doctor-buttons-container');
+
+            // Check if we need to offer a package swap (every 8 opened boxes, up to 2 times total)
+            if (gameState.totalOpenedCount % 8 === 0 && gameState.swapOfferCount < 2) {
+                gameState.swapOfferCount++;
+                titleEl.innerText = "Il Dottore ti propone il Cambio Pacco!";
+                contentEl.innerHTML = `
+                    <p class="text-sm text-slate-300 mb-2">Il Dottore ti offre la possibilità di cambiare il tuo pacco attuale con uno dei pacchi ancora rimasti chiusi in gioco.</p>
+                    <div class="text-2xl font-black text-amber-400">Vuoi effettuare il cambio?</div>
+                `;
+                descEl.innerText = "Accettando prenderai un nuovo pacco casuale tra quelli disponibili, rifiutando terrai il tuo pacco attuale.";
+                btnEl.innerHTML = `
+                    <button onclick="acceptSwapOffer()" class="py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-right-left"></i>
+                        <span>SÌ, ACCETTA IL CAMBIO</span>
+                    </button>
+                    <button onclick="refuseDoctorOffer()" class="py-4 bg-red-600 hover:bg-red-500 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-xmark"></i>
+                        <span>NO, TENGO IL MIO</span>
+                    </button>
+                `;
+            } else {
+                // Standard money offer
+                titleEl.innerText = "Offerta del Dottore";
+                const unopened = gameState.boxes.filter(b => !b.opened);
+                const sum = unopened.reduce((acc, curr) => acc + curr.prize, 0);
+                let avg = sum / unopened.length;
+                let offerMultiplier = 0.65 + (gameState.turnStep * 0.05);
+                if (offerMultiplier > 1.05) offerMultiplier = 1.05;
+                let offer = Math.round((avg * offerMultiplier) / 500) * 500;
+                if (offer < 500) offer = 500;
+                window.currentDoctorOffer = offer;
+
+                contentEl.innerHTML = `
+                    <p class="text-sm text-slate-400 mb-1">Il Dottore ti offre:</p>
+                    <div id="doctor-offer-amount" class="text-4xl md:text-5xl font-black text-amber-400 tracking-tight">${offer.toLocaleString()} €</div>
+                `;
+                descEl.innerText = "Vuoi accettare l'offerta e chiudere la partita o rifiutare e andare avanti?";
+                btnEl.innerHTML = `
+                    <button onclick="acceptDoctorOffer()" class="py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-check"></i>
+                        <span>ACCETTA OFFERTA</span>
+                    </button>
+                    <button onclick="refuseDoctorOffer()" class="py-4 bg-red-600 hover:bg-red-500 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-xmark"></i>
+                        <span>RIFIUTA (VADO AVANTI)</span>
+                    </button>
+                `;
+            }
+
+            docModal.classList.remove('hidden');
+            docModal.classList.add('flex');
+        }
+
+        function acceptSwapOffer() {
+            soundMgr.playClick();
+            closeDoctorModal();
+
+            // Find unopened boxes other than player's current box
+            let availableBoxes = gameState.boxes.filter(b => !b.opened && b.number !== gameState.myBoxNumber);
+            if (availableBoxes.length > 0) {
+                let randomNewBox = availableBoxes[Math.floor(Math.random() * availableBoxes.length)];
+                gameState.myBoxNumber = randomNewBox.number;
+                document.getElementById('disp-mybox').innerText = `Pacco n. ${gameState.myBoxNumber}`;
+                alert(`Hai cambiato pacco! Il tuo nuovo pacco è il numero ${gameState.myBoxNumber} (${randomNewBox.region}).`);
+            }
+
+            advanceTurnAfterDoctor();
+        }
+
+        function acceptDoctorOffer() {
+            soundMgr.playWin();
+            gameState.ended = true;
+            gameState.finalOfferAccepted = true;
+
+            closeDoctorModal();
+            showGameOverModal(true, window.currentDoctorOffer, "Hai accettato l'offerta del Dottore!");
+        }
+
+        function refuseDoctorOffer() {
+            soundMgr.playClick();
+            closeDoctorModal();
+            advanceTurnAfterDoctor();
+        }
+
+        function advanceTurnAfterDoctor() {
+            gameState.turnStep++;
+            gameState.boxesOpenedThisTurn = 0;
+            renderGameScreen();
+        }
+
+        function closeDoctorModal() {
+            const docModal = document.getElementById('modal-doctor');
+            docModal.classList.add('hidden');
+            docModal.classList.remove('flex');
+        }
+
+        function triggerFinalPhase() {
+            const unopened = gameState.boxes.filter(b => !b.opened);
+            const myBox = unopened.find(b => b.number === gameState.myBoxNumber);
+            const otherBox = unopened.find(b => b.number !== gameState.myBoxNumber);
+
+            document.getElementById('fin-mybox-num').innerText = `#${myBox.number}`;
+            document.getElementById('fin-mybox-region').innerText = `${gameState.playerName} (${myBox.region})`;
+            document.getElementById('fin-otherbox-num').innerText = `#${otherBox.number}`;
+            document.getElementById('fin-otherbox-label').innerText = `${otherBox.number} (${otherBox.region})`;
+
+            document.getElementById('screen-game').classList.add('hidden');
+            document.getElementById('screen-game').classList.remove('flex');
+            document.getElementById('screen-finale').classList.remove('hidden');
+            document.getElementById('screen-finale').classList.add('block');
+        }
+
+        function proposeSwapFinal() {
+            soundMgr.playClick();
+            const unopened = gameState.boxes.filter(b => !b.opened);
+            const oldMyBoxNum = gameState.myBoxNumber;
+            const otherBox = unopened.find(b => b.number !== oldMyBoxNum);
+
+            gameState.myBoxNumber = otherBox.number;
+            alert(`Hai scelto di cambiare il pacco! Ora hai il pacco n. ${gameState.myBoxNumber} (${otherBox.region}).`);
+            finishFinalOpening();
+        }
+
+        function keepMyBoxFinal() {
+            soundMgr.playClick();
+            alert(`Hai deciso di tenere il tuo pacco numero ${gameState.myBoxNumber}! Vediamo cosa conteneva.`);
+            finishFinalOpening();
+        }
+
+        function finishFinalOpening() {
+            document.getElementById('screen-finale').classList.add('hidden');
+            document.getElementById('screen-finale').classList.remove('block');
+
+            const myBoxObj = gameState.boxes.find(b => b.number === gameState.myBoxNumber);
+            gameState.ended = true;
+
+            soundMgr.playWin();
+            showGameOverModal(false, myBoxObj.prize, `Il tuo pacco n. ${myBoxObj.number} (${myBoxObj.region}) conteneva la tua vincita finale!`);
+        }
+
+        function showGameOverModal(isOffer, amount, message) {
+            document.getElementById('gameover-title').innerText = isOffer ? "Offerta Accettata!" : "La Scoperta Finale!";
+            document.getElementById('gameover-message').innerText = message;
+            document.getElementById('gameover-amount').innerText = amount.toLocaleString() + ' €';
+
+            const modal = document.getElementById('modal-gameover');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function restartGame() {
+            soundMgr.playClick();
+            location.reload();
+        }
+
+        function toggleAudio() {
+            soundMgr.enabled = !soundMgr.enabled;
+            const btn = document.getElementById('audio-toggle');
+            if (soundMgr.enabled) {
+                btn.innerHTML = '<i class="fa-solid fa-volume-high text-amber-400"></i><span class="hidden sm:inline">Audio</span>';
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-volume-xmark text-slate-500"></i><span class="hidden sm:inline">Audio Muto</span>';
+            }
+        }
+
+        window.onload = () => {
+            initSetupBoxes();
+        };
+    </script>
+</body>
+</html>
