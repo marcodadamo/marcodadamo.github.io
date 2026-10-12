@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Affari Tuoi - Il Gioco dei Pacchi</title>
+    <title>Affari Tuoi - Il Gioco dei Pacchi.</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -13,12 +13,6 @@
             background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
             color: #ffffff;
             overflow-x: hidden;
-        }
-        .rai-gradient {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #1d4ed8 100%);
-        }
-        .gold-gradient {
-            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #d97706 100%);
         }
         .box-3d {
             transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
@@ -35,10 +29,10 @@
             cursor: not-allowed;
             transform: scale(0.95);
         }
-        .pacco-nero-box {
-            background: linear-gradient(135deg, #1e1b4b 0%, #09090b 100%) !important;
-            border-color: #7c3aed !important;
-            box-shadow: 0 0 15px rgba(124, 58, 237, 0.4);
+        .pacco-nero-style {
+            background: linear-gradient(135deg, #2e1065 0%, #09090b 100%) !important;
+            border-color: #a855f7 !important;
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
         }
         @keyframes phoneRing {
             0% { transform: rotate(0deg); }
@@ -65,7 +59,6 @@
 <body class="h-full flex flex-col justify-between min-h-screen">
 
     <script>
-        // Web Audio API Sound Synthesizer for Immersive Audio
         class SoundManager {
             constructor() {
                 this.ctx = null;
@@ -295,7 +288,7 @@
                 </div>
             </div>
 
-            <!-- Main Grid layout: Left Prize Board, Center Boxes, Right Info -->
+            <!-- Main Grid layout: Left Prize Board, Center Boxes -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
                 <!-- Left Column: Prizes Board (Blue & Red) -->
@@ -434,23 +427,18 @@
     </footer>
 
     <script>
-        // Funzione per generare una cifra casuale realistica per il "Pacco Nero" (es. multiplo di 500 tra 1.000€ e 50.000€)
+        // Estrazione casuale della cifra contenuta nel Pacco Nero (es. tra 1.000€ e 50.000€)
         function getRandomPaccoNeroValue() {
-            const possibleValues = [1000, 2500, 5000, 7500, 10000, 12500, 15000, 20000, 25000, 30000, 40000, 50000];
+            const possibleValues = [1000, 2500, 5000, 7500, 10000, 15000, 20000, 25000, 30000, 40000, 50000];
             return possibleValues[Math.floor(Math.random() * possibleValues.length)];
         }
 
-        // Base dei 20 premi standard in cui uno dei valori è generato casualmente ad ogni avvio
-        function getBasePrizes() {
-            return [
-                0, 1, 5, 10, 20, 50, 100, 200, 500, 5000,
-                10000, 15000, 20000, 30000, 50000, 75000, 100000, 200000, 300000, getRandomPaccoNeroValue()
-            ];
-        }
+        // Il pacco nero figura nel tabellone come stringa speciale "Pacco Nero"
+        const PRIZES = [
+            0, 1, 5, 10, 20, 50, 100, 200, 500, 5000,
+            10000, 15000, 20000, 30000, 50000, 75000, 100000, 200000, 300000, "Pacco Nero"
+        ];
 
-        let PRIZES = [];
-
-        // All 20 Italian Regions for mapping to boxes
         const ITALIAN_REGIONS = [
             "Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Romagna",
             "Friuli-Venezia Giulia", "Lazio", "Liguria", "Lombardia", "Marche",
@@ -462,18 +450,17 @@
             playerName: '',
             playerRegion: '',
             myBoxNumber: null,
-            boxes: [], // Array of 20 objects: { number, prize, region, opened: false }
-            turnStep: 0, // index in TURNS_SCHEDULE
+            paccoNeroRealValue: 0, // Cifra reale estratta casualmente per il pacco nero
+            boxes: [],
+            turnStep: 0,
             boxesOpenedThisTurn: 0,
             lastOpenedBox: null,
             ended: false,
             finalOfferAccepted: false
         };
 
-        // Turn schedule: how many boxes to open per session
-        const TURNS_SCHEDULE = [6, 3, 3, 2, 2, 1, 1, 1]; // Remaining 2 boxes at final
+        const TURNS_SCHEDULE = [6, 3, 3, 2, 2, 1, 1, 1];
 
-        // Initialize setup box grid selector
         function initSetupBoxes() {
             const container = document.getElementById('setup-box-grid');
             container.innerHTML = '';
@@ -514,9 +501,7 @@
             gameState.playerName = name;
             gameState.playerRegion = chosenRegion;
             gameState.myBoxNumber = selectedBoxChoice;
-
-            // Genera i premi con il Pacco Nero casuale ad ogni nuova partita
-            PRIZES = getBasePrizes();
+            gameState.paccoNeroRealValue = getRandomPaccoNeroValue(); // Genera valore segreto del Pacco Nero
 
             let availableRegions = ITALIAN_REGIONS.filter(r => r !== chosenRegion).sort(() => Math.random() - 0.5);
             let boxRegionsMap = {};
@@ -560,10 +545,8 @@
             const board = document.getElementById('prizes-board');
             board.innerHTML = '';
 
-            // Ordiniamo i premi correnti della partita per mostrarli correttamente nel tabellone diviso in due colonne
-            let sortedCurrentPrizes = [...PRIZES].sort((a, b) => a - b);
-            const leftPrizes = sortedCurrentPrizes.slice(0, 10);
-            const rightPrizes = sortedCurrentPrizes.slice(10, 20);
+            const leftPrizes = [0, 1, 5, 10, 20, 50, 100, 200, 500, 5000];
+            const rightPrizes = [10000, 15000, 20000, 30000, 50000, 75000, 100000, 200000, 300000, "Pacco Nero"];
 
             const openedPrizesList = gameState.boxes.filter(b => b.opened).map(b => b.prize);
             let consumedOpened = [...openedPrizesList];
@@ -579,12 +562,15 @@
                     }
 
                     let bgClass = isRed ? 'bg-red-600/20 border-red-500/40 text-red-400' : 'bg-blue-600/20 border-blue-500/40 text-blue-400';
+                    if (p === "Pacco Nero") {
+                        bgClass = 'bg-purple-900/40 border-purple-500/60 text-purple-300 font-extrabold';
+                    }
 
                     if (isOpened) {
                         bgClass = 'bg-slate-800/40 border-slate-700/40 text-slate-600 line-through opacity-40';
                     }
 
-                    let formattedPrice = p >= 1000 ? (p.toLocaleString() + ' €') : (p + ' €');
+                    let formattedPrice = typeof p === 'number' ? (p >= 1000 ? (p.toLocaleString() + ' €') : (p + ' €')) : p;
                     html += `<div class="p-2 rounded-xl border text-center font-bold text-xs md:text-sm ${bgClass}">${formattedPrice}</div>`;
                 });
                 html += '</div>';
@@ -606,11 +592,14 @@
                 if (box.opened) {
                     btn.className += ' box-opened';
                     btn.disabled = true;
-                    let displayPrize = box.prize >= 1000 ? box.prize.toLocaleString()+'€' : box.prize+'€';
+                    
+                    let valToDisplay = box.prize === "Pacco Nero" ? gameState.paccoNeroRealValue : box.prize;
+                    let displayPrize = valToDisplay >= 1000 ? valToDisplay.toLocaleString()+'€' : valToDisplay+'€';
+
                     btn.innerHTML = `
                         <span class="text-[10px] text-slate-500 font-semibold truncate w-full text-center">${box.region}</span>
                         <span class="text-sm font-black text-slate-400">#${box.number}</span>
-                        <span class="text-xs text-slate-500 font-bold">${displayPrize}</span>
+                        <span class="text-xs text-slate-400 font-bold">${displayPrize}</span>
                     `;
                 } else {
                     if (isMyBox) {
@@ -664,16 +653,24 @@
             const modal = document.getElementById('modal-box-result');
             document.getElementById('modal-box-number-display').innerText = `#${box.number}`;
 
-            let prizeFormatted = box.prize >= 1000 ? box.prize.toLocaleString() + ' €' : box.prize + ' €';
-            document.getElementById('modal-prize-amount').innerText = prizeFormatted;
-
             const typeBadge = document.getElementById('modal-prize-type');
-            if (box.prize >= 10000) {
-                typeBadge.className = 'text-xs font-bold px-3 py-1 rounded-full inline-block mb-6 bg-red-500/20 text-red-400 border border-red-500/30';
-                typeBadge.innerText = `PREMIO ROSSO (${box.region.toUpperCase()})`;
+
+            if (box.prize === "Pacco Nero") {
+                let prizeFormatted = gameState.paccoNeroRealValue.toLocaleString() + ' €';
+                document.getElementById('modal-prize-amount').innerText = prizeFormatted;
+                typeBadge.className = 'text-xs font-bold px-3 py-1 rounded-full inline-block mb-6 bg-purple-500/20 text-purple-300 border border-purple-500/40';
+                typeBadge.innerText = `PACCO NERO - PREMIO ESTRATTO (${box.region.toUpperCase()})`;
             } else {
-                typeBadge.className = 'text-xs font-bold px-3 py-1 rounded-full inline-block mb-6 bg-blue-500/20 text-blue-400 border border-blue-500/30';
-                typeBadge.innerText = `PREMIO BLU (${box.region.toUpperCase()})`;
+                let prizeFormatted = box.prize >= 1000 ? box.prize.toLocaleString() + ' €' : box.prize + ' €';
+                document.getElementById('modal-prize-amount').innerText = prizeFormatted;
+
+                if (box.prize >= 10000) {
+                    typeBadge.className = 'text-xs font-bold px-3 py-1 rounded-full inline-block mb-6 bg-red-500/20 text-red-400 border border-red-500/30';
+                    typeBadge.innerText = `PREMIO ROSSO (${box.region.toUpperCase()})`;
+                } else {
+                    typeBadge.className = 'text-xs font-bold px-3 py-1 rounded-full inline-block mb-6 bg-blue-500/20 text-blue-400 border border-blue-500/30';
+                    typeBadge.innerText = `PREMIO BLU (${box.region.toUpperCase()})`;
+                }
             }
 
             modal.classList.remove('hidden');
@@ -704,7 +701,11 @@
             soundMgr.playPhoneRing();
 
             const unopened = gameState.boxes.filter(b => !b.opened);
-            const sum = unopened.reduce((acc, curr) => acc + curr.prize, 0);
+            const sum = unopened.reduce((acc, curr) => {
+                let val = curr.prize === "Pacco Nero" ? gameState.paccoNeroRealValue : curr.prize;
+                return acc + val;
+            }, 0);
+
             let avg = sum / unopened.length;
 
             let offerMultiplier = 0.65 + (gameState.turnStep * 0.05);
@@ -785,16 +786,22 @@
             gameState.ended = true;
 
             soundMgr.playWin();
-            let finalVal = myBoxObj.prize;
-            let msg = `Il tuo pacco n. ${myBoxObj.number} (${myBoxObj.region}) conteneva: ${finalVal.toLocaleString()} €!`;
-            showGameOverModal(false, finalVal, msg);
+
+            let finalVal = myBoxObj.prize === "Pacco Nero" ? gameState.paccoNeroRealValue : myBoxObj.prize;
+            let displayVal = finalVal.toLocaleString() + ' €';
+
+            let msg = myBoxObj.prize === "Pacco Nero"
+                ? `Il tuo pacco n. ${myBoxObj.number} (${myBoxObj.region}) era il PACCO NERO e conteneva: ${displayVal}!`
+                : `Il tuo pacco n. ${myBoxObj.number} (${myBoxObj.region}) conteneva: ${displayVal}!`;
+
+            showGameOverModal(false, displayVal, msg);
         }
 
         function showGameOverModal(isOffer, amount, message) {
             document.getElementById('gameover-title').innerText = isOffer ? "Offerta Accettata!" : "La Scoperta Finale!";
             document.getElementById('gameover-message').innerText = message;
 
-            let displayAmount = amount.toLocaleString() + ' €';
+            let displayAmount = typeof amount === 'number' ? (amount.toLocaleString() + ' €') : amount;
             document.getElementById('gameover-amount').innerText = displayAmount;
 
             const modal = document.getElementById('modal-gameover');
