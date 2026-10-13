@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La Ruota della Fortuna - Con Gerry Scotti. (Next-Gen TV Edition)</title>
+    <title>La Ruota della Fortuna - Con Gerry Scotti (Next-Gen TV Edition)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -816,8 +816,8 @@
                 updateControlsUI();
             }
 
-            if (players[activePlayerIndex].isBot && canGuessConsonant) {
-                setTimeout(botGuessConsonant, 1500);
+            if (players[activePlayerIndex].isBot) {
+                setTimeout(botMakeDecision, 1800);
             }
         }
 
@@ -828,6 +828,10 @@
             updateScoresUI();
             drawWheel();
             setGerryQuote(`Ah, sei tu ${players[0].name}? Vediamo se vali qualcosa. ` + getRandomQuote('welcome'));
+            
+            if (players[activePlayerIndex].isBot) {
+                setTimeout(botPlayTurn, 1500);
+            }
         }
 
         function selectRandomPuzzle() {
@@ -935,6 +939,15 @@
                 updateScoresUI();
                 checkPuzzleSolved();
 
+                // Se il giocatore ha trovato una vocale o una consonante corretta e il round NON è terminato, gestiamo il turno del Bot se è il suo turno
+                if (players[activePlayerIndex].isBot && !document.getElementById('modal-round-win').classList.contains('hidden') === false) {
+                    canSpin = true;
+                    canGuessConsonant = false;
+                    isBuyingVowel = false;
+                    updateControlsUI();
+                    setTimeout(botPlayTurn, 2000);
+                }
+
             } else {
                 playWrongSound();
                 setGerryQuote(getRandomQuote('badChoice'));
@@ -992,11 +1005,33 @@
             updateControlsUI();
             setGerryQuote(`Tocca a ${players[activePlayerIndex].name}. Cerca di non fare figure barbine.`);
 
-            if (players[activePlayerIndex].isBot) setTimeout(botPlayTurn, 1200);
+            if (players[activePlayerIndex].isBot) {
+                setTimeout(botPlayTurn, 1500);
+            }
         }
 
         function botPlayTurn() {
-            if (players[activePlayerIndex].isBot && canSpin) spinWheel();
+            if (players[activePlayerIndex].isBot && canSpin && document.getElementById('modal-round-win').classList.contains('hidden')) {
+                spinWheel();
+            }
+        }
+
+        function botMakeDecision() {
+            if (!canGuessConsonant) return;
+
+            // Decisione intelligente del bot: se ha abbastanza soldi (>200) e ci sono ancora vocali disponibili, a volte compra una vocale
+            const availableVowels = VOWELS.filter(v => !usedLetters.has(v));
+            if (players[activePlayerIndex].roundScore >= 400 && availableVowels.length > 0 && Math.random() < 0.4) {
+                // Compra vocale
+                players[activePlayerIndex].roundScore -= 200;
+                updateScoresUI();
+                setGerryQuote(`${players[activePlayerIndex].name} compra una vocale.`);
+                const chosenVowel = availableVowels[Math.floor(Math.random() * availableVowels.length)];
+                setTimeout(() => selectLetter(chosenVowel), 1200);
+            } else {
+                // Sceglie consonante
+                botGuessConsonant();
+            }
         }
 
         function botGuessConsonant() {
