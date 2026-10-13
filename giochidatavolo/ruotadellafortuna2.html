@@ -1,1173 +1,767 @@
+```html
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La Ruota della Fortuna - Con Gerry Scotti (Next-Gen TV Edition)</title>
+    <title>La Ruota della Fortuna - Gerry Scotti Edition</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,700;0,900;1,800&family=Orbitron:wght@700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
-
+    
     <style>
-        :root {
-            --gold-gradient: linear-gradient(135deg, #fff7ed 0%, #fef08a 25%, #f59e0b 50%, #b45309 80%, #fff7ed 100%);
-            --neon-blue: #00f0ff;
-            --neon-gold: #ffb700;
-            --neon-purple: #b500ff;
-            --studio-bg: radial-gradient(ellipse at 50% 20%, #1a1b4b 0%, #080b1a 60%, #020308 100%);
-        }
-
-        * {
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
         body {
-            font-family: 'Montserrat', sans-serif;
-            background: var(--studio-bg);
-            color: #fff;
-            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            background: #d1af10;
             overflow-x: hidden;
+            user-select: none;
+        }
+
+        /* TV Studio Background Rays styled like the provided image */
+        .tv-studio-bg {
+            background: radial-gradient(circle at 35% 50%, #fef08a 0%, #eab308 40%, #ca8a04 70%, #854d0e 100%);
             position: relative;
         }
 
-        .font-tv { font-family: 'Bebas Neue', cursive; letter-spacing: 2px; }
-        .font-digital { font-family: 'Orbitron', monospace; }
-
-        /* Metallic & Neon Utilities */
-        .gold-text {
-            background: var(--gold-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
-        }
-
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(255, 255, 255, 0.05);
-        }
-
-        .glass-gold-panel {
-            background: linear-gradient(145deg, rgba(245, 158, 11, 0.12), rgba(15, 23, 42, 0.95));
-            border: 2px solid;
-            border-image: var(--gold-gradient) 1;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(245, 158, 11, 0.15);
-        }
-
-        /* TV Studio Lights Animation */
-        .beam-light {
+        .tv-studio-bg::before {
+            content: "";
             position: absolute;
-            top: -20%;
-            width: 350px;
-            height: 1000px;
-            pointer-events: none;
-            filter: blur(35px);
-            opacity: 0.45;
-            mix-blend-mode: screen;
-        }
-
-        .beam-left-1 {
-            left: 5%;
-            background: linear-gradient(180deg, var(--neon-blue) 0%, transparent 100%);
-            transform-origin: top left;
-            animation: sweepLeft 8s infinite alternate ease-in-out;
-        }
-
-        .beam-right-1 {
-            right: 5%;
-            background: linear-gradient(180deg, var(--neon-purple) 0%, transparent 100%);
-            transform-origin: top right;
-            animation: sweepRight 9s infinite alternate ease-in-out;
-        }
-
-        .beam-center {
-            left: 40%;
-            background: linear-gradient(180deg, var(--neon-gold) 0%, transparent 100%);
-            animation: pulseCenter 5s infinite alternate ease-in-out;
-        }
-
-        @keyframes sweepLeft {
-            0% { transform: rotate(-35deg) scaleX(0.8); }
-            100% { transform: rotate(-10deg) scaleX(1.3); }
-        }
-        @keyframes sweepRight {
-            0% { transform: rotate(35deg) scaleX(0.8); }
-            100% { transform: rotate(10deg) scaleX(1.3); }
-        }
-        @keyframes pulseCenter {
-            0% { opacity: 0.2; transform: scaleX(0.9); }
-            100% { opacity: 0.5; transform: scaleX(1.4); }
-        }
-
-        /* Studio Mirror Floor */
-        .studio-floor {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 35vh;
-            background: linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.95) 100%);
-            border-top: 1px solid rgba(0, 240, 255, 0.2);
+            inset: 0;
+            background: repeating-conic-gradient(
+                from 0deg at 35% 50%,
+                rgba(255, 255, 255, 0.25) 0deg,
+                rgba(255, 255, 255, 0.25) 8deg,
+                transparent 8deg,
+                transparent 16deg
+            );
             pointer-events: none;
         }
 
-        /* Hi-Tech LED Board Frame */
-        .board-led-frame {
-            background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
-            border: 4px solid #f59e0b;
-            box-shadow: 0 0 35px rgba(245, 158, 11, 0.4), 0 0 15px rgba(0, 240, 255, 0.3) inset;
-            border-radius: 24px;
-            position: relative;
+        /* Classic TV Show Beveled HUD Controls */
+        .hud-card {
+            background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+            border: 3px solid #cbd5e1;
+            box-shadow: inset 0 2px 0 rgba(255,255,255,0.9), 0 4px 10px rgba(0,0,0,0.3);
+            border-radius: 1rem;
         }
 
-        .led-light {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #fef08a;
-            box-shadow: 0 0 10px #f59e0b, 0 0 20px #fef08a;
-            animation: ledBlink 1s infinite alternate ease-in-out;
+        /* Green Beveled Letter Board */
+        .puzzle-board-container {
+            background: linear-gradient(180deg, #15803d 0%, #166534 100%);
+            border: 6px solid #14532d;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.3);
         }
 
-        @keyframes ledBlink {
-            0% { opacity: 0.3; transform: scale(0.8); }
-            100% { opacity: 1; transform: scale(1.3); box-shadow: 0 0 15px #f59e0b, 0 0 25px #fef08a; }
-        }
-
-        /* 3D Tile Flip Effect */
-        .letter-tile {
-            perspective: 1000px;
-            width: 2.5rem;
-            height: 3.4rem;
-        }
-
-        @media (min-width: 640px) {
-            .letter-tile {
-                width: 3.4rem;
-                height: 4.4rem;
-            }
-        }
-
-        .letter-inner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            text-align: center;
-            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            transform-style: preserve-3d;
-        }
-
-        .letter-tile.revealed .letter-inner {
-            transform: rotateY(180deg);
-        }
-
-        .letter-front, .letter-back {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            -webkit-backface-visibility: hidden;
-            backface-visibility: hidden;
+        .puzzle-grid-tile {
+            width: clamp(22px, 3.2vw, 42px);
+            height: clamp(30px, 4.2vw, 56px);
+            border-radius: 4px;
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 10px;
-            font-weight: 900;
+            font-size: clamp(14px, 2.2vw, 28px);
+            transition: transform 0.4s ease, background-color 0.3s;
         }
 
-        .letter-front {
-            background: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #1e3a8a 100%);
-            border: 2px solid #38bdf8;
-            box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.4), 0 6px 12px rgba(0,0,0,0.6);
+        /* Inactive Green Board Slots */
+        .tile-empty {
+            background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
+            border: 2px solid #166534;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
         }
 
-        .letter-front.empty-space {
-            background: rgba(15, 23, 42, 0.4);
-            border: 1px transparent;
-            box-shadow: none;
-        }
-
-        .letter-back {
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-            color: #0f172a;
-            border: 3px solid #f59e0b;
-            transform: rotateY(180deg);
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.5), inset 0 0 10px rgba(245, 158, 11, 0.3);
-            font-size: 1.6rem;
-        }
-
-        @media (min-width: 640px) {
-            .letter-back { font-size: 2.2rem; }
-        }
-
-        /* Glassmorphism Buttons */
-        .btn-neon {
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(0, 0, 0, 0.3) 100%);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.5), 0 10px 20px rgba(0, 0, 0, 0.4);
-        }
-
-        .btn-neon:hover:not(:disabled) {
-            transform: translateY(-2px);
-            filter: brightness(1.2);
-            box-shadow: 0 8px 0 rgba(0, 0, 0, 0.5), 0 15px 25px rgba(0, 240, 255, 0.3);
-        }
-
-        .btn-neon:active:not(:disabled) {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.5), 0 5px 10px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Pointer Flex Physics */
-        .pointer-tick {
-            animation: pointerFlex 0.12s ease-in-out;
-        }
-
-        @keyframes pointerFlex {
-            0% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-10px) rotate(-15deg); }
-            100% { transform: translateY(0) rotate(0deg); }
-        }
-
-        /* Gerry Speech Bubble Neon */
-        .speech-bubble {
-            position: relative;
+        /* White Hidden Slot for Letters */
+        .tile-hidden {
             background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
-            border: 3px solid #f59e0b;
-            border-radius: 1.5rem;
+            border: 2px solid #94a3b8;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+            color: transparent;
+        }
+
+        /* Revealed Letter Card */
+        .tile-revealed {
+            background: #ffffff;
+            border: 2px solid #64748b;
             color: #0f172a;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.6), 0 0 15px rgba(245, 158, 11, 0.3);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transform: rotateY(360deg);
         }
 
-        .speech-bubble:after {
-            content: '';
-            position: absolute;
-            left: -18px;
-            top: 50%;
-            transform: translateY(-50%);
-            border-width: 10px 18px 10px 0;
-            border-style: solid;
-            border-color: transparent #f59e0b transparent transparent;
+        /* Category Header Box */
+        .category-banner {
+            background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+            border: 3px solid #94a3b8;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
-        @media (max-width: 768px) {
-            .speech-bubble:after {
-                left: 50%;
-                top: -18px;
-                transform: translateX(-50%);
-                border-width: 0 10px 18px 10px;
-                border-color: transparent transparent #f59e0b transparent;
-            }
+        /* Pointer Marker Pulsing */
+        .wheel-pointer {
+            filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.6));
         }
 
-        /* Active Player Glow Podium */
-        .active-podium {
-            border-color: #f59e0b !important;
-            box-shadow: 0 0 25px rgba(245, 158, 11, 0.5), inset 0 0 15px rgba(245, 158, 11, 0.2) !important;
-            transform: scale(1.03);
+        /* Canvas Wheel Glow */
+        #wheel-canvas {
+            filter: drop-shadow(0 12px 20px rgba(0,0,0,0.4));
         }
     </style>
 </head>
-<body class="flex flex-col min-h-screen justify-between relative select-none">
+<body class="tv-studio-bg min-h-screen text-slate-800 flex flex-col justify-between">
 
-    <div class="beam-light beam-left-1"></div>
-    <div class="beam-light beam-right-1"></div>
-    <div class="beam-light beam-center"></div>
-    <canvas id="bg-particles" class="absolute inset-0 pointer-events-none z-0"></canvas>
-    <div class="studio-floor"></div>
-
-    <header class="w-full py-3.5 px-6 bg-slate-950/90 backdrop-blur-xl border-b-2 border-amber-500/40 flex justify-between items-center z-10 shadow-2xl">
-        <div class="flex items-center space-x-3.5">
-            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-300 to-amber-600 flex items-center justify-center font-bold text-slate-950 text-2xl shadow-lg shadow-amber-500/40 border-2 border-yellow-100">
-                <i class="fa-solid fa-dharmachakra animate-spin" style="animation-duration: 18s;"></i>
-            </div>
-            <div>
-                <h1 class="text-2xl sm:text-4xl font-black font-tv gold-text leading-none">
-                    LA RUOTA DELLA FORTUNA
-                </h1>
-                <p class="text-[11px] text-amber-300/90 font-bold tracking-widest uppercase flex items-center gap-2">
-                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span> IN ONDA SU CANALE 5
-                </p>
+    <!-- TOP HUD / HEADER BAR -->
+    <header class="relative z-10 w-full max-w-7xl mx-auto p-3 sm:p-5 flex flex-wrap items-center justify-between gap-3">
+        <!-- Exit / Reset & Timer -->
+        <div class="flex items-center gap-3">
+            <button onclick="confirmResetGame()" class="hud-card px-3 py-2 flex items-center justify-center text-slate-700 hover:text-red-600 active:scale-95 transition" title="Nuova Partita">
+                <i class="fa-solid fa-arrow-right-from-bracket text-xl sm:text-2xl"></i>
+            </button>
+            <div class="hud-card px-4 py-2 flex items-center gap-2">
+                <i class="fa-regular fa-clock text-amber-600 text-xl sm:text-2xl"></i>
+                <span id="game-timer" class="font-black text-lg sm:text-2xl text-slate-800 font-mono">04:00</span>
             </div>
         </div>
 
-        <div class="flex items-center space-x-3">
-            <button id="btn-sound" onclick="toggleAudio()" class="p-3 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-2xl border border-amber-500/40 transition-all shadow-lg active:scale-95">
-                <i id="sound-icon" class="fa-solid fa-volume-high text-lg"></i>
-            </button>
-            <button onclick="openRulesModal()" class="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-xs sm:text-sm font-bold border border-blue-400/50 transition-all shadow-lg active:scale-95 flex items-center gap-2">
-                <i class="fa-solid fa-circle-info"></i> <span class="hidden sm:inline">Regole Show</span>
-            </button>
+        <!-- Category Title (Header Center/Right) -->
+        <div class="category-banner px-6 sm:px-12 py-2 rounded-2xl text-center flex-1 max-w-xl mx-2">
+            <span id="category-display" class="font-black text-xl sm:text-3xl tracking-wider text-slate-800 uppercase drop-shadow-sm">---</span>
+        </div>
+
+        <!-- Score & Bank Indicators -->
+        <div class="flex items-center gap-3">
+            <div class="hud-card px-4 py-2 flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-amber-400 border-2 border-yellow-200 flex items-center justify-center shadow">
+                    <i class="fa-solid fa-sack-dollar text-amber-800 text-lg"></i>
+                </div>
+                <div>
+                    <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Manche</div>
+                    <div id="round-score-display" class="font-black text-lg sm:text-2xl text-slate-900 leading-none">0 €</div>
+                </div>
+            </div>
+
+            <div class="hud-card px-4 py-2 flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-emerald-500 border-2 border-emerald-200 flex items-center justify-center shadow">
+                    <i class="fa-solid fa-piggy-bank text-white text-lg"></i>
+                </div>
+                <div>
+                    <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Banca Totale</div>
+                    <div id="total-bank-display" class="font-black text-lg sm:text-2xl text-emerald-700 leading-none">0 €</div>
+                </div>
+            </div>
         </div>
     </header>
 
-    <main class="container mx-auto px-3 sm:px-4 py-4 flex-1 flex flex-col gap-5 z-10 max-w-7xl">
+    <!-- MAIN GAMEPLAY ARENA -->
+    <main class="relative z-10 w-full max-w-7xl mx-auto px-3 sm:px-5 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center my-2">
         
-        <!-- Gerry Scotti Host Section -->
-        <section class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center glass-panel p-4 sm:p-5 rounded-3xl border-2 border-amber-500/40 shadow-2xl relative">
-            
-            <div class="md:col-span-5 flex items-center gap-4 border-b md:border-b-0 md:border-r border-slate-700/80 pb-3 md:pb-0 md:pr-4">
-                <div class="relative shrink-0">
-                    <div id="gerry-container" class="w-32 h-32 sm:w-40 sm:h-40 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-200 to-amber-600 p-1 shadow-2xl shadow-amber-500/40">
-                        <div class="w-full h-full rounded-xl bg-slate-950 overflow-hidden flex items-center justify-center relative">
-                            <!-- Gerry Scotti Real Photo -->
-                            <img src="31942.jpg" alt="Gerry Scotti" class="w-full h-full object-cover" style="object-position: 78% 20%; transform: scale(1.15);" />
-                        </div>
-                    </div>
-                </div>
-
-                <div>
-                    <h2 class="text-xl sm:text-2xl font-black text-amber-400 flex items-center gap-1.5 font-tv tracking-wider">
-                        GERRY SCOTTI <i class="fa-solid fa-circle-check text-amber-400 text-xs"></i>
-                    </h2>
-                    <p class="text-xs text-slate-300 font-semibold">"Il Re del Quiz (e del sarcasmo!)"</p>
-                    <div class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold">
-                        <i class="fa-solid fa-microphone text-amber-400"></i> STUDIO 2 MEDIASET
-                    </div>
-                </div>
-            </div>
-
-            <div class="md:col-span-7">
-                <div class="speech-bubble p-4 sm:p-5">
-                    <p id="gerry-quote" class="text-slate-900 font-black text-base sm:text-xl italic leading-relaxed">
-                        "Signore e signori, benvenuti alla Ruota della Fortuna! Siete pronti a giocare con me?"
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <section class="board-led-frame p-4 sm:p-6 flex flex-col items-center relative overflow-hidden">
-            <div class="w-full flex justify-between px-4 absolute top-2.5 left-0 right-0">
-                <div class="flex gap-2"><span class="led-light"></span><span class="led-light"></span><span class="led-light"></span></div>
-                <div class="flex gap-2"><span class="led-light"></span><span class="led-light"></span><span class="led-light"></span></div>
-            </div>
-
-            <div class="mt-2 mb-4 z-10">
-                <div class="px-6 py-2 bg-slate-950/90 rounded-full border-2 border-amber-400 shadow-xl text-center">
-                    <span class="text-xs font-bold text-slate-300 uppercase tracking-widest mr-2">CATEGORIA:</span>
-                    <span id="category-display" class="gold-text font-black text-base sm:text-xl font-tv">...</span>
-                </div>
-            </div>
-
-            <div id="board-grid" class="flex flex-wrap justify-center gap-2 sm:gap-3 max-w-5xl py-4 min-h-[150px] items-center z-10">
-                <!-- Injected via JS -->
-            </div>
-
-            <div class="mt-3 text-xs sm:text-sm text-slate-300 font-medium italic text-center z-10 flex items-center gap-2">
-                <i class="fa-solid fa-lightbulb text-amber-400 text-base animate-pulse"></i>
-                <span id="board-hint">Gira la ruota e seleziona una consonante per scoprire la frase!</span>
-            </div>
-        </section>
-
-        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <!-- LEFT COLUMN: THE WHEEL & SPIN BUTTON -->
+        <div class="lg:col-span-5 flex flex-col items-center justify-center relative">
             
             <!-- Wheel Container -->
-            <div class="lg:col-span-6 flex flex-col items-center justify-center glass-panel p-5 rounded-3xl border-2 border-slate-700/80 shadow-2xl relative">
+            <div class="relative w-[300px] h-[300px] sm:w-[380px] sm:h-[380px] flex items-center justify-center my-2">
                 
-                <div id="wheel-pointer" class="absolute top-2 z-30 w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-t-[38px] border-t-amber-400 filter drop-shadow-[0_6px_10px_rgba(0,0,0,0.9)]"></div>
-                
-                <div class="relative my-3">
-                    <canvas id="wheel-canvas" width="390" height="390" class="max-w-full h-auto cursor-pointer filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.8)] active:scale-95 transition-transform"></canvas>
+                <!-- Red Pointer Pin -->
+                <div class="absolute -top-4 z-30 wheel-pointer flex flex-col items-center">
+                    <div class="w-7 h-10 bg-red-600 rounded-t-full border-2 border-white shadow-lg flex items-start justify-center pt-1">
+                        <div class="w-3 h-3 bg-white rounded-full"></div>
+                    </div>
+                    <div class="w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[16px] border-t-red-600 -mt-1"></div>
                 </div>
 
-                <button id="btn-spin" onclick="spinWheel()" class="btn-neon w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 text-slate-950 font-black text-2xl font-tv rounded-2xl border-2 border-yellow-100 flex items-center justify-center gap-3">
-                    <i class="fa-solid fa-rotate text-2xl"></i> GIRA LA RUOTA!
+                <!-- Canvas Wheel -->
+                <canvas id="wheel-canvas" width="380" height="380" class="w-full h-full rounded-full border-8 border-yellow-300 shadow-2xl"></canvas>
+
+                <!-- Center Hub Logo -->
+                <div class="absolute w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-tr from-slate-100 to-white rounded-full border-4 border-yellow-400 shadow-2xl flex flex-col items-center justify-center z-20">
+                    <i class="fa-solid fa-dharmachakra text-yellow-600 text-3xl sm:text-4xl animate-spin-slow"></i>
+                </div>
+            </div>
+
+            <!-- Spin Controls & Status -->
+            <div class="w-full max-w-sm flex flex-col items-center gap-2 mt-2">
+                <button id="spin-btn" onclick="spinWheel()" class="w-full py-3.5 px-6 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-500 hover:to-yellow-500 text-amber-950 font-black text-xl rounded-2xl border-4 border-yellow-200 shadow-xl transform active:scale-95 transition flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-sync-alt text-2xl"></i> GIRA LA RUOTA!
                 </button>
+
+                <div id="status-message" class="w-full hud-card py-2.5 px-4 text-center font-extrabold text-sm sm:text-base text-slate-800 shadow min-h-[48px] flex items-center justify-center">
+                    Premi "Gira la Ruota" per iniziare il tuo turno!
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: PUZZLE BOARD & ACTION PANELS -->
+        <div class="lg:col-span-7 flex flex-col gap-4 justify-center">
+
+            <!-- Puzzle Letter Board Grid -->
+            <div class="puzzle-board-container rounded-3xl p-3 sm:p-5 flex flex-col items-center justify-center min-h-[240px]">
+                <div id="puzzle-grid" class="flex flex-col gap-1.5 sm:gap-2.5 items-center w-full">
+                    <!-- Dynamic Matrix Generated via JS -->
+                </div>
             </div>
 
-            <!-- Scoreboard & Controls -->
-            <div class="lg:col-span-6 flex flex-col gap-4">
-                
-                <div class="grid grid-cols-3 gap-2 sm:gap-3">
-                    <div id="p1-card" class="bg-slate-900/90 p-3.5 rounded-2xl border-2 border-amber-400 shadow-xl transition-all">
-                        <div id="p1-name-label" class="text-[11px] text-amber-400 font-bold uppercase truncate">Giocatore 1</div>
-                        <div id="p1-round-score" class="text-base sm:text-2xl font-black font-digital text-amber-300 mt-1">€0</div>
-                        <div class="text-[10px] text-slate-400 mt-0.5">Totale: <span id="p1-total-score" class="font-bold text-white">€0</span></div>
+            <!-- Action Controls & Virtual Keyboard -->
+            <div class="hud-card p-4 sm:p-5 flex flex-col gap-3">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <div class="flex items-center gap-2 font-black text-xs sm:text-sm text-slate-700">
+                        <i class="fa-solid fa-gamepad text-amber-600"></i>
+                        <span id="turn-instruction">Seleziona una consonante:</span>
                     </div>
 
-                    <div id="p2-card" class="bg-slate-900/40 p-3.5 rounded-2xl border border-slate-700/80 shadow-lg transition-all opacity-70">
-                        <div class="text-[11px] text-slate-300 font-bold uppercase truncate">Gerry Bot 🤖</div>
-                        <div id="p2-round-score" class="text-base sm:text-2xl font-black font-digital text-slate-300 mt-1">€0</div>
-                        <div class="text-[10px] text-slate-400 mt-0.5">Totale: <span id="p2-total-score" class="font-bold text-white">€0</span></div>
-                    </div>
-
-                    <div id="p3-card" class="bg-slate-900/40 p-3.5 rounded-2xl border border-slate-700/80 shadow-lg transition-all opacity-70">
-                        <div class="text-[11px] text-slate-300 font-bold uppercase truncate">Zio Gerry 👨</div>
-                        <div id="p3-round-score" class="text-base sm:text-2xl font-black font-digital text-slate-300 mt-1">€0</div>
-                        <div class="text-[10px] text-slate-400 mt-0.5">Totale: <span id="p3-total-score" class="font-bold text-white">€0</span></div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="buyVowel()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow transition flex items-center gap-1.5 active:scale-95">
+                            <i class="fa-solid fa-font"></i> Compra Vocale (250 €)
+                        </button>
+                        <button onclick="openSolveModal()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow transition flex items-center gap-1.5 active:scale-95">
+                            <i class="fa-solid fa-lightbulb"></i> Risolvi Frase
+                        </button>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <button id="btn-buy-vowel" onclick="enableVowelSelection()" disabled class="btn-neon px-4 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-600 text-white font-bold rounded-2xl border border-indigo-400/40 flex items-center justify-center gap-2 text-sm sm:text-base">
-                        <i class="fa-solid fa-font"></i> Compra Vocale (€200)
-                    </button>
-
-                    <button id="btn-solve" onclick="openSolveModal()" class="btn-neon px-4 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-2xl border border-emerald-400/40 flex items-center justify-center gap-2 text-sm sm:text-base">
-                        <i class="fa-solid fa-key"></i> Risolvi Frase
-                    </button>
+                <!-- On-Screen Alphabet Keyboard -->
+                <div id="keyboard-container" class="grid grid-cols-7 sm:grid-cols-9 gap-1.5 sm:gap-2 mt-1">
+                    <!-- Letter Buttons Generated via JS -->
                 </div>
-
-                <div class="glass-panel p-4 rounded-2xl border-2 border-slate-700/80 shadow-2xl">
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-xs font-bold text-slate-300 uppercase tracking-wider" id="keyboard-title">Tastiera Consonanti</span>
-                        <span id="current-wheel-value" class="text-xs font-black text-amber-300 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-400/40">Spicchio: €0</span>
-                    </div>
-
-                    <div id="keyboard" class="flex flex-wrap gap-1.5 sm:gap-2 justify-center">
-                        <!-- Injected via JS -->
-                    </div>
-                </div>
-
             </div>
 
-        </section>
-
+            <!-- Manche Counter Footer -->
+            <div class="flex justify-between items-center text-xs sm:text-sm font-black text-slate-900 px-2">
+                <span id="manche-counter-display">MANCHE 1 / 10</span>
+                <span>LA RUOTA DELLA FORTUNA - GERRY SCOTTI</span>
+            </div>
+        </div>
     </main>
 
-    <!-- Registration Modal (Before Game Starts) -->
-    <div id="modal-register" class="fixed inset-0 bg-slate-950/95 backdrop-blur-lg z-50 flex items-center justify-center p-4">
-        <div class="bg-gradient-to-b from-slate-900 to-indigo-950 border-2 border-amber-400 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative text-center">
-            <div class="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-amber-400 shadow-lg shadow-amber-500/30">
-                <i class="fa-solid fa-user-pen text-4xl text-amber-400"></i>
+    <!-- SOLVE PUZZLE MODAL -->
+    <div id="solve-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border-4 border-amber-400 text-center transform transition-all">
+            <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-3">
+                <i class="fa-solid fa-key"></i>
             </div>
-            <h3 class="text-3xl font-black font-tv gold-text mb-2">REGISTRATI AL GIOCO</h3>
-            <p class="text-sm text-slate-300 mb-6">Inserisci il tuo nome per scendere in campo allo Studio 2!</p>
+            <h3 class="text-2xl font-black text-slate-800 mb-1">Risolvi il Tabellone</h3>
+            <p class="text-slate-500 text-sm font-bold mb-5">Inserisci la frase o parola completa esattamente come sul tabellone:</p>
             
-            <input type="text" id="player-name-input" placeholder="Il tuo nome..." maxlength="15" class="w-full px-4 py-3.5 rounded-xl bg-slate-950 border-2 border-amber-400/60 text-white font-black text-center text-xl uppercase tracking-wider focus:outline-none focus:border-amber-300 mb-6 shadow-inner" />
-
-            <button onclick="registerPlayer()" class="btn-neon w-full py-4 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-xl rounded-2xl shadow-xl shadow-amber-500/30">
-                ENTRA IN STUDIO <i class="fa-solid fa-arrow-right ml-2"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- Solve Modal -->
-    <div id="modal-solve" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border-2 border-amber-400 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl relative">
-            <h3 class="text-3xl font-black font-tv gold-text mb-2 text-center">RISOLVI LA FRASE MISTERIOSA</h3>
-            <p class="text-sm text-slate-300 text-center mb-6">Digita la soluzione esatta per vincere il round!</p>
-            
-            <input type="text" id="solve-input" placeholder="Scrivi qui..." class="w-full px-4 py-3.5 rounded-xl bg-slate-950 border-2 border-amber-400/60 text-white font-black text-center text-xl uppercase tracking-wider focus:outline-none focus:border-amber-300 mb-6 shadow-inner" />
+            <input type="text" id="solve-input" placeholder="Scrivi qui la soluzione..." class="w-full px-4 py-3.5 rounded-2xl border-2 border-slate-300 focus:border-amber-500 focus:outline-none text-center text-xl font-black uppercase mb-5 tracking-wider">
 
             <div class="flex gap-3">
-                <button onclick="closeSolveModal()" class="w-1/2 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all">
+                <button onclick="closeSolveModal()" class="flex-1 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-extrabold rounded-xl transition">
                     Annulla
                 </button>
-                <button onclick="submitSolve()" class="w-1/2 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl transition-all shadow-lg shadow-amber-500/30">
-                    CONFERMA!
+                <button onclick="submitSolve()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl shadow-lg transition">
+                    Conferma
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Rules Modal -->
-    <div id="modal-rules" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border-2 border-slate-700 rounded-3xl p-6 max-w-md w-full shadow-2xl relative">
-            <h3 class="text-2xl font-bold font-tv text-amber-400 mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-scroll"></i> Regole dello Show
-            </h3>
-            <ul class="text-sm text-slate-300 space-y-3 list-disc pl-5">
-                <li>Gira la ruota e seleziona una **consonante**.</li>
-                <li>Ogni consonante trovata moltiplica il valore dello spicchio per la sua frequenza!</li>
-                <li>Le **vocali** costano €200 del tuo bottino attuale.</li>
-                <li>Attenzione alla **Bancarotta** e a **Perde il Turno**!</li>
-                <li>Puoi **Risolvi** in qualsiasi momento la frase misteriosa. (Ma attento alle sfuriate di Gerry se sbagli!)</li>
-            </ul>
-            <button onclick="closeRulesModal()" class="mt-6 w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-lg">
-                Ho Capito, Giochiamo!
+    <!-- GENERAL MESSAGE MODAL -->
+    <div id="msg-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center border-4 border-yellow-400 shadow-2xl">
+            <div id="modal-icon" class="text-5xl text-amber-500 mb-3"><i class="fa-solid fa-star"></i></div>
+            <h3 id="modal-title" class="text-2xl font-black text-slate-800 mb-2">Titolo</h3>
+            <p id="modal-body" class="text-slate-600 font-bold mb-6 text-sm sm:text-base">Messaggio...</p>
+            <button onclick="closeMsgModal()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-xl shadow-lg transition">
+                Continua
             </button>
         </div>
     </div>
-
-    <!-- Round Win Modal -->
-    <div id="modal-round-win" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-gradient-to-b from-slate-900 to-indigo-950 border-2 border-amber-400 rounded-3xl p-8 max-w-lg w-full text-center shadow-2xl relative">
-            <div class="w-24 h-24 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-amber-400 shadow-lg shadow-amber-500/30">
-                <i class="fa-solid fa-trophy text-5xl text-amber-400 animate-bounce"></i>
-            </div>
-            <h3 id="win-title" class="text-4xl font-black font-tv gold-text gold-text mb-2">CAMPIONE!</h3>
-            <p id="win-message" class="text-lg text-slate-200 font-semibold mb-6">Hai indovinato la frase della serata!</p>
-            
-            <div class="bg-slate-950/80 p-5 rounded-2xl border border-slate-700 mb-6">
-                <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">Soluzione Finale</p>
-                <p id="win-phrase" class="text-xl font-black text-amber-300 mt-1">"..."</p>
-                <p class="text-base text-emerald-400 font-bold mt-2">Vincita del Round: <span id="win-amount">€0</span></p>
-            </div>
-
-            <button onclick="nextRound()" class="btn-neon w-full py-4 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-xl rounded-2xl shadow-xl shadow-amber-500/30">
-                PROSSIMO ROUND <i class="fa-solid fa-arrow-right ml-2"></i>
-            </button>
-        </div>
-    </div>
-
-    <footer class="w-full py-3 px-6 bg-slate-950 border-t border-slate-800 text-center text-xs text-slate-500 z-10">
-        La Ruota della Fortuna • Mediaset Show Edition
-    </footer>
 
     <script>
-        let audioCtx = null;
-        let isAudioMuted = false;
+        // EXPANDED DATABASE WITH TONS OF CATEGORIES & SENTENCES
+        const puzzleDatabase = [
+            // GEOGRAFIA & MONUMENTI
+            { category: "GEOGRAFIA", phrase: "MONTE BIANCO" },
+            { category: "GEOGRAFIA", phrase: "IL FIUME PO ATTRAVERSA LA PIANURA PADANA" },
+            { category: "MONUMENTI", phrase: "IL COLOSSEO DI ROMA" },
+            { category: "GEOGRAFIA", phrase: "L ISOLA DI CAPRI NEL GOLFO DI NAPOLI" },
+            { category: "MONUMENTI", phrase: "LA TORRE DI PISA" },
+            { category: "GEOGRAFIA", phrase: "IL VULCANO ETNA IN SICILIA" },
 
-        function initAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
+            // CINEMA E TV
+            { category: "CINEMA E TV", phrase: "LA RUOTA DELLA FORTUNA" },
+            { category: "CINEMA E TV", phrase: "LA DOLCE VITA DI FEDERICO FELLINI" },
+            { category: "CINEMA E TV", phrase: "GERRY SCOTTI CONDUTTORE TELEVISIVO" },
+            { category: "CINEMA E TV", phrase: "IL FESTIVAL DI SANREMO" },
+            { category: "CINEMA E TV", phrase: "C ERA UNA VOLTA IL WEST" },
 
-        function playBeep(freq = 440, type = 'sine', duration = 0.1, volume = 0.2) {
-            if (isAudioMuted) return;
-            initAudio();
-            try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + duration);
-            } catch (e) {}
-        }
+            // PROVERBI E MODI DI DIRE
+            { category: "PROVERBIO", phrase: "CHI DORME NON PIGLIA PESCI" },
+            { category: "PROVERBIO", phrase: "TUTTE LE STRADE PORTANO A ROMA" },
+            { category: "MODO DI DIRE", phrase: "A CAVAL DONATO NON SI GUARDA IN BOCCA" },
+            { category: "PROVERBIO", phrase: "IL LUPO PERDE IL PELO MA NON IL VIZIO" },
+            { category: "MODO DI DIRE", phrase: "MEGLIO UN UOVO OGGI CHE UNA GALLINA DOMANI" },
 
-        function playWheelClickSound() { playBeep(700, 'triangle', 0.04, 0.2); }
-        function playCorrectSound() {
-            if (isAudioMuted) return;
-            [523, 659, 783, 1046].forEach((f, i) => setTimeout(() => playBeep(f, 'sine', 0.2, 0.25), i * 90));
-        }
-        function playWrongSound() {
-            if (isAudioMuted) return;
-            playBeep(180, 'sawtooth', 0.25, 0.3);
-            setTimeout(() => playBeep(130, 'sawtooth', 0.35, 0.3), 140);
-        }
-        function playBankruptSound() {
-            if (isAudioMuted) return;
-            [320, 260, 200, 140].forEach((f, i) => setTimeout(() => playBeep(f, 'sawtooth', 0.2, 0.3), i * 110));
-        }
-        function playFanfareSound() {
-            if (isAudioMuted) return;
-            [440, 554, 659, 880].forEach((f, i) => setTimeout(() => playBeep(f, 'triangle', 0.35, 0.3), i * 130));
-            setTimeout(() => confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } }), 400);
-        }
+            // CUCINA E GASTRONOMIA
+            { category: "CUCINA ITALIANA", phrase: "PIZZA MARGHERITA CON MOZZARELLA E BASILICO" },
+            { category: "GASTRONOMIA", phrase: "SPAGHETTI ALLA CARBONARA" },
+            { category: "CUCINA ITALIANA", phrase: "TIRAMISU CON MASCARPONE E CAFFE" },
+            { category: "GASTRONOMIA", phrase: "RISOTTO ALLA MILANESE CON ZATTERANO" },
 
-        function toggleAudio() {
-            isAudioMuted = !isAudioMuted;
-            const icon = document.getElementById('sound-icon');
-            icon.className = isAudioMuted ? 'fa-solid fa-volume-xmark text-lg text-slate-500' : 'fa-solid fa-volume-high text-lg text-amber-400';
-        }
+            // LETTERATURA E LIBRI
+            { category: "LETTERATURA", phrase: "I PROMESSI SPOSI DI ALESSANDRO MANZONI" },
+            { category: "LETTERATURA", phrase: "LA DIVINA COMMEDIA DI DANTE ALIGHIERI" },
+            { category: "LETTERATURA", phrase: "IL NOME DELLA ROSA DI UMBERTO ECO" },
 
-        const PUZZLES = [
-            { category: "PROVERBIO POPOLARE", phrase: "L ABITO NON FA IL MONACO" },
-            { category: "CINEMA ITALIANO", phrase: "LA VITA E BELLA" },
-            { category: "MODI DIRE", phrase: "CHI DORME NON PIGLIA PESCI" },
-            { category: "CITAZIONI CELEBRI", phrase: "RISPOSTA ESATTA SIGNORI" },
-            { category: "GEOGRAFIA E CULTURA", phrase: "IL COLOSSEO DI ROMA" },
-            { category: "MUSICA ITALIANA", phrase: "NEL BLU DIPINTO DI BLU" },
-            { category: "CUCINA TRADIZIONALE", phrase: "SPAGHETTI ALLA CARBONARA" }
+            // MUSICA & SPETTACOLO
+            { category: "MUSICA", phrase: "NEL BLU DIPINTO DI BLU" },
+            { category: "MUSICA", phrase: "AL BANO E ROMINA POWER" },
+            { category: "MUSICA", phrase: "L ITALIANO DI TOTO CUTUGNO" },
+
+            // STORIA E CULTURA
+            { category: "STORIA", phrase: "LA SCOPERTA DELL AMERICA NEL QUATTORDICIENTO" },
+            { category: "ARTE", phrase: "LA GIOCONDA DI LEONARDO DA VINCI" },
+            { category: "STORIA", phrase: "IL RINASCIMENTO ITALIANO" }
         ];
 
-        const GERRY_QUOTES = {
-            welcome: ["Signore e signori, benvenuti su Canale 5 alla Ruota della Fortuna!", "Vediamo se almeno tu hai un briciolo di cervello per giocare!"],
-            spin: ["Giriamo la ruota, sperando che tu non faccia disastri!", "Forza, muoviti a girare!"],
-            goodChoice: ["Vedi che quando ti impegni (raramente) ci arrivi?", "Ottima scelta, miracolosamente."],
-            badChoice: [
-                "Ma ti rendi conto di quello che fai? Non c'è!",
-                "Ma sei serio?! Questa lettera non esiste neanche nel tuo vocabolario!",
-                "Che ignoranza immane! La lettera non c'è, levati di torno!",
-                "Ma ti hanno dato il cervello in comodato d'uso? Sbagliato!"
-            ],
-            bankrupt: ["Ahi ahi ahi... BANCAROTTA! Ben ti sta, così impari a fare lo sborone!", "E via tutto! Era ora che ti si azzerasse quel portafoglio vuoto!"],
-            loseTurn: ["Perdi il Turno! E meno male, così riposiamo le orecchie dalla tua incompetenza."],
-            buyVowel: ["Compriamo una vocale... Speriamo non sia troppo difficile per te."],
-            solveSuccess: ["Miracolo della scienza! Hai indovinato."]
+        // Wheel Slices setup (Matching image colors, values, and special slots)
+        const wheelSlices = [
+            { label: "800", value: 800, color: "#0284c7" },
+            { label: "550", value: 550, color: "#38bdf8" },
+            { label: "400", value: 400, color: "#0066cc" },
+            { label: "300", value: 300, color: "#3b82f6" },
+            { label: "900", value: 900, color: "#6366f1" },
+            { label: "500", value: 500, color: "#8b5cf6" },
+            { label: "300", value: 300, color: "#a855f7" },
+            { label: "900", value: 900, color: "#d946ef" },
+            { label: "BANCOROTTA", value: "BANKRUPT", color: "#1e293b", isBankrupt: true },
+            { label: "600", value: 600, color: "#e11d48" },
+            { label: "400", value: 400, color: "#ef4444" },
+            { label: "300", value: 300, color: "#f97316" },
+            { label: "PASSA", value: "PASS", color: "#ffffff", textColor: "#000000" },
+            { label: "350", value: 350, color: "#f59e0b" },
+            { label: "450", value: 450, color: "#eab308" },
+            { label: "700", value: 700, color: "#84cc16" },
+            { label: "300", value: 300, color: "#22c55e" },
+            { label: "600", value: 600, color: "#16a34a" },
+            { label: "5000", value: 5000, color: "#15803d" },
+            { label: "500", value: 500, color: "#06b6d4" }
+        ];
+
+        // Game State Variables
+        let currentPuzzleIndex = 0;
+        let activePuzzles = [];
+        let currentPhrase = "";
+        let currentCategory = "";
+        let guessedLetters = new Set();
+        let roundScore = 0;
+        let totalBank = 0;
+        let mancheNumber = 1;
+        const maxManches = 10;
+        
+        let wheelRotation = 0;
+        let isSpinning = false;
+        let currentWheelValue = 0;
+        let canGuessLetter = false;
+
+        let timerSeconds = 240;
+        let timerInterval = null;
+
+        // Initialize Game
+        window.onload = function() {
+            initGameSession();
         };
 
-        const RUDE_SOLVE_FAILS = [
-            "Ma che risposta hai dato?! Ma ti sei svegliato con la camicia storta o sei proprio negato?",
-            "Ma dove l'hai studiata questa soluzione? All'asilo notturno? Sbagliatissimo!",
-            "Ma ti rendi conto delle idiozie che dici in prima serata su Canale 5?! Fuori!",
-            "Ma per favore! Questa risposta fa acqua da tutte le parti. Vergogna!",
-            "Sei di una tristezza unica. Risposta completamente sballata, vattene a casa!"
-        ];
+        function initGameSession() {
+            // Shuffle puzzles
+            activePuzzles = [...puzzleDatabase].sort(() => Math.random() - 0.5);
+            mancheNumber = 1;
+            totalBank = 0;
+            timerSeconds = 240;
+            startTimer();
+            loadManche();
+            buildKeyboard();
+            drawWheel(0);
+        }
 
-        const WHEEL_SECTORS = [
-            { label: "100", value: 100, color: "#ef4444", textColor: "#ffffff" },
-            { label: "300", value: 300, color: "#2563eb", textColor: "#ffffff" },
-            { label: "BANCAROTTA", value: "BANKRUPT", color: "#020617", textColor: "#ef4444" },
-            { label: "500", value: 500, color: "#059669", textColor: "#ffffff" },
-            { label: "200", value: 200, color: "#d97706", textColor: "#ffffff" },
-            { label: "PERDE TURNO", value: "LOSE_TURN", color: "#475569", textColor: "#ffffff" },
-            { label: "1000", value: 1000, color: "#7c3aed", textColor: "#ffffff" },
-            { label: "150", value: 150, color: "#db2777", textColor: "#ffffff" },
-            { label: "JOLLY", value: "JOLLY", color: "#eab308", textColor: "#0f172a" },
-            { label: "400", value: 400, color: "#0891b2", textColor: "#ffffff" },
-            { label: "250", value: 250, color: "#65a30d", textColor: "#ffffff" },
-            { label: "BANCAROTTA", value: "BANKRUPT", color: "#020617", textColor: "#ef4444" }
-        ];
+        // Timer Function
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (timerSeconds > 0) {
+                    timerSeconds--;
+                    const m = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+                    const s = String(timerSeconds % 60).padStart(2, '0');
+                    document.getElementById('game-timer').innerText = `${m}:${s}`;
+                }
+            }, 1000);
+        }
 
-        const VOWELS = ['A', 'E', 'I', 'O', 'U'];
-        const CONSONANTS = ['B', 'C', 'D', 'F', 'G', 'H', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'Z'];
+        // Load Manche
+        function loadManche() {
+            if (mancheNumber > maxManches || currentPuzzleIndex >= activePuzzles.length) {
+                showMsgModal("PARTITA FINITA!", `Hai completato la partita accumulando un totale di € ${totalBank.toLocaleString()}! Bravo!`);
+                initGameSession();
+                return;
+            }
 
-        let currentPuzzle = null;
-        let revealedLetters = new Set();
-        let usedLetters = new Set();
-        let activePlayerIndex = 0;
-        let currentSpinValue = 0;
-        let canSpin = true;
-        let canGuessConsonant = false;
-        let isBuyingVowel = false;
+            const p = activePuzzles[currentPuzzleIndex];
+            currentCategory = p.category;
+            currentPhrase = p.phrase.toUpperCase();
+            guessedLetters = new Set([' ', '\'', '-']);
+            roundScore = 0;
+            canGuessLetter = false;
 
-        let players = [
-            { name: "Giocatore 1", roundScore: 0, totalScore: 0, isBot: false },
-            { name: "Gerry Bot", roundScore: 0, totalScore: 0, isBot: true },
-            { name: "Zio Gerry", roundScore: 0, totalScore: 0, isBot: true }
-        ];
+            document.getElementById('category-display').innerText = currentCategory;
+            document.getElementById('round-score-display').innerText = `0 €`;
+            document.getElementById('total-bank-display').innerText = `${totalBank.toLocaleString()} €`;
+            document.getElementById('manche-counter-display').innerText = `MANCHE ${mancheNumber} / ${maxManches}`;
+            document.getElementById('status-message').innerText = 'Premi "GIRA LA RUOTA" per scoprire il valore!';
 
-        const canvas = document.getElementById('wheel-canvas');
-        const ctx = canvas.getContext('2d');
-        const wheelRadius = canvas.width / 2;
-        let currentAngle = 0;
-        let isSpinning = false;
+            renderPuzzleBoard();
+            resetKeyboard();
+        }
 
-        function drawWheel() {
-            const numSectors = WHEEL_SECTORS.length;
-            const arcSize = (2 * Math.PI) / numSectors;
+        // Render Green Puzzle Grid Board
+        function renderPuzzleBoard() {
+            const grid = document.getElementById('puzzle-grid');
+            grid.innerHTML = '';
+
+            const words = currentPhrase.split(' ');
+            let rows = [];
+            let currentRow = [];
+            let currentLen = 0;
+
+            // Simple row wrap logic (max 14 chars per row)
+            words.forEach(w => {
+                if (currentLen + w.length + 1 <= 13) {
+                    currentRow.push(w);
+                    currentLen += w.length + 1;
+                } else {
+                    if (currentRow.length > 0) rows.push(currentRow);
+                    currentRow = [w];
+                    currentLen = w.length;
+                }
+            });
+            if (currentRow.length > 0) rows.push(currentRow);
+
+            rows.forEach(rowWords => {
+                const rowEl = document.createElement('div');
+                rowEl.className = 'flex gap-1 sm:gap-2 justify-center my-0.5 sm:my-1';
+
+                rowWords.forEach((word, wIdx) => {
+                    for (let i = 0; i < word.length; i++) {
+                        const char = word[i];
+                        const tile = document.createElement('div');
+                        tile.className = 'puzzle-grid-tile';
+
+                        if (guessedLetters.has(char)) {
+                            tile.classList.add('tile-revealed');
+                            tile.innerText = char;
+                        } else {
+                            tile.classList.add('tile-hidden');
+                            tile.innerText = char;
+                        }
+                        rowEl.appendChild(tile);
+                    }
+
+                    // Word separator space
+                    if (wIdx < rowWords.length - 1) {
+                        const spaceTile = document.createElement('div');
+                        spaceTile.className = 'puzzle-grid-tile tile-empty';
+                        rowEl.appendChild(spaceTile);
+                    }
+                });
+
+                grid.appendChild(rowEl);
+            });
+        }
+
+        // Canvas Wheel Rendering
+        function drawWheel(angleRad) {
+            const canvas = document.getElementById('wheel-canvas');
+            const ctx = canvas.getContext('2d');
+            const numSlices = wheelSlices.length;
+            const arc = (2 * Math.PI) / numSlices;
+            const center = canvas.width / 2;
+            const radius = center - 8;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Metallic Ring 3D Rim
             ctx.save();
-            ctx.beginPath();
-            ctx.arc(wheelRadius, wheelRadius, wheelRadius - 3, 0, 2 * Math.PI);
-            ctx.fillStyle = '#0f172a';
-            ctx.fill();
-            ctx.lineWidth = 10;
-            ctx.strokeStyle = '#f59e0b';
-            ctx.stroke();
-            ctx.restore();
+            ctx.translate(center, center);
+            ctx.rotate(angleRad);
 
-            // Sectors
-            for (let i = 0; i < numSectors; i++) {
-                const angle = currentAngle + i * arcSize;
-                const sector = WHEEL_SECTORS[i];
-
-                ctx.save();
-                ctx.beginPath();
-                ctx.moveTo(wheelRadius, wheelRadius);
-                ctx.arc(wheelRadius, wheelRadius, wheelRadius - 14, angle, angle + arcSize);
-                ctx.closePath();
+            for (let i = 0; i < numSlices; i++) {
+                const sliceAngle = i * arc;
                 
-                const radGrad = ctx.createRadialGradient(wheelRadius, wheelRadius, 30, wheelRadius, wheelRadius, wheelRadius - 14);
-                radGrad.addColorStop(0, sector.color);
-                radGrad.addColorStop(1, '#00000088');
-                ctx.fillStyle = radGrad;
-                ctx.fill();
-
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = '#ffffff55';
-                ctx.stroke();
-
-                // Sector Text
-                ctx.save();
-                ctx.translate(wheelRadius, wheelRadius);
-                ctx.rotate(angle + arcSize / 2);
-                ctx.textAlign = "right";
-                ctx.fillStyle = sector.textColor;
-                ctx.font = "900 17px Montserrat";
-                ctx.shadowColor = "rgba(0,0,0,0.8)";
-                ctx.shadowBlur = 6;
-                ctx.fillText(sector.label, wheelRadius - 28, 6);
-                ctx.restore();
-
-                // Gold Pins
-                const pinAngle = angle;
-                const pinX = wheelRadius + (wheelRadius - 18) * Math.cos(pinAngle);
-                const pinY = wheelRadius + (wheelRadius - 18) * Math.sin(pinAngle);
-
-                ctx.save();
+                // Draw slice
                 ctx.beginPath();
-                ctx.arc(pinX, pinY, 5, 0, 2 * Math.PI);
-                ctx.fillStyle = '#fef08a';
+                ctx.fillStyle = wheelSlices[i].color;
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, radius, sliceAngle, sliceAngle + arc);
+                ctx.lineTo(0, 0);
                 ctx.fill();
-                ctx.strokeStyle = '#b45309';
-                ctx.lineWidth = 1.5;
+
+                // Draw border line
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
                 ctx.stroke();
-                ctx.restore();
+
+                // Draw slice text/label
+                ctx.save();
+                ctx.rotate(sliceAngle + arc / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = wheelSlices[i].textColor || "#ffffff";
+                ctx.font = "black 14px Inter";
+
+                if (wheelSlices[i].isBankrupt) {
+                    ctx.fillText("💀 " + wheelSlices[i].label, radius - 15, 5);
+                } else {
+                    ctx.fillText(wheelSlices[i].label, radius - 20, 5);
+                }
 
                 ctx.restore();
             }
 
-            // Central 3D Cap
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(wheelRadius, wheelRadius, 45, 0, 2 * Math.PI);
-            const capGrad = ctx.createLinearGradient(wheelRadius - 45, wheelRadius - 45, wheelRadius + 45, wheelRadius + 45);
-            capGrad.addColorStop(0, '#fef08a');
-            capGrad.addColorStop(0.5, '#f59e0b');
-            capGrad.addColorStop(1, '#78350f');
-            ctx.fillStyle = capGrad;
-            ctx.fill();
-            ctx.lineWidth = 4;
-            ctx.strokeStyle = '#ffffff';
-            ctx.stroke();
-
-            ctx.fillStyle = '#0f172a';
-            ctx.font = "900 13px Montserrat";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText("RUOTA", wheelRadius, wheelRadius);
             ctx.restore();
         }
 
-        function registerPlayer() {
-            const inputName = document.getElementById('player-name-input').value.trim();
-            if (inputName !== "") {
-                players[0].name = inputName.toUpperCase();
-                document.getElementById('p1-name-label').innerText = players[0].name;
-            }
-            document.getElementById('modal-register').classList.add('hidden');
-            
-            initGame();
-        }
-
+        // Spin Wheel Action
         function spinWheel() {
-            if (!canSpin || isSpinning) return;
-            initAudio();
+            if (isSpinning) return;
+            if (canGuessLetter) {
+                showMsgModal("Scegli una lettera", "Hai già girato la ruota! Seleziona una consonante dalla tastiera o risolvi.");
+                return;
+            }
 
-            canSpin = false;
             isSpinning = true;
-            document.getElementById('btn-spin').disabled = true;
-            setGerryQuote(getRandomQuote('spin'));
+            document.getElementById('status-message').innerText = "La ruota sta girando...";
 
-            const numSectors = WHEEL_SECTORS.length;
-            const arcSize = (2 * Math.PI) / numSectors;
-
-            const totalRounds = 6 + Math.floor(Math.random() * 4);
-            const randomSectorIndex = Math.floor(Math.random() * numSectors);
+            const numSlices = wheelSlices.length;
+            const sliceArc = (2 * Math.PI) / numSlices;
             
-            // Calcolo preciso dell'angolo di arrivo basato sul puntatore in alto (angolo 3 * Math.PI / 2)
-            const pointerAngle = 3 * Math.PI / 2;
-            const targetSectorCenter = (randomSectorIndex * arcSize) + (arcSize / 2);
-            const targetAngle = totalRounds * 2 * Math.PI + (pointerAngle - targetSectorCenter);
+            const selectedSliceIndex = Math.floor(Math.random() * numSlices);
+            
+            // Calculate final angle rotation
+            const extraRotations = (5 + Math.floor(Math.random() * 3)) * 2 * Math.PI;
+            // Align pin at top (-90 deg / -PI/2)
+            const targetSliceAngle = (3 * Math.PI / 2) - (selectedSliceIndex * sliceArc) - (sliceArc / 2);
+            
+            const finalAngle = wheelRotation + extraRotations + (targetSliceAngle - (wheelRotation % (2 * Math.PI)));
 
-            let startTime = null;
-            const duration = 4800;
-            let lastClickSector = -1;
+            let startTimestamp = null;
+            const duration = 3800; // 3.8s spin animation
 
-            function animateSpin(timestamp) {
-                if (!startTime) startTime = timestamp;
-                const progress = (timestamp - startTime) / duration;
+            function animate(timestamp) {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                
+                // Cubic ease-out
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const currentAngle = wheelRotation + (finalAngle - wheelRotation) * easeOut;
+
+                drawWheel(currentAngle);
 
                 if (progress < 1) {
-                    const easeOut = 1 - Math.pow(1 - progress, 3);
-                    currentAngle = easeOut * targetAngle;
-
-                    const normalizedAngle = (currentAngle % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
-                    const currentSectorIdx = Math.floor((2 * Math.PI - normalizedAngle + pointerAngle) / arcSize) % numSectors;
-
-                    if (currentSectorIdx !== lastClickSector) {
-                        playWheelClickSound();
-                        lastClickSector = currentSectorIdx;
-
-                        const ptr = document.getElementById('wheel-pointer');
-                        ptr.classList.remove('pointer-tick');
-                        void ptr.offsetWidth;
-                        ptr.classList.add('pointer-tick');
-                    }
-
-                    drawWheel();
-                    requestAnimationFrame(animateSpin);
+                    requestAnimationFrame(animate);
                 } else {
-                    currentAngle = targetAngle % (2 * Math.PI);
-                    drawWheel();
+                    wheelRotation = finalAngle;
                     isSpinning = false;
-                    handleSectorResult(randomSectorIndex);
+                    evaluateWheelResult(wheelSlices[selectedSliceIndex]);
                 }
             }
 
-            requestAnimationFrame(animateSpin);
+            requestAnimationFrame(animate);
         }
 
-        function handleSectorResult(sectorIndex) {
-            const sector = WHEEL_SECTORS[sectorIndex];
-            const sectorVal = sector.value;
+        // Evaluate Spin Landing
+        function evaluateWheelResult(slice) {
+            const statusEl = document.getElementById('status-message');
 
-            document.getElementById('current-wheel-value').innerText = `Spicchio: €${sector.label}`;
-
-            if (sectorVal === "BANKRUPT") {
-                playBankruptSound();
-                setGerryQuote(getRandomQuote('bankrupt'));
-                players[activePlayerIndex].roundScore = 0;
-                updateScoresUI();
-                setTimeout(nextTurn, 2200);
-            } else if (sectorVal === "LOSE_TURN") {
-                playWrongSound();
-                setGerryQuote(getRandomQuote('loseTurn'));
-                setTimeout(nextTurn, 2200);
-            } else if (sectorVal === "JOLLY") {
-                playCorrectSound();
-                currentSpinValue = 500;
-                canGuessConsonant = true;
-                setGerryQuote("JOLLY! Ti è andata di lusso, vale €500 per ogni consonante.");
-                updateControlsUI();
+            if (slice.value === 'BANKRUPT') {
+                roundScore = 0;
+                document.getElementById('round-score-display').innerText = `0 €`;
+                statusEl.innerHTML = `<span class="text-red-600 font-black">💀 BANCAROTTA!</span> Hai perso il montepremi della manche. Gira ancora!`;
+                canGuessLetter = false;
+            } else if (slice.value === 'PASS') {
+                statusEl.innerHTML = `<span class="text-amber-700 font-black">PASSA IL TURNO!</span> Gira di nuovo la ruota.`;
+                canGuessLetter = false;
             } else {
-                playBeep(523, 'sine', 0.15, 0.2);
-                currentSpinValue = sectorVal;
-                canGuessConsonant = true;
-                setGerryQuote(`Valore: €${sectorVal}! Scegli una consonante, vedi di non sbagliare.`);
-                updateControlsUI();
-            }
-
-            if (players[activePlayerIndex].isBot) {
-                setTimeout(botMakeDecision, 1800);
+                currentWheelValue = slice.value;
+                statusEl.innerHTML = `Spicchio: <span class="text-emerald-700 font-black">${currentWheelValue} €</span>! Scegli una consonante!`;
+                canGuessLetter = true;
             }
         }
 
-        function initGame() {
-            selectRandomPuzzle();
-            renderBoard();
-            renderKeyboard();
-            updateScoresUI();
-            drawWheel();
-            setGerryQuote(`Ah, sei tu ${players[0].name}? Vediamo se vali qualcosa. ` + getRandomQuote('welcome'));
-            
-            if (players[activePlayerIndex].isBot) {
-                setTimeout(botPlayTurn, 1500);
-            }
-        }
+        // Keyboard & Letter Selection
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        function buildKeyboard() {
+            const container = document.getElementById('keyboard-container');
+            container.innerHTML = '';
 
-        function selectRandomPuzzle() {
-            const randomIndex = Math.floor(Math.random() * PUZZLES.length);
-            currentPuzzle = PUZZLES[randomIndex];
-            revealedLetters.clear();
-            usedLetters.clear();
-            document.getElementById('category-display').innerText = currentPuzzle.category;
-        }
-
-        function renderBoard() {
-            const boardContainer = document.getElementById('board-grid');
-            boardContainer.innerHTML = '';
-
-            const words = currentPuzzle.phrase.split(' ');
-
-            words.forEach((word, wIdx) => {
-                const wordDiv = document.createElement('div');
-                wordDiv.className = 'flex gap-1.5 border-b-2 border-transparent pb-1';
-
-                for (let i = 0; i < word.length; i++) {
-                    const char = word[i];
-                    const tile = document.createElement('div');
-                    tile.className = 'letter-tile';
-
-                    if (revealedLetters.has(char)) {
-                        tile.classList.add('revealed');
-                    }
-
-                    tile.innerHTML = `
-                        <div class="letter-inner">
-                            <div class="letter-front"></div>
-                            <div class="letter-back">${char}</div>
-                        </div>
-                    `;
-                    wordDiv.appendChild(tile);
-                }
-
-                boardContainer.appendChild(wordDiv);
-
-                if (wIdx < words.length - 1) {
-                    const spaceTile = document.createElement('div');
-                    spaceTile.className = 'letter-tile';
-                    spaceTile.innerHTML = `<div class="letter-front empty-space"></div>`;
-                    boardContainer.appendChild(spaceTile);
-                }
-            });
-        }
-
-        function renderKeyboard() {
-            const keyboardContainer = document.getElementById('keyboard');
-            keyboardContainer.innerHTML = '';
-
-            const allLetters = [...CONSONANTS, ...VOWELS].sort();
-
-            allLetters.forEach(char => {
-                const isVowel = VOWELS.includes(char);
-                const isUsed = usedLetters.has(char);
-
+            for (let letter of alphabet) {
                 const btn = document.createElement('button');
-                btn.innerText = char;
-                btn.id = `key-${char}`;
-                btn.disabled = isUsed || (!canGuessConsonant && !isBuyingVowel) || (isVowel && !isBuyingVowel) || (!isVowel && isBuyingVowel);
-
-                let baseStyles = "btn-neon w-8 h-10 sm:w-10 sm:h-12 font-black rounded-xl text-sm sm:text-base border flex items-center justify-center ";
-
-                if (isUsed) {
-                    baseStyles += "bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed opacity-40 shadow-none";
-                } else if (isVowel) {
-                    baseStyles += "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-400";
-                } else {
-                    baseStyles += "bg-gradient-to-r from-blue-600 to-cyan-600 text-white border-blue-400";
-                }
-
-                btn.className = baseStyles;
-                btn.onclick = () => selectLetter(char);
-                keyboardContainer.appendChild(btn);
-            });
+                btn.id = `btn-key-${letter}`;
+                btn.innerText = letter;
+                btn.className = "py-2 sm:py-2.5 bg-slate-100 hover:bg-amber-200 font-black text-slate-800 rounded-xl shadow border border-slate-300 text-xs sm:text-base transition active:scale-95";
+                btn.onclick = () => selectLetter(letter);
+                container.appendChild(btn);
+            }
         }
 
-        function selectLetter(char) {
-            if (usedLetters.has(char)) return;
-
-            usedLetters.add(char);
-            const isVowel = VOWELS.includes(char);
-
-            let count = 0;
-            for (let c of currentPuzzle.phrase) {
-                if (c === char) count++;
+        function resetKeyboard() {
+            for (let letter of alphabet) {
+                const btn = document.getElementById(`btn-key-${letter}`);
+                if (btn) {
+                    btn.disabled = false;
+                    btn.className = "py-2 sm:py-2.5 bg-slate-100 hover:bg-amber-200 font-black text-slate-800 rounded-xl shadow border border-slate-300 text-xs sm:text-base transition active:scale-95";
+                }
             }
+        }
+
+        function selectLetter(letter) {
+            const isVowel = ['A', 'E', 'I', 'O', 'U'].includes(letter);
+
+            if (isVowel) {
+                showMsgModal("Vocale", "Le vocali vanno acquistate col pulsante 'Compra Vocale'!");
+                return;
+            }
+
+            if (!canGuessLetter) {
+                showMsgModal("Gira la ruota", "Devi prima girare la ruota prima di selezionare una consonante!");
+                return;
+            }
+
+            const btn = document.getElementById(`btn-key-${letter}`);
+            btn.disabled = true;
+            btn.className = "py-2 sm:py-2.5 bg-slate-300 text-slate-400 font-bold rounded-xl cursor-not-allowed text-xs sm:text-base";
+
+            guessedLetters.add(letter);
+
+            // Count letter occurrences
+            let count = 0;
+            for (let c of currentPhrase) {
+                if (c === letter) count++;
+            }
+
+            const statusEl = document.getElementById('status-message');
 
             if (count > 0) {
-                playCorrectSound();
-                revealedLetters.add(char);
-
-                if (!isVowel) {
-                    const gainedAmount = count * currentSpinValue;
-                    players[activePlayerIndex].roundScore += gainedAmount;
-                    setGerryQuote(`Incredibile, c'erano ${count} '${char}'. Ti sei salvato per questa volta.`);
-                } else {
-                    setGerryQuote(`La vocale '${char}' c'è. Pagata profumatamente.`);
-                }
-
-                renderBoard();
-                updateScoresUI();
-                checkPuzzleSolved();
-
-                if (players[activePlayerIndex].isBot && document.getElementById('modal-round-win').classList.contains('hidden')) {
-                    canSpin = true;
-                    canGuessConsonant = false;
-                    isBuyingVowel = false;
-                    updateControlsUI();
-                    setTimeout(botPlayTurn, 2000);
-                }
-
+                const points = count * currentWheelValue;
+                roundScore += points;
+                document.getElementById('round-score-display').innerText = `${roundScore.toLocaleString()} €`;
+                statusEl.innerHTML = `Trovate <span class="text-emerald-700 font-black">${count} x '${letter}'</span>! Guadagni +${points} €!`;
+                
+                renderPuzzleBoard();
+                checkAutomatedWin();
             } else {
-                playWrongSound();
-                setGerryQuote(getRandomQuote('badChoice'));
-                setTimeout(nextTurn, 2200);
+                statusEl.innerHTML = `La lettera <span class="text-red-600 font-black">'${letter}'</span> non è presente! Gira di nuovo.`;
             }
 
-            canGuessConsonant = false;
-            isBuyingVowel = false;
-            updateControlsUI();
+            canGuessLetter = false;
         }
 
-        function enableVowelSelection() {
-            if (players[activePlayerIndex].roundScore < 200) return;
+        // Buy Vowel Action
+        function buyVowel() {
+            if (roundScore < 250 && totalBank < 250) {
+                showMsgModal("Credito insufficiente", "Servono almeno 250 € nel montepremi o in banca per comprare una vocale!");
+                return;
+            }
 
-            players[activePlayerIndex].roundScore -= 200;
-            updateScoresUI();
-            isBuyingVowel = true;
-            canGuessConsonant = false;
+            const input = prompt("Quale vocale vuoi acquistare? (A, E, I, O, U)")?.toUpperCase();
+            if (!input || !['A', 'E', 'I', 'O', 'U'].includes(input)) {
+                return;
+            }
 
-            document.getElementById('keyboard-title').innerText = "Seleziona una Vocale (€200)";
-            setGerryQuote(getRandomQuote('buyVowel'));
-            renderKeyboard();
+            if (guessedLetters.has(input)) {
+                showMsgModal("Già usata", "Questa vocale è già stata scoperta!");
+                return;
+            }
+
+            // Deduct 250 €
+            if (roundScore >= 250) {
+                roundScore -= 250;
+                document.getElementById('round-score-display').innerText = `${roundScore.toLocaleString()} €`;
+            } else {
+                totalBank -= 250;
+                document.getElementById('total-bank-display').innerText = `${totalBank.toLocaleString()} €`;
+            }
+
+            guessedLetters.add(input);
+            renderPuzzleBoard();
+            checkAutomatedWin();
+            
+            const btn = document.getElementById(`btn-key-${input}`);
+            if (btn) {
+                btn.disabled = true;
+                btn.className = "py-2 sm:py-2.5 bg-slate-300 text-slate-400 font-bold rounded-xl cursor-not-allowed text-xs sm:text-base";
+            }
         }
 
-        function checkPuzzleSolved() {
-            let isComplete = true;
-            for (let char of currentPuzzle.phrase) {
-                if (char !== ' ' && !revealedLetters.has(char)) {
-                    isComplete = false;
+        // Automatic Check if all letters are uncovered
+        function checkAutomatedWin() {
+            let won = true;
+            for (let c of currentPhrase) {
+                if (c !== ' ' && !guessedLetters.has(c)) {
+                    won = false;
                     break;
                 }
             }
 
-            if (isComplete) handleRoundVictory();
-        }
-
-        function handleRoundVictory() {
-            playFanfareSound();
-            const winner = players[activePlayerIndex];
-            winner.totalScore += winner.roundScore;
-
-            document.getElementById('win-title').innerText = `${winner.name.toUpperCase()} VINCE!`;
-            document.getElementById('win-phrase').innerText = `"${currentPuzzle.phrase}"`;
-            document.getElementById('win-amount').innerText = `€${winner.roundScore}`;
-
-            document.getElementById('modal-round-win').classList.contains('hidden') && document.getElementById('modal-round-win').classList.remove('hidden');
-            document.getElementById('modal-round-win').classList.remove('hidden');
-        }
-
-        function nextTurn() {
-            activePlayerIndex = (activePlayerIndex + 1) % players.length;
-            canSpin = true;
-            canGuessConsonant = false;
-            isBuyingVowel = false;
-            document.getElementById('current-wheel-value').innerText = `Spicchio: €0`;
-
-            updateControlsUI();
-            setGerryQuote(`Tocca a ${players[activePlayerIndex].name}. Cerca di non fare figure barbine.`);
-
-            if (players[activePlayerIndex].isBot) {
-                setTimeout(botPlayTurn, 1500);
+            if (won) {
+                completeManche();
             }
         }
 
-        function botPlayTurn() {
-            if (players[activePlayerIndex].isBot && canSpin && document.getElementById('modal-round-win').classList.contains('hidden')) {
-                spinWheel();
-            }
+        // Complete Manche & Advance
+        function completeManche() {
+            totalBank += roundScore;
+            document.getElementById('total-bank-display').innerText = `${totalBank.toLocaleString()} €`;
+
+            showMsgModal("COMPLIMENTI!", `Hai risolto il tabellone! Aggiunti € ${roundScore.toLocaleString()} alla tua banca!`);
+
+            setTimeout(() => {
+                mancheNumber++;
+                currentPuzzleIndex++;
+                loadManche();
+            }, 1800);
         }
 
-        function botMakeDecision() {
-            if (!canGuessConsonant) return;
-
-            const availableVowels = VOWELS.filter(v => !usedLetters.has(v));
-            if (players[activePlayerIndex].roundScore >= 400 && availableVowels.length > 0 && Math.random() < 0.4) {
-                players[activePlayerIndex].roundScore -= 200;
-                updateScoresUI();
-                setGerryQuote(`${players[activePlayerIndex].name} compra una vocale.`);
-                const chosenVowel = availableVowels[Math.floor(Math.random() * availableVowels.length)];
-                setTimeout(() => selectLetter(chosenVowel), 1200);
-            } else {
-                botGuessConsonant();
-            }
-        }
-
-        function botGuessConsonant() {
-            if (!canGuessConsonant) return;
-            const availableConsonants = CONSONANTS.filter(c => !usedLetters.has(c));
-
-            if (availableConsonants.length > 0) {
-                const randomChoice = availableConsonants[Math.floor(Math.random() * availableConsonants.length)];
-                selectLetter(randomChoice);
-            } else {
-                nextTurn();
-            }
-        }
-
-        function updateControlsUI() {
-            const isHuman = !players[activePlayerIndex].isBot;
-
-            document.getElementById('btn-spin').disabled = !canSpin || !isHuman;
-            document.getElementById('btn-buy-vowel').disabled = !isHuman || players[activePlayerIndex].roundScore < 200 || isBuyingVowel || canGuessConsonant;
-            document.getElementById('btn-solve').disabled = !isHuman || isSpinning;
-
-            document.getElementById('keyboard-title').innerText = isBuyingVowel ? "Seleziona una Vocale (€200)" : "Tastiera Consonanti";
-            renderKeyboard();
-
-            for (let i = 0; i < 3; i++) {
-                const card = document.getElementById(`p${i + 1}-card`);
-                if (i === activePlayerIndex) {
-                    card.className = "bg-slate-900 p-3.5 rounded-2xl border-2 border-amber-400 shadow-xl active-podium transition-all";
-                } else {
-                    card.className = "bg-slate-900/40 p-3.5 rounded-2xl border border-slate-700/80 shadow-md transition-all opacity-70";
-                }
-            }
-        }
-
-        function updateScoresUI() {
-            players.forEach((p, idx) => {
-                document.getElementById(`p${idx + 1}-round-score`).innerText = `€${p.roundScore}`;
-                document.getElementById(`p${idx + 1}-total-score`).innerText = `€${p.totalScore}`;
-            });
-        }
-
-        function setGerryQuote(quote) {
-            document.getElementById('gerry-quote').innerText = `"${quote}"`;
-        }
-
-        function getRandomQuote(key) {
-            const arr = GERRY_QUOTES[key];
-            return arr[Math.floor(Math.random() * arr.length)];
-        }
-
+        // Solve Board Modal
         function openSolveModal() {
-            document.getElementById('modal-solve').classList.remove('hidden');
-            document.getElementById('solve-input').focus();
+            document.getElementById('solve-input').value = '';
+            document.getElementById('solve-modal').classList.remove('hidden');
         }
 
         function closeSolveModal() {
-            document.getElementById('modal-solve').classList.add('hidden');
-            document.getElementById('solve-input').value = '';
+            document.getElementById('solve-modal').classList.add('hidden');
         }
 
         function submitSolve() {
-            const input = document.getElementById('solve-input').value.trim().toUpperCase();
+            const guess = document.getElementById('solve-input').value.trim().toUpperCase();
             closeSolveModal();
 
-            if (input === currentPuzzle.phrase) {
-                handleRoundVictory();
+            if (guess === currentPhrase) {
+                // Uncover all letters
+                for (let c of currentPhrase) {
+                    guessedLetters.add(c);
+                }
+                renderPuzzleBoard();
+                roundScore += 1000; // Solve bonus
+                completeManche();
             } else {
-                playWrongSound();
-                const rudeFail = RUDE_SOLVE_FAILS[Math.floor(Math.random() * RUDE_SOLVE_FAILS.length)];
-                setGerryQuote(rudeFail);
-                setTimeout(nextTurn, 2500);
+                showMsgModal("Risposta Errata", "La soluzione inserita non è corretta! Continua a girare la ruota.");
             }
         }
 
-        function openRulesModal() { document.getElementById('modal-rules').classList.remove('hidden'); }
-        function closeRulesModal() { document.getElementById('modal-rules').classList.add('hidden'); }
-
-        function nextRound() {
-            document.getElementById('modal-round-win').classList.add('hidden');
-            players.forEach(p => p.roundScore = 0);
-            document.getElementById('current-wheel-value').innerText = `Spicchio: €0`;
-            initGame();
+        // Generic Modal
+        function showMsgModal(title, text) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerText = text;
+            document.getElementById('msg-modal').classList.remove('hidden');
         }
 
-        const bgCanvas = document.getElementById('bg-particles');
-        const bgCtx = bgCanvas.getContext('2d');
-        let particles = [];
-
-        function resizeBgCanvas() {
-            bgCanvas.width = window.innerWidth;
-            bgCanvas.height = window.innerHeight;
+        function closeMsgModal() {
+            document.getElementById('msg-modal').classList.add('hidden');
         }
 
-        function createParticles() {
-            particles = [];
-            for (let i = 0; i < 45; i++) {
-                particles.push({
-                    x: Math.random() * bgCanvas.width,
-                    y: Math.random() * bgCanvas.height,
-                    radius: Math.random() * 2.5 + 1,
-                    speedY: -Math.random() * 0.5 - 0.2,
-                    opacity: Math.random() * 0.6 + 0.2
-                });
+        function confirmResetGame() {
+            if (confirm("Vuoi azzerare la partita e ricominciare dalla Manche 1?")) {
+                initGameSession();
             }
         }
-
-        function animateParticles() {
-            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-            particles.forEach(p => {
-                p.y += p.speedY;
-                if (p.y < 0) p.y = bgCanvas.height;
-
-                bgCtx.save();
-                bgCtx.beginPath();
-                bgCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                bgCtx.fillStyle = `rgba(245, 158, 11, ${p.opacity})`;
-                bgCtx.shadowColor = '#f59e0b';
-                bgCtx.shadowBlur = 8;
-                bgCtx.fill();
-                bgCtx.restore();
-            });
-            requestAnimationFrame(animateParticles);
-        }
-
-        window.addEventListener('resize', resizeBgCanvas);
-
-        window.onload = function () {
-            resizeBgCanvas();
-            createParticles();
-            animateParticles();
-            drawWheel();
-            document.getElementById('player-name-input').focus();
-        };
     </script>
 </body>
 </html>
+```
