@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La Ruota della Fortuna - Con Gerry Scotti.(Next-Gen TV Edition)</title>
+    <title>La Ruota della Fortuna - Con Gerry Scotti (Next-Gen TV Edition)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -289,7 +289,7 @@
                     LA RUOTA DELLA FORTUNA
                 </h1>
                 <p class="text-[11px] text-amber-300/90 font-bold tracking-widest uppercase flex items-center gap-2">
-                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>Developer Marco D'Adamo
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span> IN ONDA SU CANALE 5
                 </p>
             </div>
         </div>
@@ -311,10 +311,9 @@
             
             <div class="md:col-span-5 flex items-center gap-4 border-b md:border-b-0 md:border-r border-slate-700/80 pb-3 md:pb-0 md:pr-4">
                 <div class="relative shrink-0">
-                    <!-- Ingrandito il contenitore e impostato il ritaglio sul volto sulla destra -->
                     <div id="gerry-container" class="w-32 h-32 sm:w-40 sm:h-40 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-200 to-amber-600 p-1 shadow-2xl shadow-amber-500/40">
                         <div class="w-full h-full rounded-xl bg-slate-950 overflow-hidden flex items-center justify-center relative">
-                            <!-- Gerry Scotti Real Photo ingrandita e centrata sul viso -->
+                            <!-- Gerry Scotti Real Photo -->
                             <img src="31942.jpg" alt="Gerry Scotti" class="w-full h-full object-cover" style="object-position: 78% 20%; transform: scale(1.15);" />
                         </div>
                     </div>
@@ -390,7 +389,7 @@
                     </div>
 
                     <div id="p2-card" class="bg-slate-900/40 p-3.5 rounded-2xl border border-slate-700/80 shadow-lg transition-all opacity-70">
-                        <div class="text-[11px] text-slate-300 font-bold uppercase truncate">Potito 🤖</div>
+                        <div class="text-[11px] text-slate-300 font-bold uppercase truncate">Gerry Bot 🤖</div>
                         <div id="p2-round-score" class="text-base sm:text-2xl font-black font-digital text-slate-300 mt-1">€0</div>
                         <div class="text-[10px] text-slate-400 mt-0.5">Totale: <span id="p2-total-score" class="font-bold text-white">€0</span></div>
                     </div>
@@ -441,7 +440,7 @@
             <input type="text" id="player-name-input" placeholder="Il tuo nome..." maxlength="15" class="w-full px-4 py-3.5 rounded-xl bg-slate-950 border-2 border-amber-400/60 text-white font-black text-center text-xl uppercase tracking-wider focus:outline-none focus:border-amber-300 mb-6 shadow-inner" />
 
             <button onclick="registerPlayer()" class="btn-neon w-full py-4 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-xl rounded-2xl shadow-xl shadow-amber-500/30">
-                ENTRA IN STUDIO. RIMANI CONCENTRATO <i class="fa-solid fa-arrow-right ml-2"></i>
+                ENTRA IN STUDIO <i class="fa-solid fa-arrow-right ml-2"></i>
             </button>
         </div>
     </div>
@@ -450,7 +449,7 @@
     <div id="modal-solve" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border-2 border-amber-400 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl relative">
             <h3 class="text-3xl font-black font-tv gold-text mb-2 text-center">RISOLVI LA FRASE MISTERIOSA</h3>
-            <p class="text-sm text-slate-300 text-center mb-6">Digita la soluzione esatta per vincere il round! Se non la sai, non la scrivere!</p>
+            <p class="text-sm text-slate-300 text-center mb-6">Digita la soluzione esatta per vincere il round!</p>
             
             <input type="text" id="solve-input" placeholder="Scrivi qui..." class="w-full px-4 py-3.5 rounded-xl bg-slate-950 border-2 border-amber-400/60 text-white font-black text-center text-xl uppercase tracking-wider focus:outline-none focus:border-amber-300 mb-6 shadow-inner" />
 
@@ -490,7 +489,7 @@
             <div class="w-24 h-24 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-amber-400 shadow-lg shadow-amber-500/30">
                 <i class="fa-solid fa-trophy text-5xl text-amber-400 animate-bounce"></i>
             </div>
-            <h3 id="win-title" class="text-4xl font-black font-tv gold-text mb-2">CAMPIONE!</h3>
+            <h3 id="win-title" class="text-4xl font-black font-tv gold-text gold-text mb-2">CAMPIONE!</h3>
             <p id="win-message" class="text-lg text-slate-200 font-semibold mb-6">Hai indovinato la frase della serata!</p>
             
             <div class="bg-slate-950/80 p-5 rounded-2xl border border-slate-700 mb-6">
@@ -576,7 +575,7 @@
             goodChoice: ["Vedi che quando ti impegni (raramente) ci arrivi?", "Ottima scelta, miracolosamente."],
             badChoice: [
                 "Ma ti rendi conto di quello che fai? Non c'è!",
-                "Ma sei serio?! Questa lettera non existe neanche nel tuo vocabolario!",
+                "Ma sei serio?! Questa lettera non esiste neanche nel tuo vocabolario!",
                 "Che ignoranza immane! La lettera non c'è, levati di torno!",
                 "Ma ti hanno dato il cervello in comodato d'uso? Sbagliato!"
             ],
@@ -748,8 +747,11 @@
 
             const totalRounds = 6 + Math.floor(Math.random() * 4);
             const randomSectorIndex = Math.floor(Math.random() * numSectors);
-            const targetSectorAngle = (numSectors - randomSectorIndex) * arcSize - (arcSize / 2);
-            const targetAngle = totalRounds * 2 * Math.PI + targetSectorAngle;
+            
+            // Calcolo preciso dell'angolo di arrivo basato sul puntatore in alto (angolo 3 * Math.PI / 2)
+            const pointerAngle = 3 * Math.PI / 2;
+            const targetSectorCenter = (randomSectorIndex * arcSize) + (arcSize / 2);
+            const targetAngle = totalRounds * 2 * Math.PI + (pointerAngle - targetSectorCenter);
 
             let startTime = null;
             const duration = 4800;
@@ -763,7 +765,9 @@
                     const easeOut = 1 - Math.pow(1 - progress, 3);
                     currentAngle = easeOut * targetAngle;
 
-                    const currentSectorIdx = Math.floor(((2 * Math.PI) - (currentAngle % (2 * Math.PI))) / arcSize) % numSectors;
+                    const normalizedAngle = (currentAngle % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+                    const currentSectorIdx = Math.floor((2 * Math.PI - normalizedAngle + pointerAngle) / arcSize) % numSectors;
+
                     if (currentSectorIdx !== lastClickSector) {
                         playWheelClickSound();
                         lastClickSector = currentSectorIdx;
@@ -791,7 +795,7 @@
             const sector = WHEEL_SECTORS[sectorIndex];
             const sectorVal = sector.value;
 
-            document.getElementById('current-wheel-value').innerText = `Spicchio: ${sector.label}`;
+            document.getElementById('current-wheel-value').innerText = `Spicchio: €${sector.label}`;
 
             if (sectorVal === "BANKRUPT") {
                 playBankruptSound();
@@ -993,6 +997,7 @@
             document.getElementById('win-phrase').innerText = `"${currentPuzzle.phrase}"`;
             document.getElementById('win-amount').innerText = `€${winner.roundScore}`;
 
+            document.getElementById('modal-round-win').classList.contains('hidden') && document.getElementById('modal-round-win').classList.remove('hidden');
             document.getElementById('modal-round-win').classList.remove('hidden');
         }
 
@@ -1001,6 +1006,7 @@
             canSpin = true;
             canGuessConsonant = false;
             isBuyingVowel = false;
+            document.getElementById('current-wheel-value').innerText = `Spicchio: €0`;
 
             updateControlsUI();
             setGerryQuote(`Tocca a ${players[activePlayerIndex].name}. Cerca di non fare figure barbine.`);
@@ -1109,6 +1115,7 @@
         function nextRound() {
             document.getElementById('modal-round-win').classList.add('hidden');
             players.forEach(p => p.roundScore = 0);
+            document.getElementById('current-wheel-value').innerText = `Spicchio: €0`;
             initGame();
         }
 
