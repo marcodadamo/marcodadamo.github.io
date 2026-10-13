@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La Ruota della Fortuna - Con Gerry Scotti. (Next-Gen TV Edition)</title>
+    <title>La Ruota della Fortuna - Con Gerry Scotti (Next-Gen TV Edition)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -309,12 +309,13 @@
         <!-- Gerry Scotti Host Section -->
         <section class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center glass-panel p-4 sm:p-5 rounded-3xl border-2 border-amber-500/40 shadow-2xl relative">
             
-            <div class="md:col-span-4 flex items-center gap-4 border-b md:border-b-0 md:border-r border-slate-700/80 pb-3 md:pb-0 md:pr-4">
+            <div class="md:col-span-5 flex items-center gap-4 border-b md:border-b-0 md:border-r border-slate-700/80 pb-3 md:pb-0 md:pr-4">
                 <div class="relative shrink-0">
-                    <div id="gerry-container" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-200 to-amber-600 p-1 shadow-2xl shadow-amber-500/40">
+                    <!-- Ingrandito il contenitore e impostato il ritaglio sul volto sulla destra -->
+                    <div id="gerry-container" class="w-32 h-32 sm:w-40 sm:h-40 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-200 to-amber-600 p-1 shadow-2xl shadow-amber-500/40">
                         <div class="w-full h-full rounded-xl bg-slate-950 overflow-hidden flex items-center justify-center relative">
-                            <!-- Gerry Scotti Real Photo -->
-                            <img src="31942.jpg" alt="Gerry Scotti" class="w-full h-full object-cover object-center" />
+                            <!-- Gerry Scotti Real Photo ingrandita e centrata sul viso -->
+                            <img src="31942.jpg" alt="Gerry Scotti" class="w-full h-full object-cover" style="object-position: 78% 20%; transform: scale(1.15);" />
                         </div>
                     </div>
                 </div>
@@ -330,7 +331,7 @@
                 </div>
             </div>
 
-            <div class="md:col-span-8">
+            <div class="md:col-span-7">
                 <div class="speech-bubble p-4 sm:p-5">
                     <p id="gerry-quote" class="text-slate-900 font-black text-base sm:text-xl italic leading-relaxed">
                         "Signore e signori, benvenuti alla Ruota della Fortuna! Siete pronti a giocare con me?"
@@ -575,7 +576,7 @@
             goodChoice: ["Vedi che quando ti impegni (raramente) ci arrivi?", "Ottima scelta, miracolosamente."],
             badChoice: [
                 "Ma ti rendi conto di quello che fai? Non c'è!",
-                "Ma sei serio?! Questa lettera non esiste neanche nel tuo vocabolario!",
+                "Ma sei serio?! Questa lettera non existe neanche nel tuo vocabolario!",
                 "Che ignoranza immane! La lettera non c'è, levati di torno!",
                 "Ma ti hanno dato il cervello in comodato d'uso? Sbagliato!"
             ],
@@ -939,8 +940,7 @@
                 updateScoresUI();
                 checkPuzzleSolved();
 
-                // Se il giocatore ha trovato una vocale o una consonante corretta e il round NON è terminato, gestiamo il turno del Bot se è il suo turno
-                if (players[activePlayerIndex].isBot && !document.getElementById('modal-round-win').classList.contains('hidden') === false) {
+                if (players[activePlayerIndex].isBot && document.getElementById('modal-round-win').classList.contains('hidden')) {
                     canSpin = true;
                     canGuessConsonant = false;
                     isBuyingVowel = false;
@@ -1019,17 +1019,14 @@
         function botMakeDecision() {
             if (!canGuessConsonant) return;
 
-            // Decisione intelligente del bot: se ha abbastanza soldi (>200) e ci sono ancora vocali disponibili, a volte compra una vocale
             const availableVowels = VOWELS.filter(v => !usedLetters.has(v));
             if (players[activePlayerIndex].roundScore >= 400 && availableVowels.length > 0 && Math.random() < 0.4) {
-                // Compra vocale
                 players[activePlayerIndex].roundScore -= 200;
                 updateScoresUI();
                 setGerryQuote(`${players[activePlayerIndex].name} compra una vocale.`);
                 const chosenVowel = availableVowels[Math.floor(Math.random() * availableVowels.length)];
                 setTimeout(() => selectLetter(chosenVowel), 1200);
             } else {
-                // Sceglie consonante
                 botGuessConsonant();
             }
         }
