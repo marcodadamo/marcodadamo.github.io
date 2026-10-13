@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Ruota della Fortuna - Con Gerry Scotti (Next-Gen TV Edition)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,700;0,900;1,800&family=Orbitron:wght@700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --gold-gradient: linear-gradient(135deg, #fff7ed 0%, #fef08a 25%, #f59e0b 50%, #b45309 80%, #fff7ed 100%);
+            --neon-blue: #00f0ff;
+            --neon-gold: #ffb700;
+            --neon-purple: #b500ff;
+            --studio-bg: radial-gradient(ellipse at 50% 20%, #1a1b4b 0%, #080b1a 60%, #020308 100%);
+        }
+
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: var(--studio-bg);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .font-tv { font-family: 'Bebas Neue', cursive; letter-spacing: 2px; }
+        .font-digital { font-family: 'Orbitron', monospace; }
+
+        /* Metallic & Neon Utilities */
+        .gold-text {
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(255, 255, 255, 0.05);
+        }
+
+        .glass-gold-panel {
+            background: linear-gradient(145deg, rgba(245, 158, 11, 0.12), rgba(15, 23, 42, 0.95));
+            border: 2px solid;
+            border-image: var(--gold-gradient) 1;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(245, 158, 11, 0.15);
+        }
+
+        /* TV Studio Lights Animation */
+        .beam-light {
+            position: absolute;
+            top: -20%;
+            width: 350px;
+            height: 1000px;
+            pointer-events: none;
+            filter: blur(35px);
+            opacity: 0.45;
+            mix-blend-mode: screen;
+        }
+
+        .beam-left-1 {
+            left: 5%;
+            background: linear-gradient(180deg, var(--neon-blue) 0%, transparent 100%);
+            transform-origin: top left;
+            animation: sweepLeft 8s infinite alternate ease-in-out;
+        }
+
+        .beam-right-1 {
+            right: 5%;
+            background: linear-gradient(180deg, var(--neon-purple) 0%, transparent 100%);
+            transform-origin: top right;
+            animation: sweepRight 9s infinite alternate ease-in-out;
+        }
+
+        .beam-center {
+            left: 40%;
+            background: linear-gradient(180deg, var(--neon-gold) 0%, transparent 100%);
+            animation: pulseCenter 5s infinite alternate ease-in-out;
+        }
+
+        @keyframes sweepLeft {
+            0% { transform: rotate(-35deg) scaleX(0.8); }
+            100% { transform: rotate(-10deg) scaleX(1.3); }
+        }
+        @keyframes sweepRight {
+            0% { transform: rotate(35deg) scaleX(0.8); }
+            100% { transform: rotate(10deg) scaleX(1.3); }
+        }
+        @keyframes pulseCenter {
+            0% { opacity: 0.2; transform: scaleX(0.9); }
+            100% { opacity: 0.5; transform: scaleX(1.4); }
+        }
+
+        /* Studio Mirror Floor */
+        .studio-floor {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 35vh;
+            background: linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.95) 100%);
+            border-top: 1px solid rgba(0, 240, 255, 0.2);
+            pointer-events: none;
+        }
+
+        /* Hi-Tech LED Board Frame */
+        .board-led-frame {
+            background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+            border: 4px solid #f59e0b;
+            box-shadow: 0 0 35px rgba(245, 158, 11, 0.4), 0 0 15px rgba(0, 240, 255, 0.3) inset;
+            border-radius: 24px;
+            position: relative;
+        }
+
+        .led-light {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #fef08a;
+            box-shadow: 0 0 10px #f59e0b, 0 0 20px #fef08a;
+            animation: ledBlink 1s infinite alternate ease-in-out;
+        }
+
+        @keyframes ledBlink {
+            0% { opacity: 0.3; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.3); box-shadow: 0 0 15px #f59e0b, 0 0 25px #fef08a; }
+        }
+
+        /* 3D Tile Flip Effect */
+        .letter-tile {
+            perspective: 1000px;
+            width: 2.5rem;
+            height: 3.4rem;
+        }
+
+        @media (min-width: 640px) {
+            .letter-tile {
+                width: 3.4rem;
+                height: 4.4rem;
+            }
+        }
+
+        .letter-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+        }
+
+        .letter-tile.revealed .letter-inner {
+            transform: rotateY(180deg);
+        }
+
+        .letter-front, .letter-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-weight: 900;
+        }
+
+        .letter-front {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #1e3a8a 100%);
+            border: 2px solid #38bdf8;
+            box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.4), 0 6px 12px rgba(0,0,0,0.6);
+        }
+
+        .letter-front.empty-space {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px transparent;
+            box-shadow: none;
+        }
+
+        .letter-back {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            color: #0f172a;
+            border: 3px solid #f59e0b;
+            transform: rotateY(180deg);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.5), inset 0 0 10px rgba(245, 158, 11, 0.3);
+            font-size: 1.6rem;
+        }
+
+        @media (min-width: 640px) {
+            .letter-back { font-size: 2.2rem; }
+        }
+
+        /* Glassmorphism Buttons */
+        .btn-neon {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(0, 0, 0, 0.3) 100%);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.5), 0 10px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn-neon:hover:not(:disabled) {
+            transform: translateY(-2px);
+            filter: brightness(1.2);
+            box-shadow: 0 8px 0 rgba(0, 0, 0, 0.5), 0 15px 25px rgba(0, 240, 255, 0.3);
+        }
+
+        .btn-neon:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.5), 0 5px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Pointer Flex Physics */
+        .pointer-tick {
+            animation: pointerFlex 0.12s ease-in-out;
+        }
+
+        @keyframes pointerFlex {
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(-15deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+
+        /* Gerry Speech Bubble Neon */
+        .speech-bubble {
+            position: relative;
+            background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+            border: 3px solid #f59e0b;
+            border-radius: 1.5rem;
+            color: #0f172a;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.6), 0 0 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            left: -18px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-width: 10px 18px 10px 0;
+            border-style: solid;
+            border-color: transparent #f59e0b transparent transparent;
+        }
+
+        @media (max-width: 768px) {
+            .speech-bubble:after {
+                left: 50%;
+                top: -18px;
+                transform: translateX(-50%);
+                border-width: 0 10px 18px 10px;
+                border-color: transparent transparent #f59e0b transparent;
+            }
+        }
+
+        /* Active Player Glow Podium */
+        .active-podium {
+            border-color: #f59e0b !important;
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.5), inset 0 0 15px rgba(245, 158, 11, 0.2) !important;
+            transform: scale(1.03);
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen justify-between relative select-none">
+
+    <div class="beam-light beam-left-1"></div>
+    <div class="beam-light beam-right-1"></div>
+    <div class="beam-light beam-center"></div>
+    <canvas id="bg-particles" class="absolute inset-0 pointer-events-none z-0"></canvas>
+    <div class="studio-floor"></div>
+
+    <header class="w-full py-3.5 px-6 bg-slate-950/90 backdrop-blur-xl border-b-2 border-amber-500/40 flex justify-between items-center z-10 shadow-2xl">
+        <div class="flex items-center space-x-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-300 to-amber-600 flex items-center justify-center font-bold text-slate-950 text-2xl shadow-lg shadow-amber-500/40 border-2 border-yellow-100">
+                <i class="fa-solid fa-dharmachakra animate-spin" style="animation-duration: 18s;"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl sm:text-4xl font-black font-tv gold-text leading-none">
+                    LA RUOTA DELLA FORTUNA
+                </h1>
+                <p class="text-[11px] text-amber-300/90 font-bold tracking-widest uppercase flex items-center gap-2">
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span> IN ONDA SU CANALE 5
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <button id="btn-sound" onclick="toggleAudio()" class="p-3 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-2xl border border-amber-500/40 transition-all shadow-lg active:scale-95">
+                <i id="sound-icon" class="fa-solid fa-volume-high text-lg"></i>
+            </button>
+            <button onclick="openRulesModal()" class="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-2xl text-xs sm:text-sm font-bold border border-blue-400/50 transition-all shadow-lg active:scale-95 flex items-center gap-2">
+                <i class="fa-solid fa-circle-info"></i> <span class="hidden sm:inline">Regole Show</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-3 sm:px-4 py-4 flex-1 flex flex-col gap-5 z-10 max-w-7xl">
+        
+        <!-- Gerry Scotti Host Section -->
+        <section class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center glass-panel p-4 sm:p-5 rounded-3xl border-2 border-amber-500/40 shadow-2xl relative">
+            
+            <div class="md:col-span-4 flex items-center gap-4 border-b md:border-b-0 md:border-r border-slate-700/80 pb-3 md:pb-0 md:pr-4">
+                <div class="relative shrink-0">
+                    <div id="gerry-container" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-200 to-amber-600 p-1 shadow-2xl shadow-amber-500/40">
+                        <div class="w-full h-full rounded-xl bg-slate-950 overflow-hidden flex items-center justify-center relative">
+                            <!-- Gerry Scotti Real Photo -->
+                            <img src="31942.jpg" alt="Gerry Scotti" class="w-full h-full object-cover object-center" />
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-xl sm:text-2xl font-black text-amber-400 flex items-center gap-1.5 font-tv tracking-wider">
+                        GERRY SCOTTI <i class="fa-solid fa-circle-check text-amber-400 text-xs"></i>
+                    </h2>
+                    <p class="text-xs text-slate-300 font-semibold">"Il Re del Quiz (e del sarcasmo!)"</p>
+                    <div class="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold">
+                        <i class="fa-solid fa-microphone text-amber-400"></i> STUDIO 2 MEDIASET
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-8">
+                <div class="speech-bubble p-4 sm:p-5">
+                    <p id="gerry-quote" class="text-slate-900 font-black text-base sm:text-xl italic leading-relaxed">
+                        "Signore e signori, benvenuti alla Ruota della Fortuna! Siete pronti a giocare con me?"
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="board-led-frame p-4 sm:p-6 flex flex-col items-center relative overflow-hidden">
+            <div class="w-full flex justify-between px-4 absolute top-2.5 left-0 right-0">
+                <div class="flex gap-2"><span class="led-light"></span><span class="led-light"></span><span class="led-light"></span></div>
+                <div class="flex gap-2"><span class="led-light"></span><span class="led-light"></span><span class="led-light"></span></div>
+            </div>
+
+            <div class="mt-2 mb-4 z-10">
+                <div class="px-6 py-2 bg-slate-950/90 rounded-full border-2 border-amber-400 shadow-xl text-center">
+                    <span class="text-xs font-bold text-slate-300 uppercase tracking-widest mr-2">CATEGORIA:</span>
+                    <span id="category-display" class="gold-text font-black text-base sm:text-xl font-tv">...</span>
+                </div>
+            </div>
+
+            <div id="board-grid" class="flex flex-wrap justify-center gap-2 sm:gap-3 max-w-5xl py-4 min-h-[150px] items-center z-10">
+                <!-- Injected via JS -->
+            </div>
+
+            <div class="mt-3 text-xs sm:text-sm text-slate-300 font-medium italic text-center z-10 flex items-center gap-2">
+                <i class="fa-solid fa-lightbulb text-amber-400 text-base animate-pulse"></i>
+                <span id="board-hint">Gira la ruota e seleziona una consonante per scoprire la frase!</span>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+            
+            <!-- Wheel Container -->
+            <div class="lg:col-span-6 flex flex-col items-center justify-center glass-panel p-5 rounded-3xl border-2 border-slate-700/80 shadow-2xl relative">
+                
+                <div id="wheel-pointer" class="absolute top-2 z-30 w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-t-[38px] border-t-amber-400 filter drop-shadow-[0_6px_10px_rgba(0,0,0,0.9)]"></div>
+                
+                <div class="relative my-3">
+                    <canvas id="wheel-canvas" width="390" height="390" class="max-w-full h-auto cursor-pointer filter drop-shadow-[0_15px_30px_rgba(0,0,0,0.8)] active:scale-95 transition-transform"></canvas>
+                </div>
+
+                <button id="btn-spin" onclick="spinWheel()" class="btn-neon w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 text-slate-950 font-black text-2xl font-tv rounded-2xl border-2 border-yellow-100 flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-rotate text-2xl"></i> GIRA LA RUOTA!
+                </button>
+            </div>
+
+            <!-- Scoreboard & Controls -->
+            <div class="lg:col-span-6 flex flex-col gap-4">
+                
+                <div class="grid grid-cols-3 gap-2 sm:gap-3">
+                    <div id="p1-card" class="bg-slate-900/90 p-3.5 rounded-2xl border-2 border-amber-400 shadow-xl transition-all">
+                        <div id="p1-name-label" class="text-[11px] text-amber-400 font-bold uppercase truncate">Giocatore 1</div>
+                        <div id="p1-round-score" class="text-base sm:text-2xl font-black font-digital text-amber-300 mt-1">€0</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">Totale: <span id="p1-total-score" class="font-bold text-white">€0</span></div>
+                    </div>
+
+                    <div id="p2-card" class="bg-slate-900/40 p-3.5 rounded-2xl border border-slate-700/80 shadow-lg transition-all opacity-70">
+                        <div class="text-[11px] text-slate-300 font-bold uppercase truncate">Gerry Bot 🤖</div>
+                        <div id="p2-round-score" class="text-base sm:text-2xl font-black font-digital text-slate-300 mt-1">€0</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">Totale: <span id="p2-total-score" class="font-bold text-white">€0</span></div>
+                    </div>
+
+                    <div id="p3-card" class="bg-slate-900/40 p-3.5 rounded-2xl border border-slate-700/80 shadow-lg transition-all opacity-70">
+                        <div class="text-[11px] text-slate-300 font-bold uppercase truncate">Zio Gerry 👨</div>
+                        <div id="p3-round-score" class="text-base sm:text-2xl font-black font-digital text-slate-300 mt-1">€0</div>
+                        <div class="text-[10px] text-slate-400 mt-0.5">Totale: <span id="p3-total-score" class="font-bold text-white">€0</span></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button id="btn-buy-vowel" onclick="enableVowelSelection()" disabled class="btn-neon px-4 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-600 text-white font-bold rounded-2xl border border-indigo-400/40 flex items-center justify-center gap-2 text-sm sm:text-base">
+                        <i class="fa-solid fa-font"></i> Compra Vocale (€200)
+                    </button>
+
+                    <button id="btn-solve" onclick="openSolveModal()" class="btn-neon px-4 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-2xl border border-emerald-400/40 flex items-center justify-center gap-2 text-sm sm:text-base">
+                        <i class="fa-solid fa-key"></i> Risolvi Frase
+                    </button>
+                </div>
+
+                <div class="glass-panel p-4 rounded-2xl border-2 border-slate-700/80 shadow-2xl">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-xs font-bold text-slate-300 uppercase tracking-wider" id="keyboard-title">Tastiera Consonanti</span>
+                        <span id="current-wheel-value" class="text-xs font-black text-amber-300 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-400/40">Spicchio: €0</span>
+                    </div>
+
+                    <div id="keyboard" class="flex flex-wrap gap-1.5 sm:gap-2 justify-center">
+                        <!-- Injected via JS -->
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Registration Modal (Before Game Starts) -->
+    <div id="modal-register" class="fixed inset-0 bg-slate-950/95 backdrop-blur-lg z-50 flex items-center justify-center p-4">
+        <div class="bg-gradient-to-b from-slate-900 to-indigo-950 border-2 border-amber-400 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative text-center">
+            <div class="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-amber-400 shadow-lg shadow-amber-500/30">
+                <i class="fa-solid fa-user-pen text-4xl text-amber-400"></i>
+            </div>
+            <h3 class="text-3xl font-black font-tv gold-text mb-2">REGISTRATI AL GIOCO</h3>
+            <p class="text-sm text-slate-300 mb-6">Inserisci il tuo nome per scendere in campo allo Studio 2!</p>
+            
+            <input type="text" id="player-name-input" placeholder="Il tuo nome..." maxlength="15" class="w-full px-4 py-3.5 rounded-xl bg-slate-950 border-2 border-amber-400/60 text-white font-black text-center text-xl uppercase tracking-wider focus:outline-none focus:border-amber-300 mb-6 shadow-inner" />
+
+            <button onclick="registerPlayer()" class="btn-neon w-full py-4 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-xl rounded-2xl shadow-xl shadow-amber-500/30">
+                ENTRA IN STUDIO <i class="fa-solid fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Solve Modal -->
+    <div id="modal-solve" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-amber-400 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl relative">
+            <h3 class="text-3xl font-black font-tv gold-text mb-2 text-center">RISOLVI LA FRASE MISTERIOSA</h3>
+            <p class="text-sm text-slate-300 text-center mb-6">Digita la soluzione esatta per vincere il round!</p>
+            
+            <input type="text" id="solve-input" placeholder="Scrivi qui..." class="w-full px-4 py-3.5 rounded-xl bg-slate-950 border-2 border-amber-400/60 text-white font-black text-center text-xl uppercase tracking-wider focus:outline-none focus:border-amber-300 mb-6 shadow-inner" />
+
+            <div class="flex gap-3">
+                <button onclick="closeSolveModal()" class="w-1/2 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition-all">
+                    Annulla
+                </button>
+                <button onclick="submitSolve()" class="w-1/2 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl transition-all shadow-lg shadow-amber-500/30">
+                    CONFERMA!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rules Modal -->
+    <div id="modal-rules" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-slate-700 rounded-3xl p-6 max-w-md w-full shadow-2xl relative">
+            <h3 class="text-2xl font-bold font-tv text-amber-400 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-scroll"></i> Regole dello Show
+            </h3>
+            <ul class="text-sm text-slate-300 space-y-3 list-disc pl-5">
+                <li>Gira la ruota e seleziona una **consonante**.</li>
+                <li>Ogni consonante trovata moltiplica il valore dello spicchio per la sua frequenza!</li>
+                <li>Le **vocali** costano €200 del tuo bottino attuale.</li>
+                <li>Attenzione alla **Bancarotta** e a **Perde il Turno**!</li>
+                <li>Puoi **Risolvi** in qualsiasi momento la frase misteriosa. (Ma attento alle sfuriate di Gerry se sbagli!)</li>
+            </ul>
+            <button onclick="closeRulesModal()" class="mt-6 w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-lg">
+                Ho Capito, Giochiamo!
+            </button>
+        </div>
+    </div>
+
+    <!-- Round Win Modal -->
+    <div id="modal-round-win" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gradient-to-b from-slate-900 to-indigo-950 border-2 border-amber-400 rounded-3xl p-8 max-w-lg w-full text-center shadow-2xl relative">
+            <div class="w-24 h-24 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-amber-400 shadow-lg shadow-amber-500/30">
+                <i class="fa-solid fa-trophy text-5xl text-amber-400 animate-bounce"></i>
+            </div>
+            <h3 id="win-title" class="text-4xl font-black font-tv gold-text mb-2">CAMPIONE!</h3>
+            <p id="win-message" class="text-lg text-slate-200 font-semibold mb-6">Hai indovinato la frase della serata!</p>
+            
+            <div class="bg-slate-950/80 p-5 rounded-2xl border border-slate-700 mb-6">
+                <p class="text-xs text-slate-400 uppercase font-bold tracking-wider">Soluzione Finale</p>
+                <p id="win-phrase" class="text-xl font-black text-amber-300 mt-1">"..."</p>
+                <p class="text-base text-emerald-400 font-bold mt-2">Vincita del Round: <span id="win-amount">€0</span></p>
+            </div>
+
+            <button onclick="nextRound()" class="btn-neon w-full py-4 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-xl rounded-2xl shadow-xl shadow-amber-500/30">
+                PROSSIMO ROUND <i class="fa-solid fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+
+    <footer class="w-full py-3 px-6 bg-slate-950 border-t border-slate-800 text-center text-xs text-slate-500 z-10">
+        La Ruota della Fortuna • Mediaset Show Edition
+    </footer>
+
+    <script>
+        let audioCtx = null;
+        let isAudioMuted = false;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playBeep(freq = 440, type = 'sine', duration = 0.1, volume = 0.2) {
+            if (isAudioMuted) return;
+            initAudio();
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        function playWheelClickSound() { playBeep(700, 'triangle', 0.04, 0.2); }
+        function playCorrectSound() {
+            if (isAudioMuted) return;
+            [523, 659, 783, 1046].forEach((f, i) => setTimeout(() => playBeep(f, 'sine', 0.2, 0.25), i * 90));
+        }
+        function playWrongSound() {
+            if (isAudioMuted) return;
+            playBeep(180, 'sawtooth', 0.25, 0.3);
+            setTimeout(() => playBeep(130, 'sawtooth', 0.35, 0.3), 140);
+        }
+        function playBankruptSound() {
+            if (isAudioMuted) return;
+            [320, 260, 200, 140].forEach((f, i) => setTimeout(() => playBeep(f, 'sawtooth', 0.2, 0.3), i * 110));
+        }
+        function playFanfareSound() {
+            if (isAudioMuted) return;
+            [440, 554, 659, 880].forEach((f, i) => setTimeout(() => playBeep(f, 'triangle', 0.35, 0.3), i * 130));
+            setTimeout(() => confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } }), 400);
+        }
+
+        function toggleAudio() {
+            isAudioMuted = !isAudioMuted;
+            const icon = document.getElementById('sound-icon');
+            icon.className = isAudioMuted ? 'fa-solid fa-volume-xmark text-lg text-slate-500' : 'fa-solid fa-volume-high text-lg text-amber-400';
+        }
+
+        const PUZZLES = [
+            { category: "PROVERBIO POPOLARE", phrase: "L ABITO NON FA IL MONACO" },
+            { category: "CINEMA ITALIANO", phrase: "LA VITA E BELLA" },
+            { category: "MODI DIRE", phrase: "CHI DORME NON PIGLIA PESCI" },
+            { category: "CITAZIONI CELEBRI", phrase: "RISPOSTA ESATTA SIGNORI" },
+            { category: "GEOGRAFIA E CULTURA", phrase: "IL COLOSSEO DI ROMA" },
+            { category: "MUSICA ITALIANA", phrase: "NEL BLU DIPINTO DI BLU" },
+            { category: "CUCINA TRADIZIONALE", phrase: "SPAGHETTI ALLA CARBONARA" }
+        ];
+
+        const GERRY_QUOTES = {
+            welcome: ["Signore e signori, benvenuti su Canale 5 alla Ruota della Fortuna!", "Vediamo se almeno tu hai un briciolo di cervello per giocare!"],
+            spin: ["Giriamo la ruota, sperando che tu non faccia disastri!", "Forza, muoviti a girare!"],
+            goodChoice: ["Vedi che quando ti impegni (raramente) ci arrivi?", "Ottima scelta, miracolosamente."],
+            badChoice: [
+                "Ma ti rendi conto di quello che fai? Non c'è!",
+                "Ma sei serio?! Questa lettera non esiste neanche nel tuo vocabolario!",
+                "Che ignoranza immane! La lettera non c'è, levati di torno!",
+                "Ma ti hanno dato il cervello in comodato d'uso? Sbagliato!"
+            ],
+            bankrupt: ["Ahi ahi ahi... BANCAROTTA! Ben ti sta, così impari a fare lo sborone!", "E via tutto! Era ora che ti si azzerasse quel portafoglio vuoto!"],
+            loseTurn: ["Perdi il Turno! E meno male, così riposiamo le orecchie dalla tua incompetenza."],
+            buyVowel: ["Compriamo una vocale... Speriamo non sia troppo difficile per te."],
+            solveSuccess: ["Miracolo della scienza! Hai indovinato."]
+        };
+
+        const RUDE_SOLVE_FAILS = [
+            "Ma che risposta hai dato?! Ma ti sei svegliato con la camicia storta o sei proprio negato?",
+            "Ma dove l'hai studiata questa soluzione? All'asilo notturno? Sbagliatissimo!",
+            "Ma ti rendi conto delle idiozie che dici in prima serata su Canale 5?! Fuori!",
+            "Ma per favore! Questa risposta fa acqua da tutte le parti. Vergogna!",
+            "Sei di una tristezza unica. Risposta completamente sballata, vattene a casa!"
+        ];
+
+        const WHEEL_SECTORS = [
+            { label: "100", value: 100, color: "#ef4444", textColor: "#ffffff" },
+            { label: "300", value: 300, color: "#2563eb", textColor: "#ffffff" },
+            { label: "BANCAROTTA", value: "BANKRUPT", color: "#020617", textColor: "#ef4444" },
+            { label: "500", value: 500, color: "#059669", textColor: "#ffffff" },
+            { label: "200", value: 200, color: "#d97706", textColor: "#ffffff" },
+            { label: "PERDE TURNO", value: "LOSE_TURN", color: "#475569", textColor: "#ffffff" },
+            { label: "1000", value: 1000, color: "#7c3aed", textColor: "#ffffff" },
+            { label: "150", value: 150, color: "#db2777", textColor: "#ffffff" },
+            { label: "JOLLY", value: "JOLLY", color: "#eab308", textColor: "#0f172a" },
+            { label: "400", value: 400, color: "#0891b2", textColor: "#ffffff" },
+            { label: "250", value: 250, color: "#65a30d", textColor: "#ffffff" },
+            { label: "BANCAROTTA", value: "BANKRUPT", color: "#020617", textColor: "#ef4444" }
+        ];
+
+        const VOWELS = ['A', 'E', 'I', 'O', 'U'];
+        const CONSONANTS = ['B', 'C', 'D', 'F', 'G', 'H', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'Z'];
+
+        let currentPuzzle = null;
+        let revealedLetters = new Set();
+        let usedLetters = new Set();
+        let activePlayerIndex = 0;
+        let currentSpinValue = 0;
+        let canSpin = true;
+        let canGuessConsonant = false;
+        let isBuyingVowel = false;
+
+        let players = [
+            { name: "Giocatore 1", roundScore: 0, totalScore: 0, isBot: false },
+            { name: "Gerry Bot", roundScore: 0, totalScore: 0, isBot: true },
+            { name: "Zio Gerry", roundScore: 0, totalScore: 0, isBot: true }
+        ];
+
+        const canvas = document.getElementById('wheel-canvas');
+        const ctx = canvas.getContext('2d');
+        const wheelRadius = canvas.width / 2;
+        let currentAngle = 0;
+        let isSpinning = false;
+
+        function drawWheel() {
+            const numSectors = WHEEL_SECTORS.length;
+            const arcSize = (2 * Math.PI) / numSectors;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Metallic Ring 3D Rim
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(wheelRadius, wheelRadius, wheelRadius - 3, 0, 2 * Math.PI);
+            ctx.fillStyle = '#0f172a';
+            ctx.fill();
+            ctx.lineWidth = 10;
+            ctx.strokeStyle = '#f59e0b';
+            ctx.stroke();
+            ctx.restore();
+
+            // Sectors
+            for (let i = 0; i < numSectors; i++) {
+                const angle = currentAngle + i * arcSize;
+                const sector = WHEEL_SECTORS[i];
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(wheelRadius, wheelRadius);
+                ctx.arc(wheelRadius, wheelRadius, wheelRadius - 14, angle, angle + arcSize);
+                ctx.closePath();
+                
+                const radGrad = ctx.createRadialGradient(wheelRadius, wheelRadius, 30, wheelRadius, wheelRadius, wheelRadius - 14);
+                radGrad.addColorStop(0, sector.color);
+                radGrad.addColorStop(1, '#00000088');
+                ctx.fillStyle = radGrad;
+                ctx.fill();
+
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#ffffff55';
+                ctx.stroke();
+
+                // Sector Text
+                ctx.save();
+                ctx.translate(wheelRadius, wheelRadius);
+                ctx.rotate(angle + arcSize / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = sector.textColor;
+                ctx.font = "900 17px Montserrat";
+                ctx.shadowColor = "rgba(0,0,0,0.8)";
+                ctx.shadowBlur = 6;
+                ctx.fillText(sector.label, wheelRadius - 28, 6);
+                ctx.restore();
+
+                // Gold Pins
+                const pinAngle = angle;
+                const pinX = wheelRadius + (wheelRadius - 18) * Math.cos(pinAngle);
+                const pinY = wheelRadius + (wheelRadius - 18) * Math.sin(pinAngle);
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(pinX, pinY, 5, 0, 2 * Math.PI);
+                ctx.fillStyle = '#fef08a';
+                ctx.fill();
+                ctx.strokeStyle = '#b45309';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                ctx.restore();
+
+                ctx.restore();
+            }
+
+            // Central 3D Cap
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(wheelRadius, wheelRadius, 45, 0, 2 * Math.PI);
+            const capGrad = ctx.createLinearGradient(wheelRadius - 45, wheelRadius - 45, wheelRadius + 45, wheelRadius + 45);
+            capGrad.addColorStop(0, '#fef08a');
+            capGrad.addColorStop(0.5, '#f59e0b');
+            capGrad.addColorStop(1, '#78350f');
+            ctx.fillStyle = capGrad;
+            ctx.fill();
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = "900 13px Montserrat";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("RUOTA", wheelRadius, wheelRadius);
+            ctx.restore();
+        }
+
+        function registerPlayer() {
+            const inputName = document.getElementById('player-name-input').value.trim();
+            if (inputName !== "") {
+                players[0].name = inputName.toUpperCase();
+                document.getElementById('p1-name-label').innerText = players[0].name;
+            }
+            document.getElementById('modal-register').classList.add('hidden');
+            
+            initGame();
+        }
+
+        function spinWheel() {
+            if (!canSpin || isSpinning) return;
+            initAudio();
+
+            canSpin = false;
+            isSpinning = true;
+            document.getElementById('btn-spin').disabled = true;
+            setGerryQuote(getRandomQuote('spin'));
+
+            const numSectors = WHEEL_SECTORS.length;
+            const arcSize = (2 * Math.PI) / numSectors;
+
+            const totalRounds = 6 + Math.floor(Math.random() * 4);
+            const randomSectorIndex = Math.floor(Math.random() * numSectors);
+            const targetSectorAngle = (numSectors - randomSectorIndex) * arcSize - (arcSize / 2);
+            const targetAngle = totalRounds * 2 * Math.PI + targetSectorAngle;
+
+            let startTime = null;
+            const duration = 4800;
+            let lastClickSector = -1;
+
+            function animateSpin(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const progress = (timestamp - startTime) / duration;
+
+                if (progress < 1) {
+                    const easeOut = 1 - Math.pow(1 - progress, 3);
+                    currentAngle = easeOut * targetAngle;
+
+                    const currentSectorIdx = Math.floor(((2 * Math.PI) - (currentAngle % (2 * Math.PI))) / arcSize) % numSectors;
+                    if (currentSectorIdx !== lastClickSector) {
+                        playWheelClickSound();
+                        lastClickSector = currentSectorIdx;
+
+                        const ptr = document.getElementById('wheel-pointer');
+                        ptr.classList.remove('pointer-tick');
+                        void ptr.offsetWidth;
+                        ptr.classList.add('pointer-tick');
+                    }
+
+                    drawWheel();
+                    requestAnimationFrame(animateSpin);
+                } else {
+                    currentAngle = targetAngle % (2 * Math.PI);
+                    drawWheel();
+                    isSpinning = false;
+                    handleSectorResult(randomSectorIndex);
+                }
+            }
+
+            requestAnimationFrame(animateSpin);
+        }
+
+        function handleSectorResult(sectorIndex) {
+            const sector = WHEEL_SECTORS[sectorIndex];
+            const sectorVal = sector.value;
+
+            document.getElementById('current-wheel-value').innerText = `Spicchio: ${sector.label}`;
+
+            if (sectorVal === "BANKRUPT") {
+                playBankruptSound();
+                setGerryQuote(getRandomQuote('bankrupt'));
+                players[activePlayerIndex].roundScore = 0;
+                updateScoresUI();
+                setTimeout(nextTurn, 2200);
+            } else if (sectorVal === "LOSE_TURN") {
+                playWrongSound();
+                setGerryQuote(getRandomQuote('loseTurn'));
+                setTimeout(nextTurn, 2200);
+            } else if (sectorVal === "JOLLY") {
+                playCorrectSound();
+                currentSpinValue = 500;
+                canGuessConsonant = true;
+                setGerryQuote("JOLLY! Ti è andata di lusso, vale €500 per ogni consonante.");
+                updateControlsUI();
+            } else {
+                playBeep(523, 'sine', 0.15, 0.2);
+                currentSpinValue = sectorVal;
+                canGuessConsonant = true;
+                setGerryQuote(`Valore: €${sectorVal}! Scegli una consonante, vedi di non sbagliare.`);
+                updateControlsUI();
+            }
+
+            if (players[activePlayerIndex].isBot && canGuessConsonant) {
+                setTimeout(botGuessConsonant, 1500);
+            }
+        }
+
+        function initGame() {
+            selectRandomPuzzle();
+            renderBoard();
+            renderKeyboard();
+            updateScoresUI();
+            drawWheel();
+            setGerryQuote(`Ah, sei tu ${players[0].name}? Vediamo se vali qualcosa. ` + getRandomQuote('welcome'));
+        }
+
+        function selectRandomPuzzle() {
+            const randomIndex = Math.floor(Math.random() * PUZZLES.length);
+            currentPuzzle = PUZZLES[randomIndex];
+            revealedLetters.clear();
+            usedLetters.clear();
+            document.getElementById('category-display').innerText = currentPuzzle.category;
+        }
+
+        function renderBoard() {
+            const boardContainer = document.getElementById('board-grid');
+            boardContainer.innerHTML = '';
+
+            const words = currentPuzzle.phrase.split(' ');
+
+            words.forEach((word, wIdx) => {
+                const wordDiv = document.createElement('div');
+                wordDiv.className = 'flex gap-1.5 border-b-2 border-transparent pb-1';
+
+                for (let i = 0; i < word.length; i++) {
+                    const char = word[i];
+                    const tile = document.createElement('div');
+                    tile.className = 'letter-tile';
+
+                    if (revealedLetters.has(char)) {
+                        tile.classList.add('revealed');
+                    }
+
+                    tile.innerHTML = `
+                        <div class="letter-inner">
+                            <div class="letter-front"></div>
+                            <div class="letter-back">${char}</div>
+                        </div>
+                    `;
+                    wordDiv.appendChild(tile);
+                }
+
+                boardContainer.appendChild(wordDiv);
+
+                if (wIdx < words.length - 1) {
+                    const spaceTile = document.createElement('div');
+                    spaceTile.className = 'letter-tile';
+                    spaceTile.innerHTML = `<div class="letter-front empty-space"></div>`;
+                    boardContainer.appendChild(spaceTile);
+                }
+            });
+        }
+
+        function renderKeyboard() {
+            const keyboardContainer = document.getElementById('keyboard');
+            keyboardContainer.innerHTML = '';
+
+            const allLetters = [...CONSONANTS, ...VOWELS].sort();
+
+            allLetters.forEach(char => {
+                const isVowel = VOWELS.includes(char);
+                const isUsed = usedLetters.has(char);
+
+                const btn = document.createElement('button');
+                btn.innerText = char;
+                btn.id = `key-${char}`;
+                btn.disabled = isUsed || (!canGuessConsonant && !isBuyingVowel) || (isVowel && !isBuyingVowel) || (!isVowel && isBuyingVowel);
+
+                let baseStyles = "btn-neon w-8 h-10 sm:w-10 sm:h-12 font-black rounded-xl text-sm sm:text-base border flex items-center justify-center ";
+
+                if (isUsed) {
+                    baseStyles += "bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed opacity-40 shadow-none";
+                } else if (isVowel) {
+                    baseStyles += "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-400";
+                } else {
+                    baseStyles += "bg-gradient-to-r from-blue-600 to-cyan-600 text-white border-blue-400";
+                }
+
+                btn.className = baseStyles;
+                btn.onclick = () => selectLetter(char);
+                keyboardContainer.appendChild(btn);
+            });
+        }
+
+        function selectLetter(char) {
+            if (usedLetters.has(char)) return;
+
+            usedLetters.add(char);
+            const isVowel = VOWELS.includes(char);
+
+            let count = 0;
+            for (let c of currentPuzzle.phrase) {
+                if (c === char) count++;
+            }
+
+            if (count > 0) {
+                playCorrectSound();
+                revealedLetters.add(char);
+
+                if (!isVowel) {
+                    const gainedAmount = count * currentSpinValue;
+                    players[activePlayerIndex].roundScore += gainedAmount;
+                    setGerryQuote(`Incredibile, c'erano ${count} '${char}'. Ti sei salvato per questa volta.`);
+                } else {
+                    setGerryQuote(`La vocale '${char}' c'è. Pagata profumatamente.`);
+                }
+
+                renderBoard();
+                updateScoresUI();
+                checkPuzzleSolved();
+
+            } else {
+                playWrongSound();
+                setGerryQuote(getRandomQuote('badChoice'));
+                setTimeout(nextTurn, 2200);
+            }
+
+            canGuessConsonant = false;
+            isBuyingVowel = false;
+            updateControlsUI();
+        }
+
+        function enableVowelSelection() {
+            if (players[activePlayerIndex].roundScore < 200) return;
+
+            players[activePlayerIndex].roundScore -= 200;
+            updateScoresUI();
+            isBuyingVowel = true;
+            canGuessConsonant = false;
+
+            document.getElementById('keyboard-title').innerText = "Seleziona una Vocale (€200)";
+            setGerryQuote(getRandomQuote('buyVowel'));
+            renderKeyboard();
+        }
+
+        function checkPuzzleSolved() {
+            let isComplete = true;
+            for (let char of currentPuzzle.phrase) {
+                if (char !== ' ' && !revealedLetters.has(char)) {
+                    isComplete = false;
+                    break;
+                }
+            }
+
+            if (isComplete) handleRoundVictory();
+        }
+
+        function handleRoundVictory() {
+            playFanfareSound();
+            const winner = players[activePlayerIndex];
+            winner.totalScore += winner.roundScore;
+
+            document.getElementById('win-title').innerText = `${winner.name.toUpperCase()} VINCE!`;
+            document.getElementById('win-phrase').innerText = `"${currentPuzzle.phrase}"`;
+            document.getElementById('win-amount').innerText = `€${winner.roundScore}`;
+
+            document.getElementById('modal-round-win').classList.remove('hidden');
+        }
+
+        function nextTurn() {
+            activePlayerIndex = (activePlayerIndex + 1) % players.length;
+            canSpin = true;
+            canGuessConsonant = false;
+            isBuyingVowel = false;
+
+            updateControlsUI();
+            setGerryQuote(`Tocca a ${players[activePlayerIndex].name}. Cerca di non fare figure barbine.`);
+
+            if (players[activePlayerIndex].isBot) setTimeout(botPlayTurn, 1200);
+        }
+
+        function botPlayTurn() {
+            if (players[activePlayerIndex].isBot && canSpin) spinWheel();
+        }
+
+        function botGuessConsonant() {
+            if (!canGuessConsonant) return;
+            const availableConsonants = CONSONANTS.filter(c => !usedLetters.has(c));
+
+            if (availableConsonants.length > 0) {
+                const randomChoice = availableConsonants[Math.floor(Math.random() * availableConsonants.length)];
+                selectLetter(randomChoice);
+            } else {
+                nextTurn();
+            }
+        }
+
+        function updateControlsUI() {
+            const isHuman = !players[activePlayerIndex].isBot;
+
+            document.getElementById('btn-spin').disabled = !canSpin || !isHuman;
+            document.getElementById('btn-buy-vowel').disabled = !isHuman || players[activePlayerIndex].roundScore < 200 || isBuyingVowel || canGuessConsonant;
+            document.getElementById('btn-solve').disabled = !isHuman || isSpinning;
+
+            document.getElementById('keyboard-title').innerText = isBuyingVowel ? "Seleziona una Vocale (€200)" : "Tastiera Consonanti";
+            renderKeyboard();
+
+            for (let i = 0; i < 3; i++) {
+                const card = document.getElementById(`p${i + 1}-card`);
+                if (i === activePlayerIndex) {
+                    card.className = "bg-slate-900 p-3.5 rounded-2xl border-2 border-amber-400 shadow-xl active-podium transition-all";
+                } else {
+                    card.className = "bg-slate-900/40 p-3.5 rounded-2xl border border-slate-700/80 shadow-md transition-all opacity-70";
+                }
+            }
+        }
+
+        function updateScoresUI() {
+            players.forEach((p, idx) => {
+                document.getElementById(`p${idx + 1}-round-score`).innerText = `€${p.roundScore}`;
+                document.getElementById(`p${idx + 1}-total-score`).innerText = `€${p.totalScore}`;
+            });
+        }
+
+        function setGerryQuote(quote) {
+            document.getElementById('gerry-quote').innerText = `"${quote}"`;
+        }
+
+        function getRandomQuote(key) {
+            const arr = GERRY_QUOTES[key];
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function openSolveModal() {
+            document.getElementById('modal-solve').classList.remove('hidden');
+            document.getElementById('solve-input').focus();
+        }
+
+        function closeSolveModal() {
+            document.getElementById('modal-solve').classList.add('hidden');
+            document.getElementById('solve-input').value = '';
+        }
+
+        function submitSolve() {
+            const input = document.getElementById('solve-input').value.trim().toUpperCase();
+            closeSolveModal();
+
+            if (input === currentPuzzle.phrase) {
+                handleRoundVictory();
+            } else {
+                playWrongSound();
+                const rudeFail = RUDE_SOLVE_FAILS[Math.floor(Math.random() * RUDE_SOLVE_FAILS.length)];
+                setGerryQuote(rudeFail);
+                setTimeout(nextTurn, 2500);
+            }
+        }
+
+        function openRulesModal() { document.getElementById('modal-rules').classList.remove('hidden'); }
+        function closeRulesModal() { document.getElementById('modal-rules').classList.add('hidden'); }
+
+        function nextRound() {
+            document.getElementById('modal-round-win').classList.add('hidden');
+            players.forEach(p => p.roundScore = 0);
+            initGame();
+        }
+
+        const bgCanvas = document.getElementById('bg-particles');
+        const bgCtx = bgCanvas.getContext('2d');
+        let particles = [];
+
+        function resizeBgCanvas() {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+        }
+
+        function createParticles() {
+            particles = [];
+            for (let i = 0; i < 45; i++) {
+                particles.push({
+                    x: Math.random() * bgCanvas.width,
+                    y: Math.random() * bgCanvas.height,
+                    radius: Math.random() * 2.5 + 1,
+                    speedY: -Math.random() * 0.5 - 0.2,
+                    opacity: Math.random() * 0.6 + 0.2
+                });
+            }
+        }
+
+        function animateParticles() {
+            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+            particles.forEach(p => {
+                p.y += p.speedY;
+                if (p.y < 0) p.y = bgCanvas.height;
+
+                bgCtx.save();
+                bgCtx.beginPath();
+                bgCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                bgCtx.fillStyle = `rgba(245, 158, 11, ${p.opacity})`;
+                bgCtx.shadowColor = '#f59e0b';
+                bgCtx.shadowBlur = 8;
+                bgCtx.fill();
+                bgCtx.restore();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+
+        window.addEventListener('resize', resizeBgCanvas);
+
+        window.onload = function () {
+            resizeBgCanvas();
+            createParticles();
+            animateParticles();
+            drawWheel();
+            document.getElementById('player-name-input').focus();
+        };
+    </script>
+</body>
+</html>
