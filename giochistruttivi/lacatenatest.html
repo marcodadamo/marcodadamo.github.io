@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Catena della Speranza, un progetto di pace</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for empathetic icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .pulse-soft { animation: pulseSoft 2s infinite; }
+        @keyframes pulseSoft {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+
+    <!-- Header / Navbar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-emerald-600 text-white p-2.5 rounded-2xl shadow-md flex items-center justify-center">
+                    <i class="fa-solid fa-hands-holding-child text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900 leading-tight">La catena della speranza</h1>
+                    <p class="text-xs text-slate-500 font-medium">Un gioco di sensibilizzazione verso chi è meno fortunato. Developer Marco D'Adamo</p>
+                </div>
+            </div>
+
+            <!-- Quick Stats Ticker -->
+            <div class="flex items-center gap-3 overflow-x-auto py-1">
+                <div class="bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-xl flex items-center space-x-2 shadow-xs">
+                    <i class="fa-solid fa-heart-pulse text-emerald-600"></i>
+                    <div>
+                        <div class="text-[10px] text-emerald-700 uppercase font-semibold">Benessere</div>
+                        <div id="stat-benessere" class="text-sm font-bold text-emerald-900">45%</div>
+                    </div>
+                </div>
+                <div class="bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-xl flex items-center space-x-2 shadow-xs">
+                    <i class="fa-solid fa-wallet text-blue-600"></i>
+                    <div>
+                        <div class="text-[10px] text-blue-700 uppercase font-semibold">Fondi</div>
+                        <div id="stat-fondi" class="text-sm font-bold text-blue-900">€ 500</div>
+                    </div>
+                </div>
+                <div class="bg-amber-50 border border-amber-100 px-3 py-1.5 rounded-xl flex items-center space-x-2 shadow-xs">
+                    <i class="fa-solid fa-utensils text-amber-600"></i>
+                    <div>
+                        <div class="text-[10px] text-amber-700 uppercase font-semibold">Pasti Caritas</div>
+                        <div id="stat-pasti" class="text-sm font-bold text-amber-900">0</div>
+                    </div>
+                </div>
+                <div class="bg-purple-50 border border-purple-100 px-3 py-1.5 rounded-xl flex items-center space-x-2 shadow-xs">
+                    <i class="fa-solid fa-house-chimney-user text-purple-600"></i>
+                    <div>
+                        <div class="text-[10px] text-purple-700 uppercase font-semibold">Famiglie Aiutate</div>
+                        <div id="stat-famiglie" class="text-sm font-bold text-purple-900">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Day & Speed Controls -->
+            <div class="flex items-center space-x-2">
+                <div class="text-xs bg-slate-100 px-3 py-1.5 rounded-xl font-semibold text-slate-700">
+                    <i class="fa-regular fa-calendar-days text-slate-500 mr-1"></i> Giorno <span id="stat-giorno">1</span>
+                </div>
+                <button onclick="toggleGameSpeed()" id="btn-speed" class="bg-slate-900 hover:bg-slate-800 text-white text-xs px-3 py-1.5 rounded-xl font-medium transition shadow-sm flex items-center gap-1">
+                    <i class="fa-solid fa-play"></i> <span id="speed-label">Avvia Tempo</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Layout Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Left Column: Navigation Tabs & Actions -->
+        <div class="lg:col-span-2 flex flex-col space-y-6">
+
+            <!-- Navigation Tabs -->
+            <div class="bg-white p-1.5 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap gap-1">
+                <button onclick="switchTab('raccolta')" id="tab-raccolta" class="flex-1 min-w-[110px] py-2.5 px-3 rounded-xl font-medium text-xs md:text-sm transition flex items-center justify-center gap-2 bg-emerald-600 text-white shadow-sm">
+                    <i class="fa-solid fa-hand-holding-dollar"></i> Raccolta Fondi
+                </button>
+                <button onclick="switchTab('caritas')" id="tab-caritas" class="flex-1 min-w-[110px] py-2.5 px-3 rounded-xl font-medium text-xs md:text-sm transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
+                    <i class="fa-solid fa-bowl-food"></i> Mensa Caritas
+                </button>
+                <button onclick="switchTab('famiglie')" id="tab-famiglie" class="flex-1 min-w-[110px] py-2.5 px-3 rounded-xl font-medium text-xs md:text-sm transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
+                    <i class="fa-solid fa-box-open"></i> Pacchi Viveri
+                </button>
+                <button onclick="switchTab('progetti')" id="tab-progetti" class="flex-1 min-w-[110px] py-2.5 px-3 rounded-xl font-medium text-xs md:text-sm transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
+                    <i class="fa-solid fa-city"></i> Progetti Città
+                </button>
+            </div>
+
+            <!-- TAB 1: Raccolta Fondi -->
+            <div id="section-raccolta" class="space-y-6 fade-in">
+                <div class="bg-gradient-to-br from-emerald-800 to-emerald-950 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden">
+                    <div class="absolute right-4 bottom-4 opacity-10 text-9xl pointer-events-none">
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                    </div>
+                    <h2 class="text-xl font-bold mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-bullhorn text-emerald-400"></i> Area Raccolta Fondi Solidali
+                    </h2>
+                    <p class="text-emerald-100 text-sm mb-6 max-w-xl">
+                        Sensibilizza i cittadini, organizza eventi di beneficenza e raccogli donazioni economiche e materiali da destinare alle famiglie in difficoltà e ai progetti della comunità. Pensiamo ai ragazzi che non possono permettersi i libri per studiare. Pensiamo a chi non riesce ad arrivare con lo stipendio alla fine del mese, al caro carburante, caro energia...
+                    </p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <button onclick="azioneRaccolta('strada')" class="bg-white/10 hover:bg-white/20 border border-white/20 p-4 rounded-2xl text-left transition backdrop-blur-sm group">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="bg-emerald-500/30 text-emerald-200 text-xs px-2.5 py-1 rounded-lg font-medium">Basso Impatto</span>
+                                <i class="fa-solid fa-handshake text-emerald-300 text-lg group-hover:scale-110 transition"></i>
+                            </div>
+                            <div class="font-bold text-white text-base">Banco per Strada</div>
+                            <div class="text-xs text-emerald-200 mt-1">Allestisci un banchetto informativo e raccogli piccole donazioni dai passanti.</div>
+                            <div class="mt-3 text-xs font-semibold text-emerald-300 flex items-center gap-1">
+                                <i class="fa-solid fa-coins">+€25 a €60</i>
+                            </div>
+                        </button>
+
+                        <button onclick="azioneRaccolta('sagra')" class="bg-white/10 hover:bg-white/20 border border-white/20 p-4 rounded-2xl text-left transition backdrop-blur-sm group">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="bg-amber-500/30 text-amber-200 text-xs px-2.5 py-1 rounded-lg font-medium">Evento Popolare</span>
+                                <i class="fa-solid fa-utensils text-amber-300 text-lg group-hover:scale-110 transition"></i>
+                            </div>
+                            <div class="font-bold text-white text-base">Sagra di Beneficenza</div>
+                            <div class="text-xs text-emerald-200 mt-1">Organizza una cena comunitaria con prodotti donati dai commercianti locali.</div>
+                            <div class="mt-3 text-xs font-semibold text-emerald-300 flex items-center gap-1">
+                                <i class="fa-solid fa-coins">+€120 a €300 (Costo: €40)</i>
+                            </div>
+                        </button>
+
+                        <button onclick="azioneRaccolta('aziende')" class="bg-white/10 hover:bg-white/20 border border-white/20 p-4 rounded-2xl text-left transition backdrop-blur-sm group">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="bg-blue-500/30 text-blue-200 text-xs px-2.5 py-1 rounded-lg font-medium">Grandi Donatori</span>
+                                <i class="fa-solid fa-building-columns text-blue-300 text-lg group-hover:scale-110 transition"></i>
+                            </div>
+                            <div class="font-bold text-white text-base">Partnership Aziendale</div>
+                            <div class="text-xs text-emerald-200 mt-1">Incontra i dirigenti delle aziende locali per sponsorizzare il fondo sociale.</div>
+                            <div class="mt-3 text-xs font-semibold text-emerald-300 flex items-center gap-1">
+                                <i class="fa-solid fa-coins">+€400 a €800 (Richiede Reputazione)</i>
+                            </div>
+                        </button>
+
+                        <button onclick="azioneRaccolta('campagna')" class="bg-white/10 hover:bg-white/20 border border-white/20 p-4 rounded-2xl text-left transition backdrop-blur-sm group">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="bg-purple-500/30 text-purple-200 text-xs px-2.5 py-1 rounded-lg font-medium">Media & Social</span>
+                                <i class="fa-solid fa-bullhorn text-purple-300 text-lg group-hover:scale-110 transition"></i>
+                            </div>
+                            <div class="font-bold text-white text-base">Campagna Digitale</div>
+                            <div class="text-xs text-emerald-200 mt-1">Lancia un appello online per mobilitare donatori da tutta la regione.</div>
+                            <div class="mt-3 text-xs font-semibold text-emerald-300 flex items-center gap-1">
+                                <i class="fa-solid fa-coins">Fondi costanti e +Reputazione</i>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: Mensa Caritas -->
+            <div id="section-caritas" class="space-y-6 hidden fade-in">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <div>
+                            <div class="flex items-center gap-2 text-amber-600 font-semibold text-sm mb-1">
+                                <i class="fa-solid fa-bowl-food"></i> Collaborazione Caritas Diocesana
+                            </div>
+                            <h2 class="text-xl font-bold text-slate-900">Mensa Sociale e Accoglienza</h2>
+                            <p class="text-xs text-slate-500">Aiuta i volontari a servire pasti caldi e offrire conforto ai senzatetto e alle persone in difficoltà.</p>
+                        </div>
+                        <div class="bg-amber-50 border border-amber-200 px-4 py-2 rounded-2xl text-center">
+                            <div class="text-xs text-amber-800 font-semibold uppercase">Pasti Serviti Totali</div>
+                            <div id="caritas-totale-pasti" class="text-2xl font-extrabold text-amber-900">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Minigioco / Gestione Mensa -->
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 mb-6 text-center">
+                        <div id="mensa-stato-test" class="text-sm font-semibold text-slate-700 mb-3">
+                            La mensa è pronta per accogliere gli ospiti del turno di oggi.
+                        </div>
+
+                        <div id="mensa-cucina-box" class="min-h-[100px] flex flex-col items-center justify-center mb-4">
+                            <div id="mensa-ospite-avatar" class="w-16 h-16 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-2xl mb-2 shadow-inner">
+                                <i class="fa-solid fa-user-clock"></i>
+                            </div>
+                            <div id="mensa-ospite-nome" class="font-bold text-slate-800 text-sm">Nessun ospite in attesa</div>
+                            <div id="mensa-ospite-richiesta" class="text-xs text-slate-500 mt-0.5">Avvia il turno di distribuzione per cominciare.</div>
+                        </div>
+
+                        <div class="flex justify-center gap-3">
+                            <button onclick="avviaTurnoMensa()" id="btn-avvia-mensa" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm px-6 py-3 rounded-xl transition shadow-md flex items-center gap-2">
+                                <i class="fa-solid fa-play"></i> Apri Turno Mensa
+                            </button>
+                            <button onclick="serviPasto()" id="btn-servi-pasto" disabled class="bg-slate-300 text-slate-500 font-semibold text-sm px-6 py-3 rounded-xl transition shadow-xs flex items-center gap-2 cursor-not-allowed">
+                                <i class="fa-solid fa-utensils"></i> Servi Pasto Caldo
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                            <div class="text-xs text-slate-500 font-medium">Scorte Alimentari Caritas</div>
+                            <div id="caritas-scorte" class="text-lg font-bold text-slate-800 mt-1">100 kg</div>
+                            <button onclick="acquistaScorteCaritas()" class="mt-3 w-full bg-slate-900 hover:bg-slate-800 text-white text-xs py-2 rounded-xl font-medium transition">
+                                Acquista Scorte (€50)
+                            </button>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                            <div class="text-xs text-slate-500 font-medium">Volontari Attivi</div>
+                            <div id="caritas-volontari" class="text-lg font-bold text-slate-800 mt-1">5 Volontari</div>
+                            <button onclick="reclutaVolontario()" class="mt-3 w-full bg-slate-900 hover:bg-slate-800 text-white text-xs py-2 rounded-xl font-medium transition">
+                                Recluta Volontario (€80)
+                            </button>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                            <div class="text-xs text-slate-500 font-medium">Efficienza Mensa</div>
+                            <div id="caritas-efficienza" class="text-lg font-bold text-emerald-600 mt-1">Standard</div>
+                            <div class="text-[11px] text-slate-500 mt-2">Aumenta con volontari e scorte adeguate.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: Pacchi Viveri per Famiglie -->
+            <div id="section-famiglie" class="space-y-6 hidden fade-in">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <div>
+                            <div class="flex items-center gap-2 text-purple-600 font-semibold text-sm mb-1">
+                                <i class="fa-solid fa-box-open"></i> Sostegno alle Famiglie in Difficoltà
+                            </div>
+                            <h2 class="text-xl font-bold text-slate-900">Distribuzione Pacchi Viveri</h2>
+                            <p class="text-xs text-slate-500">Preparazione e consegna di beni di prima necessità e generi alimentari per le famiglie povere locali.</p>
+                        </div>
+                        <div class="bg-purple-50 border border-purple-200 px-4 py-2 rounded-2xl text-center">
+                            <div class="text-xs text-purple-800 font-semibold uppercase">Famiglie Sostenute</div>
+                            <div id="famiglie-totale-aiutate" class="text-2xl font-extrabold text-purple-900">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Azioni Pacchi -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                        <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-bold text-slate-800 text-base">Pacco Viveri Standard</span>
+                                    <span class="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">Costo: €30</span>
+                                </div>
+                                <p class="text-xs text-slate-500 mb-4">Contiene generi alimentari di base (pasta, olio, scatolame, farina) per una famiglia di 3 persone per una settimana.</p>
+                            </div>
+                            <button onclick="preparaPacco('standard')" class="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold py-2.5 rounded-xl transition shadow-sm">
+                                Prepara e Consegna Pacco
+                            </button>
+                        </div>
+
+                        <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-bold text-slate-800 text-base">Kit Bambini & Neonati</span>
+                                    <span class="text-xs font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">Costo: €55</span>
+                                </div>
+                                <p class="text-xs text-slate-500 mb-4">Omogeneizzati, latte in polvere, pannolini e prodotti per l'infanzia destinati alle famiglie con neonati.</p>
+                            </div>
+                            <button onclick="preparaPacco('infanzia')" class="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold py-2.5 rounded-xl transition shadow-sm">
+                                Prepara Kit Infanzia
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Lista Famiglie In Attesa di Aiuto -->
+                    <div class="border border-slate-200 rounded-2xl overflow-hidden">
+                        <div class="bg-slate-100 px-4 py-3 font-bold text-xs text-slate-700 uppercase tracking-wider flex justify-between items-center">
+                            <span>Richieste di Aiuto Ricevute</span>
+                            <span id="badge-richieste-famiglie" class="bg-purple-600 text-white px-2 py-0.5 rounded-full text-[10px]">2 in attesa</span>
+                        </div>
+                        <div id="lista-famiglie-container" class="divide-y divide-slate-100">
+                            <!-- Popolato da JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: Progetti Città -->
+            <div id="section-progetti" class="space-y-6 hidden fade-in">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                    <div class="flex items-center gap-2 text-blue-600 font-semibold text-sm mb-1">
+                        <i class="fa-solid fa-city"></i> Investimenti per la Comunità
+                    </div>
+                    <h2 class="text-xl font-bold text-slate-900 mb-1">Progetti di Miglioramento della Qualità di Vita</h2>
+                    <p class="text-xs text-slate-500 mb-6">Investi i fondi raccolti in grandi opere sociali per risollevare permanentemente il benessere della città.</p>
+                    <p class="text-xs text-slate-500 mb-6">Conoscere il problema dell'abitare per dare una risposta concreta a tutte le coppie, alle nuove generazioni, ai lavoratori che faticano a trovare una casa a prezzi accessibili</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="progetti-grid">
+                        <!-- Popolato via JS -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Dashboard, Notifiche & Stato Comunità -->
+        <div class="space-y-6">
+
+            <!-- Comunity Health Card -->
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 space-y-4">
+                <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-chart-pie text-emerald-600"></i> Indicatori di Comunità
+                </h3>
+
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between text-xs font-semibold mb-1">
+                            <span class="text-slate-600">Indice di Benessere Cittadino</span>
+                            <span id="progress-benessere-val" class="text-emerald-700 font-bold">45%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                            <div id="bar-benessere" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 45%;"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs font-semibold mb-1">
+                            <span class="text-slate-600">Reputazione Solidale</span>
+                            <span id="progress-reputazione-val" class="text-blue-700 font-bold">50%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                            <div id="bar-reputazione" class="bg-blue-500 h-full rounded-full transition-all duration-500" style="width: 50%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100 grid grid-cols-2 gap-3 text-center">
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                        <div class="text-[11px] text-slate-500 font-medium">Fondi Distribuiti</div>
+                        <div id="stat-fondi-distribuiti" class="text-base font-bold text-slate-800 mt-0.5">€ 0</div>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                        <div class="text-[11px] text-slate-500 font-medium">Progetti Attivati</div>
+                        <div id="stat-progetti-attivi" class="text-base font-bold text-slate-800 mt-0.5">0 / 5</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Gratitude Feed / Notifiche -->
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col h-[360px]">
+                <h3 class="font-bold text-slate-900 text-base flex items-center gap-2 mb-3">
+                    <i class="fa-solid fa-comments text-amber-500"></i> Voce della Comunità
+                </h3>
+                <div id="feed-notizie" class="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
+                    <div class="p-3 bg-emerald-50 border border-emerald-100 rounded-2xl text-emerald-900">
+                        <div class="font-bold mb-1 flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-check text-emerald-600"></i> Benvenuto Sindaco
+                        </div>
+                        La città conta su di te. Aiuta i bisognosi, collabora con la Caritas e migliora la qualità di vita di tutti.
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer / Info -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 mt-auto">
+        La Catena della Speranza &bull; Costruiamo insieme un futuro più equo e solidale.
+    </footer>
+
+    <!-- Dilemma / Event Modal -->
+    <div id="modal-dilemma" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 fade-in">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="bg-amber-100 text-amber-600 p-3 rounded-2xl text-xl">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                </div>
+                <div>
+                    <h3 id="dilemma-titolo" class="font-bold text-lg text-slate-900">Dilemma Etico</h3>
+                    <p class="text-xs text-slate-500">Situazione imprevista nella comunità</p>
+                </div>
+            </div>
+            <p id="dilemma-testo" class="text-slate-600 text-sm mb-6 leading-relaxed">
+                Testo del dilemma...
+            </p>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button id="dilemma-btn-1" onclick="rispondiDilemma(1)" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-3 px-4 rounded-xl transition shadow-sm text-center">
+                    Opzione 1
+                </button>
+                <button id="dilemma-btn-2" onclick="rispondiDilemma(2)" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold text-xs py-3 px-4 rounded-xl transition shadow-xs text-center">
+                    Opzione 2
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- General Message Box Modal (No alert() used) -->
+    <div id="modal-messaggio" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 text-center fade-in">
+            <div id="msg-icon-box" class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4">
+                <i class="fa-solid fa-heart"></i>
+            </div>
+            <h4 id="msg-titolo" class="font-bold text-lg text-slate-900 mb-1">Notizia</h4>
+            <p id="msg-testo" class="text-slate-600 text-xs mb-6 leading-relaxed">Testo del messaggio...</p>
+            <button onclick="chiudiMessaggio()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs py-3 rounded-xl transition shadow-sm">
+                Ho capito
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript Game Engine -->
+    <script>
+        // Stato del Gioco
+        let stato = {
+            benessere: 45,
+            reputazione: 50,
+            fondi: 500,
+            fondiDistribuiti: 0,
+            pastiServiti: 0,
+            famiglieAiutate: 0,
+            giorno: 1,
+            scorteCaritas: 100,
+            volontariCaritas: 5,
+            tempoInEsecuzione: false,
+            intervalloGioco: null
+        };
+
+        // Famiglie in attesa
+        let famiglieInAttesa = [
+            { id: 1, nome: "Famiglia Rossi", membri: 4, tipoRichiesta: "Generi alimentari di base", urgenza: "Alta" },
+            { id: 2, nome: "Sig. Giovanni (Pensionato)", membri: 1, tipoRichiesta: "Supporto bollette e spesa", urgenza: "Media" },
+            { id: 3, nome: "Famiglia Ahmed", membri: 5, tipoRichiesta: "Kit infanzia e viveri", urgenza: "Alta" }
+        ];
+
+        // Progetti di miglioramento qualità di vita (incluso il quinto progetto)
+        let progettiComunitari = [
+            { id: 'borsa', nome: "Borse di Studio per Studenti Bisognosi", costo: 600, benessereBoost: 15, reputazioneBoost: 10, completato: false, icon: "fa-graduation-cap", desc: "Permette a 10 ragazzi di famiglie povere di continuare gli studi superiori e universitari." },
+            { id: 'medico', nome: "Ambulatorio Medico Solidale Gratuito", costo: 900, benessereBoost: 25, reputazioneBoost: 15, completato: false, icon: "fa-notes-medical", desc: "Garantisce visite mediche e medicinali di base gratuiti per chi non può permettersi l'assistenza." },
+            { id: 'corsi', nome: "Corsi di Formazione e Lavoro", costo: 1100, benessereBoost: 30, reputazioneBoost: 20, completato: false, icon: "fa-briefcase", desc: "Corsi professionali gratuiti per disoccupati e reinserimento lavorativo." },
+            { id: 'alloggi', nome: "Ristrutturazione Alloggi Popolari", costo: 2000, benessereBoost: 45, reputazioneBoost: 30, completato: false, icon: "fa-house-chimney", desc: "Riqualificazione energetica e sistemazione di appartamenti per famiglie in grave emergenza abitativa." },
+            { id: 'rottamazione', nome: "Rottamazione Regionale del bollo auto", costo: 2000, benessereBoost: 20, reputazioneBoost: 15, completato: false, icon: "fa-car", desc: "Aiuto concreto alle famiglie" }
+        ];
+
+        // Stato Minigioco Mensa
+        let mensaAttiva = false;
+        let ospiteCorrente = null;
+
+        const ospitiMensa = [
+            { nome: "Marco, senza fissa dimora", richiesta: "Ha bisogno di un pasto caldo e una bevanda calda.", icon: "fa-user" },
+            { nome: "Elena, madre in difficoltà", richiesta: "Chiede un pasto per sé e il suo bambino. È in difficoltà nel pagarsi le visite mediche.", icon: "fa-child" },
+            { nome: "Claudio, operaio disoccupato", richiesta: "Cerca un piatto caldo e un momento di conforto. Gli mancano i soldi per pagare la corrente ed il gas.", icon: "fa-person" },
+            { nome: "Anna, anziana sola", richiesta: "Ha bisogno di un pasto nutriente e di due parole di compagnia.", icon: "fa-person-cane" }
+        ];
+
+        // Inizializzazione
+        window.onload = function() {
+            aggiornaInterfaccia();
+            renderProgetti();
+            renderFamiglie();
+        };
+
+        // Cambio Tab
+        function switchTab(tabId) {
+            ['raccolta', 'caritas', 'famiglie', 'progetti'].forEach(t => {
+                document.getElementById(`section-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).className = "flex-1 min-w-[110px] py-2.5 px-3 rounded-xl font-medium text-xs md:text-sm transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100";
+            });
+            document.getElementById(`section-${tabId}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabId}`).className = "flex-1 min-w-[110px] py-2.5 px-3 rounded-xl font-medium text-xs md:text-sm transition flex items-center justify-center gap-2 bg-emerald-600 text-white shadow-sm";
+        }
+
+        // Timer di Gioco / Avanzamento Giorni
+        function toggleGameSpeed() {
+            stato.tempoInEsecuzione = !stato.tempoInEsecuzione;
+            const btn = document.getElementById('btn-speed');
+            const label = document.getElementById('speed-label');
+            if (stato.tempoInEsecuzione) {
+                btn.className = "bg-amber-600 hover:bg-amber-700 text-white text-xs px-3 py-1.5 rounded-xl font-medium transition shadow-sm flex items-center gap-1";
+                label.innerText = "Pausa Tempo";
+                stato.intervalloGioco = setInterval(avanzareGiorno, 6000); // Ogni 6 secondi un giorno
+                aggiungiFeed("Il tempo scorre: la comunità si attiva e nuove esigenze emergono.", "info");
+            } else {
+                btn.className = "bg-slate-900 hover:bg-slate-800 text-white text-xs px-3 py-1.5 rounded-xl font-medium transition shadow-sm flex items-center gap-1";
+                label.innerText = "Avvia Tempo";
+                clearInterval(stato.intervalloGioco);
+            }
+        }
+
+        function avanzareGiorno() {
+            stato.giorno++;
+            // Eventi passivi
+            stato.benessere = Math.max(10, stato.benessere - 1); // Lieve calo naturale se non si interviene
+
+            // Evento casuale ogni 3 giorni
+            if (stato.giorno % 3 === 0) {
+                generaDilemmaCasuale();
+            }
+
+            aggiornaInterfaccia();
+        }
+
+        // Azioni Raccolta Fondi
+        function azioneRaccolta(tipo) {
+            let guadagno = 0;
+            let msg = "";
+            let repGain = 1;
+
+            if (tipo === 'strada') {
+                guadagno = Math.floor(Math.random() * 35) + 25;
+                msg = `Il banco per strada ha raccolto €${guadagno} grazie alla generosità dei passanti!`;
+            } else if (tipo === 'sagra') {
+                if (stato.fondi < 40) {
+                    mostraMessaggio("Fondi insufficienti", "Non hai abbastanza fondi per organizzare la sagra (costo €40).", "fa-coins", "text-amber-600", "bg-amber-100");
+                    return;
+                }
+                stato.fondi -= 40;
+                guadagno = Math.floor(Math.random() * 180) + 120;
+                repGain = 3;
+                msg = `La sagra di beneficenza è stata un successo! Raccolti €${guadagno} lordi.`;
+            } else if (tipo === 'aziende') {
+                if (stato.reputazione < 40) {
+                    mostraMessaggio("Reputazione Bassa", "Le aziende locali non ti conoscono ancora abbastanza. Aumenta la reputazione con banchetti e progetti!", "fa-triangle-exclamation", "text-amber-600", "bg-amber-100");
+                    return;
+                }
+                guadagno = Math.floor(Math.random() * 400) + 400;
+                repGain = 5;
+                msg = `Un'azienda locale ha sposato la causa donando €${guadagno} al fondo sociale!`;
+            } else if (tipo === 'campagna') {
+                guadagno = Math.floor(Math.random() * 100) + 70;
+                repGain = 4;
+                msg = `La campagna digitale sui social ha mobilitato centinaia di donatori online! Raccolti €${guadagno}.`;
+            }
+
+            stato.fondi += guadagno;
+            stato.reputazione = Math.min(100, stato.reputazione + repGain);
+            stato.benessere = Math.min(100, stato.benessere + 1);
+
+            aggiungiFeed(msg, "success");
+            aggiornaInterfaccia();
+        }
+
+        // Mensa Caritas Minigame
+        function avviaTurnoMensa() {
+            if (stato.scorteCaritas <= 0) {
+                mostraMessaggio("Scorte Esaurite", "La mensa non ha più scorte alimentari. Acquista scorte prima di avviare il turno!", "fa-box-archive", "text-amber-600", "bg-amber-100");
+                return;
+            }
+
+            mensaAttiva = true;
+            document.getElementById('btn-avvia-mensa').disabled = true;
+            document.getElementById('btn-avvia-mensa').className = "bg-slate-300 text-slate-500 font-semibold text-sm px-6 py-3 rounded-xl transition cursor-not-allowed";
+
+            document.getElementById('btn-servi-pasto').disabled = false;
+            document.getElementById('btn-servi-pasto').className = "bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-6 py-3 rounded-xl transition shadow-md flex items-center gap-2 cursor-pointer";
+
+            caricaProssimoOspiteMensa();
+        }
+
+        function caricaProssimoOspiteMensa() {
+            ospiteCorrente = ospitiMensa[Math.floor(Math.random() * ospitiMensa.length)];
+            document.getElementById('mensa-ospite-avatar').innerHTML = `<i class="fa-solid ${ospiteCorrente.icon}"></i>`;
+            document.getElementById('mensa-ospite-nome').innerText = ospiteCorrente.nome;
+            document.getElementById('mensa-ospite-richiesta').innerText = ospiteCorrente.richiesta;
+            document.getElementById('mensa-stato-test').innerText = "Ospite in attesa al tavolo della mensa:";
+        }
+
+        function serviPasto() {
+            if (!mensaAttiva || !ospiteCorrente) return;
+
+            if (stato.scorteCaritas < 5) {
+                mostraMessaggio("Scorte basse", "Le scorte alimentari sono terminate durante il turno!", "fa-triangle-exclamation", "text-amber-600", "bg-amber-100");
+                terminaTurnoMensa();
+                return;
+            }
+
+            stato.scorteCaritas -= 5;
+            stato.pastiServiti++;
+            stato.benessere = Math.min(100, stato.benessere + 1);
+            stato.reputazione = Math.min(100, stato.reputazione + 1);
+
+            aggiungiFeed(`Pasto servito con calore a ${ospiteCorrente.nome}. Sorrisi e gratitudine in sala.`, "success");
+            aggiornaInterfaccia();
+
+            // Possibilità di servire un altro o terminare
+            if (Math.random() > 0.3 && stato.scorteCaritas >= 5) {
+                caricaProssimoOspiteMensa();
+            } else {
+                terminaTurnoMensa();
+                mostraMessaggio("Turno Conclusi", "Il turno alla mensa Caritas si è concluso con successo. Grazie al tuo aiuto molte persone hanno trovato conforto.", "fa-bowl-food", "text-emerald-600", "bg-emerald-100");
+            }
+        }
+
+        function terminaTurnoMensa() {
+            mensaAttiva = false;
+            ospiteCorrente = null;
+            document.getElementById('btn-avvia-mensa').disabled = false;
+            document.getElementById('btn-avvia-mensa').className = "bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm px-6 py-3 rounded-xl transition shadow-md flex items-center gap-2 cursor-pointer";
+
+            document.getElementById('btn-servi-pasto').disabled = true;
+            document.getElementById('btn-servi-pasto').className = "bg-slate-300 text-slate-500 font-semibold text-sm px-6 py-3 rounded-xl transition shadow-xs flex items-center gap-2 cursor-not-allowed";
+
+            document.getElementById('mensa-ospite-avatar').innerHTML = `<i class="fa-solid fa-user-clock"></i>`;
+            document.getElementById('mensa-ospite-nome').innerText = "Nessun ospite in attesa";
+            document.getElementById('mensa-ospite-richiesta').innerText = "Avvia il turno di distribuzione per cominciare.";
+            document.getElementById('mensa-stato-test').innerText = "La mensa è pronta per accogliere gli ospiti del prossimo turno.";
+        }
+
+        function acquistaScorteCaritas() {
+            if (stato.fondi < 50) {
+                mostraMessaggio("Fondi Insufficienti", "Non hai abbastanza fondi per acquistare scorte alimentari (€50).", "fa-coins", "text-amber-600", "bg-amber-100");
+                return;
+            }
+            stato.fondi -= 50;
+            stato.scorteCaritas += 60;
+            aggiungiFeed("Acquistati 60 kg di generi alimentari per la mensa Caritas.", "info");
+            aggiornaInterfaccia();
+        }
+
+        function reclutaVolontario() {
+            if (stato.fondi < 80) {
+                mostraMessaggio("Fondi Insufficienti", "Non hai abbastanza fondi per coprire le spese di formazione e rimborso per un nuovo volontario (€80).", "fa-coins", "text-amber-600", "bg-amber-100");
+                return;
+            }
+            stato.fondi -= 80;
+            stato.volontariCaritas += 1;
+            aggiungiFeed("Un nuovo volontario si è unito alla squadra Caritas!", "success");
+            aggiornaInterfaccia();
+        }
+
+        // Pacchi Viveri Famiglie
+        function preparaPacco(tipo) {
+            let costo = tipo === 'standard' ? 30 : 55;
+            let benBoost = tipo === 'standard' ? 3 : 6;
+
+            if (stato.fondi < costo) {
+                mostraMessaggio("Fondi Insufficienti", `Non hai abbastanza fondi per preparare questo pacco (€${costo}).`, "fa-coins", "text-amber-600", "bg-amber-100");
+                return;
+            }
+
+            if (famiglieInAttesa.length === 0) {
+                mostraMessaggio("Tutte le famiglie aiutate", "Al momento non ci sono famiglie in attesa di pacchi viveri urgenti. Ottimo lavoro!", "fa-circle-check", "text-emerald-600", "bg-emerald-100");
+                return;
+            }
+
+            stato.fondi -= costo;
+            stato.fondiDistribuiti += costo;
+            stato.famiglieAiutate++;
+            stato.benessere = Math.min(100, stato.benessere + benBoost);
+            stato.reputazione = Math.min(100, stato.reputazione + 2);
+
+            let famigliaAiutata = famiglieInAttesa.shift();
+            aggiungiFeed(`Pacco consegnato con successo alla ${famigliaAiutata.nome}. Famiglia felice e supportata.`, "success");
+
+            // Genera nuova richiesta casuale dopo un po'
+            setTimeout(() => {
+                const nomiNuovi = ["Famiglia De Luca", "Sig.ra Maria", "Famiglia Esposito", "Padre Luigi (Centro Famiglie)"];
+                const richiesteNuove = ["Generi alimentari", "Pacchi viveri e bollette", "Kit infanzia"];
+                famiglieInAttesa.push({
+                    id: Date.now(),
+                    nome: nomiNuovi[Math.floor(Math.random() * nomiNuovi.length)],
+                    membri: Math.floor(Math.random() * 4) + 1,
+                    tipoRichiesta: richiesteNuove[Math.floor(Math.random() * richiesteNuove.length)],
+                    urgenza: "Alta"
+                });
+                renderFamiglie();
+            }, 3000);
+
+            renderFamiglie();
+            aggiornaInterfaccia();
+        }
+
+        function renderFamiglie() {
+            const container = document.getElementById('lista-famiglie-container');
+            document.getElementById('badge-richieste-famiglie').innerText = `${famiglieInAttesa.length} in attesa`;
+
+            if (famiglieInAttesa.length === 0) {
+                container.innerHTML = `<div class="p-4 text-center text-xs text-slate-500">Nessuna famiglia in attesa al momento.</div>`;
+                return;
+            }
+
+            container.innerHTML = famiglieInAttesa.map(f => `
+                <div class="p-4 flex items-center justify-between text-xs">
+                    <div>
+                        <div class="font-bold text-slate-800 text-sm">${f.nome}</div>
+                        <div class="text-slate-500">Componenti: ${f.membri} &bull; Richiesta: ${f.tipoRichiesta}</div>
+                    </div>
+                    <span class="bg-amber-100 text-amber-800 font-semibold px-2.5 py-1 rounded-lg">Urgenza ${f.urgenza}</span>
+                </div>
+            `).join('');
+        }
+
+        // Progetti Comunitari
+        function renderProgetti() {
+            const grid = document.getElementById('progetti-grid');
+            grid.innerHTML = progettiComunitari.map(p => `
+                <div class="border border-slate-200 p-5 rounded-2xl flex flex-col justify-between bg-slate-50">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold">
+                                    <i class="fa-solid ${p.icon}"></i>
+                                </div>
+                                <span class="font-bold text-slate-800 text-sm">${p.nome}</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-4 leading-relaxed">${p.desc}</p>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-3 text-xs font-semibold">
+                            <span class="text-slate-600">Costo: €${p.costo}</span>
+                            <span class="text-emerald-700">+${p.benessereBoost}% Benessere</span>
+                        </div>
+                        ${p.completato ? 
+                            `<div class="w-full bg-emerald-100 text-emerald-800 text-xs font-bold py-2.5 rounded-xl text-center flex items-center justify-center gap-1"><i class="fa-solid fa-check"></i> Progetto Completato</div>` :
+                            `<button onclick="investiProgetto('${p.id}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2.5 rounded-xl transition shadow-sm">Finanzia Progetto</button>`
+                        }
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function investiProgetto(id) {
+            let progetto = progettiComunitari.find(p => p.id === id);
+            if (!progetto || progetto.completato) return;
+
+            if (stato.fondi < progetto.costo) {
+                mostraMessaggio("Fondi Insufficienti", `Non hai abbastanza fondi per finanziare questo progetto (€${progetto.costo}). Raccogli altri fondi!`, "fa-coins", "text-amber-600", "bg-amber-100");
+                return;
+            }
+
+            stato.fondi -= progetto.costo;
+            stato.fondiDistribuiti += progetto.costo;
+            progetto.completato = true;
+            stato.benessere = Math.min(100, stato.benessere + progetto.benessereBoost);
+            stato.reputazione = Math.min(100, stato.reputazione + progetto.reputazioneBoost);
+
+            aggiungiFeed(`Grande traguardo! Il progetto "${progetto.nome}" è stato completato con successo. La città rinasce.`, "success");
+            renderProgetti();
+            aggiornaInterfaccia();
+
+            // Controllo vittoria
+            if (progettiComunitari.every(p => p.completato) && stato.benessere >= 85) {
+                mostraMessaggio("Vittoria della Solidarietà!", "Straordinario! Hai trasformato la città in un modello di accoglienza, giustizia sociale e benessere condiviso.", "fa-trophy", "text-amber-500", "bg-amber-100");
+            }
+        }
+
+        // Dilemmi Etici Casuali
+        let dilemmaAttuale = null;
+        function generaDilemmaCasuale() {
+            const dilemmi = [
+                {
+                    titolo: "Ondata di Freddo Improvviso",
+                    testo: "Un'ondata di gelo mette a rischio i senzatetto della città. La Caritas chiede l'apertura straordinaria di un rifugio notturno riscaldato.",
+                    opzione1: "Finanzia subito il rifugio (€150)",
+                    effetto1: () => { stato.fondi -= 150; stato.benessere += 8; stato.reputazione += 5; aggiungiFeed("Rifugio notturno aperto in emergenza. Vite salvate dal gelo.", "success"); },
+                    opzione2: "Distribuisci solo coperte pesanti (€50)",
+                    effetto2: () => { stato.fondi -= 50; stato.benessere += 3; aggiungiFeed("Distribuite coperte d'emergenza ai senzatetto.", "info"); }
+                },
+                {
+                    titolo: "Offerta Condizionata da Azienda",
+                    testo: "Un grande imprenditore offre €500 alla Caritas ma chiede di affiggere grandi cart pubblicitari della sua azienda sui furgoni solidali.",
+                    opzione1: "Accetta l'offerta per il bene dei bisognosi",
+                    effetto1: () => { stato.fondi += 500; stato.reputazione -= 4; stato.benessere += 5; aggiungiFeed("Accettata la donazione aziendale con visibilità.", "info"); },
+                    opzione2: "Rifiuta e spiega l'etica della solidarietà pura",
+                    effetto2: () => { stato.reputazione += 6; aggiungiFeed("La comunità apprezza la trasparenza e l'etica rigorosa.", "success"); }
+                }
+            ];
+
+            dilemmaAttuale = dilemmi[Math.floor(Math.random() * dilemmi.length)];
+            document.getElementById('dilemma-titolo').innerText = dilemmaAttuale.titolo;
+            document.getElementById('dilemma-testo').innerText = dilemmaAttuale.testo;
+            document.getElementById('dilemma-btn-1').innerText = dilemmaAttuale.opzione1;
+            document.getElementById('dilemma-btn-2').innerText = dilemmaAttuale.opzione2;
+            document.getElementById('modal-dilemma').classList.remove('hidden');
+        }
+
+        function rispondiDilemma(scelta) {
+            document.getElementById('modal-dilemma').classList.add('hidden');
+            if (scelta === 1) {
+                dilemmaAttuale.effetto1();
+            } else {
+                dilemmaAttuale.effetto2();
+            }
+            aggiornaInterfaccia();
+        }
+
+        // Feed & UI Helpers
+        function aggiungiFeed(testo, tipo) {
+            const feed = document.getElementById('feed-notizie');
+            const iconClass = tipo === 'success' ? 'fa-circle-check text-emerald-600' : 'fa-circle-info text-blue-600';
+            const bgClass = tipo === 'success' ? 'bg-emerald-50 border-emerald-100 text-emerald-900' : 'bg-slate-50 border-slate-200 text-slate-800';
+
+            const div = document.createElement('div');
+            div.className = `p-3 rounded-2xl border ${bgClass} fade-in`;
+            div.innerHTML = `
+                <div class="font-bold mb-1 flex items-center gap-1.5">
+                    <i class="fa-solid ${iconClass}"></i> Giorno ${stato.giorno}
+                </div>
+                ${testo}
+            `;
+            feed.insertBefore(div, feed.firstChild);
+        }
+
+        function aggiornaInterfaccia() {
+            document.getElementById('stat-benessere').innerText = `${stato.benessere}%`;
+            document.getElementById('stat-fondi').innerText = `€ ${stato.fondi}`;
+            document.getElementById('stat-pasti').innerText = stato.pastiServiti;
+            document.getElementById('stat-famiglie').innerText = stato.famiglieAiutate;
+            document.getElementById('stat-giorno').innerText = stato.giorno;
+
+            document.getElementById('bar-benessere').style.width = `${stato.benessere}%`;
+            document.getElementById('progress-benessere-val').innerText = `${stato.benessere}%`;
+
+            document.getElementById('bar-reputazione').style.width = `${stato.reputazione}%`;
+            document.getElementById('progress-reputazione-val').innerText = `${stato.reputazione}%`;
+
+            document.getElementById('caritas-totale-pasti').innerText = stato.pastiServiti;
+            document.getElementById('caritas-scorte').innerText = `${stato.scorteCaritas} kg`;
+            document.getElementById('caritas-volontari').innerText = `${stato.volontariCaritas} Volontari`;
+            document.getElementById('famiglie-totale-aiutate').innerText = stato.famiglieAiutate;
+            document.getElementById('stat-fondi-distribuiti').innerText = `€ ${stato.fondiDistribuiti}`;
+
+            let progettiCompletatiCount = progettiComunitari.filter(p => p.completato).length;
+            document.getElementById('stat-progetti-attivi').innerText = `${progettiCompletatiCount} / 5`;
+        }
+
+        function mostraMessaggio(titolo, testo, icon, iconColor, iconBg) {
+            document.getElementById('msg-titolo').innerText = titolo;
+            document.getElementById('msg-testo').innerText = testo;
+            const iconBox = document.getElementById('msg-icon-box');
+            iconBox.className = `w-14 h-14 ${iconBg} ${iconColor} rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4`;
+            iconBox.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+            document.getElementById('modal-messaggio').classList.remove('hidden');
+        }
+
+        function chiudiMessaggio() {
+            document.getElementById('modal-messaggio').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
