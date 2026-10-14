@@ -1,0 +1,999 @@
+```html
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batman: Gotham City Hunt 3D - Joystick Edition</title>
+    <!-- Tailwind CSS for UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js for 3D Graphics -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            background-color: #030712;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        .orbitron { font-family: 'Orbitron', sans-serif; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+        
+        /* Glassmorphism UI Effects */
+        .bat-panel {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(234, 179, 8, 0.3);
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.8), inset 0 0 10px rgba(234, 179, 8, 0.1);
+        }
+        .bat-btn {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid #eab308;
+            transition: all 0.2s ease;
+        }
+        .bat-btn:hover {
+            background: linear-gradient(135deg, #ca8a04 0%, #a16207 100%);
+            color: #000;
+            box-shadow: 0 0 15px rgba(234, 179, 8, 0.6);
+            transform: translateY(-2px);
+        }
+        .hud-border {
+            border: 2px solid #eab308;
+            box-shadow: 0 0 10px rgba(234, 179, 8, 0.4);
+        }
+        .radar-grid {
+            background-image: radial-gradient(rgba(234, 179, 8, 0.2) 1px, transparent 0);
+            background-size: 10px 10px;
+        }
+
+        /* Virtual Joystick Base Styling */
+        #joystick-zone {
+            position: absolute;
+            left: 2rem;
+            bottom: 7rem; /* Positioned elevated higher on the display */
+            width: 140px;
+            height: 140px;
+            pointer-events: auto;
+            z-index: 25;
+        }
+        .joystick-ring {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid rgba(234, 179, 8, 0.6);
+            box-shadow: 0 0 20px rgba(234, 179, 8, 0.3), inset 0 0 15px rgba(0, 0, 0, 0.8);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .joystick-knob {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #facc15 0%, #ca8a04 100%);
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 15px rgba(250, 204, 21, 0.8);
+            position: absolute;
+            transform: translate(0px, 0px);
+            transition: transform 0.05s ease-out;
+        }
+
+        /* Action Buttons Right Side Overlay */
+        #action-zone {
+            position: absolute;
+            right: 2rem;
+            bottom: 6rem; /* Elevated position for right hand actions */
+            pointer-events: auto;
+            z-index: 25;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+    </style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden text-gray-100">
+
+    <!-- Canvas 3D -->
+    <div id="canvas-container" class="absolute inset-0 z-0"></div>
+
+    <!-- Gameplay HUD Overlay -->
+    <div id="hud-layer" class="hidden absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-4 md:p-6">
+        
+        <!-- Top HUD Bar -->
+        <div class="flex justify-between items-start w-full max-w-6xl mx-auto">
+            
+            <!-- Health & Shield Status -->
+            <div class="bat-panel p-4 rounded-xl w-60 md:w-80 border-l-4 border-l-yellow-500">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="orbitron text-xs tracking-widest text-yellow-500 font-bold">INTEGRITÀ BATMOBILE</span>
+                    <span id="health-num" class="orbitron text-sm text-yellow-400 font-bold">100%</span>
+                </div>
+                <div class="w-full bg-gray-950 rounded-full h-3 border border-gray-800 overflow-hidden p-0.5">
+                    <div id="health-bar" class="bg-gradient-to-r from-red-600 via-yellow-500 to-emerald-400 h-full rounded-full transition-all duration-300 w-full shadow-[0_0_10px_#22c55e]"></div>
+                </div>
+
+                <div class="flex justify-between items-center mt-2">
+                    <span class="orbitron text-xs tracking-widest text-blue-400 font-bold">NITRO BOOST</span>
+                    <span id="nitro-num" class="orbitron text-sm text-blue-400 font-bold">100%</span>
+                </div>
+                <div class="w-full bg-gray-950 rounded-full h-2 border border-gray-800 overflow-hidden p-0.5 mt-0.5">
+                    <div id="nitro-bar" class="bg-gradient-to-r from-cyan-500 to-blue-600 h-full rounded-full transition-all duration-150 w-full"></div>
+                </div>
+            </div>
+
+            <!-- Objective & Score Display -->
+            <div class="bat-panel p-4 rounded-xl text-center min-w-[180px] border-t-2 border-t-yellow-500">
+                <div class="orbitron text-xs tracking-wider text-gray-400">PUNTEGGIO BAT-COMPUTER</div>
+                <div id="score-val" class="orbitron text-3xl font-black text-yellow-400 my-0.5 drop-shadow">0</div>
+                <div id="objective-text" class="text-xs text-emerald-400 font-bold tracking-wide uppercase">Insegui la Gang!</div>
+            </div>
+
+            <!-- Radar / Minimap -->
+            <div class="bat-panel p-2 rounded-xl w-28 h-28 md:w-36 md:h-36 relative overflow-hidden flex items-center justify-center hud-border">
+                <div class="radar-grid absolute inset-0 opacity-40"></div>
+                <div class="absolute inset-0 border border-yellow-500/30 rounded-full animate-ping opacity-25"></div>
+                <!-- Batmobile Dot (Player) -->
+                <div class="w-2.5 h-2.5 bg-yellow-400 rounded-full z-10 shadow-[0_0_8px_#facc15]"></div>
+                <!-- Enemy Dots Container -->
+                <div id="radar-dots" class="absolute inset-0"></div>
+                <div class="absolute bottom-1 text-[9px] orbitron text-yellow-500/80 tracking-widest">RADAR GOTHAM</div>
+            </div>
+        </div>
+
+        <!-- Speedometer & Controls Helper -->
+        <div class="flex justify-between items-end w-full max-w-6xl mx-auto pb-2">
+            <!-- Speedometer -->
+            <div class="bat-panel p-3 rounded-xl text-center w-28 md:w-36">
+                <span class="orbitron text-[10px] text-gray-400 tracking-widest">VELOCITÀ</span>
+                <div class="flex items-baseline justify-center">
+                    <span id="speed-val" class="orbitron text-2xl md:text-3xl font-bold text-white">0</span>
+                    <span class="text-xs text-yellow-500 ml-1">KM/H</span>
+                </div>
+            </div>
+
+            <!-- On-Screen Controls Hint -->
+            <div class="hidden md:flex gap-4 bat-panel px-4 py-2 rounded-xl text-xs text-gray-400">
+                <div><span class="text-yellow-400 font-bold">JOYSTICK / WASD</span> - Guida & Sterza</div>
+                <div><span class="text-yellow-400 font-bold">BOTTONE BATARANG / SPAZIO</span> - Fuoco</div>
+                <div><span class="text-yellow-400 font-bold">NITRO / SHIFT</span> - Turbo</div>
+            </div>
+        </div>
+
+        <!-- Interactive Virtual Joystick (Positioned Elevated on Display) -->
+        <div id="joystick-zone">
+            <div class="joystick-ring">
+                <div class="joystick-knob" id="joystick-knob"></div>
+            </div>
+        </div>
+
+        <!-- Action Buttons (Right Side Elevated) -->
+        <div id="action-zone">
+            <button id="btn-nitro" class="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-cyan-600 to-blue-800 border-2 border-cyan-400 rounded-2xl text-white text-2xl font-bold shadow-[0_0_15px_rgba(6,182,212,0.5)] active:scale-95 flex items-center justify-center">
+                ⚡
+            </button>
+            <button id="btn-fire" class="w-18 h-18 md:w-22 md:h-22 bg-gradient-to-br from-red-600 to-amber-700 border-2 border-yellow-400 rounded-2xl text-white text-3xl font-bold shadow-[0_0_20px_rgba(239,68,68,0.6)] active:scale-95 flex items-center justify-center">
+                🦇
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Menu & Difficulty Modal -->
+    <div id="menu-modal" class="absolute inset-0 z-30 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bat-panel max-w-xl w-full p-6 md:p-8 rounded-2xl border-2 border-yellow-500 text-center relative overflow-hidden">
+            
+            <div class="mb-6">
+                <div class="text-5xl md:text-6xl mb-2">🦇</div>
+                <h1 class="orbitron text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-500 to-amber-600 tracking-wider">
+                    BATMAN: GOTHAM HUNT
+                </h1>
+                <p class="text-sm md:text-base text-gray-400 mt-1">Caccia 3D sui Tetti e Strade di Gotham</p>
+            </div>
+
+            <!-- Difficulty Selection -->
+            <div class="mb-6">
+                <label class="orbitron text-xs tracking-widest text-yellow-500 font-bold block mb-3 uppercase">Seleziona Livello di Difficoltà</label>
+                <div class="grid grid-cols-3 gap-3">
+                    <button data-diff="easy" class="diff-btn bat-btn p-3 rounded-xl text-center cursor-pointer">
+                        <div class="orbitron font-bold text-sm text-green-400">RECLUTA</div>
+                        <div class="text-[11px] text-gray-400 mt-1">Facile • Danni ridotti</div>
+                    </button>
+                    <button data-diff="medium" class="diff-btn bat-btn p-3 rounded-xl text-center cursor-pointer border-yellow-500 bg-yellow-500/10">
+                        <div class="orbitron font-bold text-sm text-yellow-400">CAVALIERE</div>
+                        <div class="text-[11px] text-gray-400 mt-1">Medio • Velocità standard</div>
+                    </button>
+                    <button data-diff="hard" class="diff-btn bat-btn p-3 rounded-xl text-center cursor-pointer">
+                        <div class="orbitron font-bold text-sm text-red-400">INCUBO</div>
+                        <div class="text-[11px] text-gray-400 mt-1">Difficile • Traffico Intenso</div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800 text-left mb-6 text-xs md:text-sm text-gray-300 space-y-1">
+                <p class="text-yellow-400 font-bold orbitron">COMANDI DI GUIDA:</p>
+                <p>• Usa il <span class="text-yellow-400">Joystick Touch/Mouse</span> a sinistra per sterzare, accelerare e frenare.</p>
+                <p>• Premi <span class="text-red-400">🦇 Batarang</span> per distruggere i criminali e <span class="text-cyan-400">⚡ Nitro</span> per il turbo.</p>
+            </div>
+
+            <button id="start-btn" class="orbitron text-lg font-bold w-full py-4 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_0_20px_rgba(234,179,8,0.5)] transition-all transform hover:scale-[1.02]">
+                AVVIA BATMOBILE 🚀
+            </button>
+        </div>
+    </div>
+
+    <!-- Game Over / Victory Modal -->
+    <div id="end-modal" class="hidden absolute inset-0 z-30 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bat-panel max-w-md w-full p-6 rounded-2xl border-2 border-yellow-500 text-center">
+            <div id="end-icon" class="text-6xl mb-3">🏆</div>
+            <h2 id="end-title" class="orbitron text-3xl font-black text-yellow-400 mb-1">MISSIONE COMPLETA</h2>
+            <p id="end-subtitle" class="text-sm text-gray-300 mb-6">Gotham City è di nuovo al sicuro!</p>
+
+            <div class="bg-slate-950/80 p-4 rounded-xl border border-slate-800 text-left mb-6 space-y-2 text-sm">
+                <div class="flex justify-between"><span class="text-gray-400">Punteggio Finale:</span><span id="stat-score" class="orbitron font-bold text-yellow-400">0</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">Criminali Neutralizzati:</span><span id="stat-kills" class="orbitron font-bold text-red-400">0</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">Integrità Residua:</span><span id="stat-health" class="orbitron font-bold text-green-400">0%</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">Difficoltà:</span><span id="stat-diff" class="orbitron font-bold text-gray-200">Cavaliere</span></div>
+            </div>
+
+            <button id="restart-btn" class="orbitron text-base font-bold w-full py-3.5 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-black shadow-[0_0_15px_rgba(234,179,8,0.4)]">
+                NUOVA MISSIONE 🦇
+            </button>
+        </div>
+    </div>
+
+    <!-- Web Audio API Sound Synthesizer -->
+    <script>
+        class BatAudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.engineGain = null;
+                this.engineOsc = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            startEngine() {
+                if (!this.ctx) return;
+                try {
+                    this.engineOsc = this.ctx.createOscillator();
+                    this.engineGain = this.ctx.createGain();
+
+                    this.engineOsc.type = 'sawtooth';
+                    this.engineOsc.frequency.setValueAtTime(55, this.ctx.currentTime);
+
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(320, this.ctx.currentTime);
+
+                    this.engineGain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+
+                    this.engineOsc.connect(filter);
+                    filter.connect(this.engineGain);
+                    this.engineGain.connect(this.ctx.destination);
+
+                    this.engineOsc.start();
+                } catch(e) {}
+            }
+
+            updateEnginePitch(speedRatio) {
+                if (this.engineOsc && this.ctx) {
+                    const freq = 50 + (speedRatio * 180);
+                    this.engineOsc.frequency.setTargetAtTime(freq, this.ctx.currentTime, 0.1);
+                }
+            }
+
+            stopEngine() {
+                if (this.engineOsc) {
+                    try { this.engineOsc.stop(); } catch(e) {}
+                }
+            }
+
+            playBatarang() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(900, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(220, this.ctx.currentTime + 0.2);
+
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.2);
+            }
+
+            playNitro() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.3);
+
+                gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.35);
+            }
+
+            playExplosion() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(130, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(25, this.ctx.currentTime + 0.4);
+
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.4);
+            }
+        }
+
+        const audio = new BatAudioEngine();
+    </script>
+
+    <!-- Main Game Logic (Three.js & Joystick Controller Engine) -->
+    <script>
+        // --- Game Setup & State ---
+        let scene, camera, renderer;
+        let batmobile, batSignalMesh, rainParticles;
+        
+        let gameActive = false;
+        let score = 0;
+        let health = 100;
+        let nitro = 100;
+        let isNitroActive = false;
+        let enemiesKilled = 0;
+        let currentSpeed = 0;
+        let selectedDiff = 'medium';
+
+        // Joystick Input Vector (-1 to 1)
+        let joystickVector = { x: 0, y: 0 };
+
+        // Difficulty configs
+        const DIFF_SETTINGS = {
+            easy: { speedBase: 0.38, spawnRate: 1700, damageMul: 10, targetKills: 8, name: 'Recluta' },
+            medium: { speedBase: 0.52, spawnRate: 1200, damageMul: 18, targetKills: 12, name: 'Cavaliere Oscuro' },
+            hard: { speedBase: 0.68, spawnRate: 850, damageMul: 28, targetKills: 18, name: 'Incubo di Gotham' }
+        };
+
+        // World Objects
+        let enemies = [];
+        let batarangs = [];
+        let cityBuildings = [];
+
+        // Keyboard Backup controls state
+        const keys = { KeyW: false, KeyS: false, KeyA: false, KeyD: false, ShiftLeft: false };
+
+        // --- DOM Elements ---
+        const hudLayer = document.getElementById('hud-layer');
+        const menuModal = document.getElementById('menu-modal');
+        const endModal = document.getElementById('end-modal');
+        const healthBar = document.getElementById('health-bar');
+        const healthNum = document.getElementById('health-num');
+        const nitroBar = document.getElementById('nitro-bar');
+        const nitroNum = document.getElementById('nitro-num');
+        const scoreVal = document.getElementById('score-val');
+        const speedVal = document.getElementById('speed-val');
+        const radarDots = document.getElementById('radar-dots');
+
+        // Initializer
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x02040a);
+            scene.fog = new THREE.FogExp2(0x02040a, 0.016);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 300);
+            camera.position.set(0, 3.2, 7.5);
+            camera.lookAt(0, 1.2, -5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0x1e293b, 1.3);
+            scene.add(ambientLight);
+
+            const moonLight = new THREE.DirectionalLight(0x38bdf8, 0.9);
+            moonLight.position.set(20, 50, -20);
+            moonLight.castShadow = true;
+            scene.add(moonLight);
+
+            buildRoadAndCity();
+            buildBatSignal();
+            buildBatmobile();
+            buildRainEffect();
+
+            window.addEventListener('resize', onWindowResize);
+            setupInputListeners();
+            setupJoystick();
+        }
+
+        // --- Batmobile 3D Model ---
+        function buildBatmobile() {
+            batmobile = new THREE.Group();
+
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.2, metalness: 0.8 });
+            const armorMat = new THREE.MeshStandardMaterial({ color: 0x030712, roughness: 0.1, metalness: 0.9 });
+            const glassMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.1, opacity: 0.8, transparent: true });
+
+            // Main chassis
+            const chassisGeo = new THREE.BoxGeometry(1.8, 0.5, 3.8);
+            const chassis = new THREE.Mesh(chassisGeo, bodyMat);
+            chassis.position.y = 0.4;
+            chassis.castShadow = true;
+            batmobile.add(chassis);
+
+            // Cockpit Canopy
+            const cockpitGeo = new THREE.BoxGeometry(1.1, 0.45, 1.6);
+            const cockpit = new THREE.Mesh(cockpitGeo, glassMat);
+            cockpit.position.set(0, 0.75, -0.2);
+            batmobile.add(cockpit);
+
+            // Fenders
+            const wingGeo = new THREE.BoxGeometry(0.4, 0.6, 2.2);
+            const leftWing = new THREE.Mesh(wingGeo, armorMat);
+            leftWing.position.set(-1.05, 0.5, 0.2);
+            batmobile.add(leftWing);
+
+            const rightWing = new THREE.Mesh(wingGeo, armorMat);
+            rightWing.position.set(1.05, 0.5, 0.2);
+            batmobile.add(rightWing);
+
+            // Bat fins
+            const finShape = new THREE.Shape();
+            finShape.moveTo(0, 0);
+            finShape.lineTo(0.1, 1.0);
+            finShape.lineTo(1.2, 0);
+            const finGeo = new THREE.ExtrudeGeometry(finShape, { depth: 0.1, bevelEnabled: false });
+
+            const leftFin = new THREE.Mesh(finGeo, armorMat);
+            leftFin.rotation.y = -Math.PI / 2;
+            leftFin.position.set(-0.9, 0.6, 1.8);
+            batmobile.add(leftFin);
+
+            const rightFin = new THREE.Mesh(finGeo, armorMat);
+            rightFin.rotation.y = -Math.PI / 2;
+            rightFin.position.set(0.8, 0.6, 1.8);
+            batmobile.add(rightFin);
+
+            // Wheels
+            const wheelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.4, 16);
+            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.9 });
+            wheelGeo.rotateZ(Math.PI / 2);
+
+            [[-1.0, 0.45, -1.2], [1.0, 0.45, -1.2], [-1.1, 0.45, 1.2], [1.1, 0.45, 1.2]].forEach(pos => {
+                const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+                wheel.position.set(...pos);
+                wheel.castShadow = true;
+                batmobile.add(wheel);
+            });
+
+            // Headlights
+            const lightGeo = new THREE.BoxGeometry(0.3, 0.1, 0.1);
+            const headLightLeft = new THREE.Mesh(lightGeo, new THREE.MeshBasicMaterial({ color: 0xfacc15 }));
+            headLightLeft.position.set(-0.6, 0.45, -1.9);
+            batmobile.add(headLightLeft);
+
+            const headLightRight = new THREE.Mesh(lightGeo, new THREE.MeshBasicMaterial({ color: 0xfacc15 }));
+            headLightRight.position.set(0.6, 0.45, -1.9);
+            batmobile.add(headLightRight);
+
+            // Jet Thruster Flame
+            const jetGeo = new THREE.CylinderGeometry(0.22, 0.05, 0.9, 8);
+            jetGeo.rotateX(Math.PI / 2);
+            const jetMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.8 });
+            const jetFlame = new THREE.Mesh(jetGeo, jetMat);
+            jetFlame.position.set(0, 0.45, 2.2);
+            jetFlame.name = "jetFlame";
+            batmobile.add(jetFlame);
+
+            batmobile.position.set(0, 0, 0);
+            scene.add(batmobile);
+        }
+
+        // --- Gotham City Environment ---
+        function buildRoadAndCity() {
+            const roadGeo = new THREE.PlaneGeometry(16, 300);
+            const roadMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3, metalness: 0.2 });
+            const road = new THREE.Mesh(roadGeo, roadMat);
+            road.rotation.x = -Math.PI / 2;
+            road.position.set(0, 0, -100);
+            road.receiveShadow = true;
+            scene.add(road);
+
+            for (let i = -1; i <= 1; i += 2) {
+                const lineGeo = new THREE.PlaneGeometry(0.15, 300);
+                const lineMat = new THREE.MeshBasicMaterial({ color: 0xeab308 });
+                const line = new THREE.Mesh(lineGeo, lineMat);
+                line.rotation.x = -Math.PI / 2;
+                line.position.set(i * 2.2, 0.01, -100);
+                scene.add(line);
+            }
+
+            const bldgColors = [0x090d16, 0x0f172a, 0x030712, 0x111827];
+            for (let i = 0; i < 35; i++) {
+                const height = 30 + Math.random() * 50;
+                const width = 8 + Math.random() * 8;
+                const geo = new THREE.BoxGeometry(width, height, 10);
+                const mat = new THREE.MeshStandardMaterial({ 
+                    color: bldgColors[Math.floor(Math.random() * bldgColors.length)], 
+                    roughness: 0.7 
+                });
+                
+                const bldgLeft = new THREE.Mesh(geo, mat);
+                bldgLeft.position.set(-13 - width / 2, height / 2, -i * 8);
+                scene.add(bldgLeft);
+                cityBuildings.push(bldgLeft);
+
+                const bldgRight = new THREE.Mesh(geo, mat);
+                bldgRight.position.set(13 + width / 2, height / 2, -i * 8);
+                scene.add(bldgRight);
+                cityBuildings.push(bldgRight);
+            }
+        }
+
+        function buildBatSignal() {
+            const signalGroup = new THREE.Group();
+            const beamGeo = new THREE.ConeGeometry(12, 80, 16, 1, true);
+            const beamMat = new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.12, side: THREE.DoubleSide });
+            const beam = new THREE.Mesh(beamGeo, beamMat);
+            beam.rotation.x = Math.PI / 3;
+            beam.position.set(0, 30, -70);
+            signalGroup.add(beam);
+
+            const batCircle = new THREE.Mesh(new THREE.CircleGeometry(4.5, 16), new THREE.MeshBasicMaterial({ color: 0xfacc15, transparent: true, opacity: 0.7 }));
+            batCircle.position.set(0, 60, -90);
+            signalGroup.add(batCircle);
+
+            scene.add(signalGroup);
+            batSignalMesh = signalGroup;
+        }
+
+        function buildRainEffect() {
+            const rainCount = 800;
+            const rainGeo = new THREE.BufferGeometry();
+            const positions = new Float32Array(rainCount * 3);
+
+            for (let i = 0; i < rainCount * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 40;
+                positions[i + 1] = Math.random() * 30;
+                positions[i + 2] = (Math.random() - 0.5) * 80;
+            }
+
+            rainGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const rainMat = new THREE.PointsMaterial({ color: 0x38bdf8, size: 0.12, transparent: true, opacity: 0.6 });
+            rainParticles = new THREE.Points(rainGeo, rainMat);
+            scene.add(rainParticles);
+        }
+
+        // --- Interactive Touch/Mouse Virtual Joystick Setup ---
+        function setupJoystick() {
+            const zone = document.getElementById('joystick-zone');
+            const knob = document.getElementById('joystick-knob');
+            let activeTouchId = null;
+            let center = { x: 0, y: 0 };
+            const maxRadius = 45;
+
+            function handleStart(clientX, clientY, id) {
+                activeTouchId = id;
+                const rect = zone.getBoundingClientRect();
+                center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+                handleMove(clientX, clientY);
+            }
+
+            function handleMove(clientX, clientY) {
+                const deltaX = clientX - center.x;
+                const deltaY = clientY - center.y;
+                const distance = Math.hypot(deltaX, deltaY);
+                const angle = Math.atan2(deltaY, deltaX);
+
+                const clampedDist = Math.min(distance, maxRadius);
+                const knobX = Math.cos(angle) * clampedDist;
+                const knobY = Math.sin(angle) * clampedDist;
+
+                knob.style.transform = `translate(${knobX}px, ${knobY}px)`;
+
+                // Normalized vector (-1 to 1)
+                joystickVector.x = knobX / maxRadius;
+                joystickVector.y = -(knobY / maxRadius); // Inverted so UP is positive acceleration
+            }
+
+            function handleEnd() {
+                activeTouchId = null;
+                knob.style.transform = `translate(0px, 0px)`;
+                joystickVector.x = 0;
+                joystickVector.y = 0;
+            }
+
+            // Touch events
+            zone.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (activeTouchId === null && e.changedTouches.length > 0) {
+                    const t = e.changedTouches[0];
+                    handleStart(t.clientX, t.clientY, t.identifier);
+                }
+            });
+
+            window.addEventListener('touchmove', (e) => {
+                if (activeTouchId !== null) {
+                    for (let t of e.changedTouches) {
+                        if (t.identifier === activeTouchId) {
+                            handleMove(t.clientX, t.clientY);
+                            break;
+                        }
+                    }
+                }
+            });
+
+            window.addEventListener('touchend', (e) => {
+                if (activeTouchId !== null) {
+                    for (let t of e.changedTouches) {
+                        if (t.identifier === activeTouchId) {
+                            handleEnd();
+                            break;
+                        }
+                    }
+                }
+            });
+
+            // Mouse events for desktop simulation
+            let isMouseDown = false;
+            zone.addEventListener('mousedown', (e) => {
+                isMouseDown = true;
+                handleStart(e.clientX, e.clientY, 'mouse');
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (isMouseDown) {
+                    handleMove(e.clientX, e.clientY);
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isMouseDown) {
+                    isMouseDown = false;
+                    handleEnd();
+                }
+            });
+        }
+
+        // --- Enemy Spawner ---
+        function spawnEnemy() {
+            if (!gameActive) return;
+
+            const enemyLanes = [-4.5, -1.5, 1.5, 4.5];
+            const lane = enemyLanes[Math.floor(Math.random() * enemyLanes.length)];
+            const enemyGroup = new THREE.Group();
+
+            const isJoker = Math.random() > 0.4;
+            const carColor = isJoker ? 0x7e22ce : 0x065f46;
+            const mat = new THREE.MeshStandardMaterial({ color: carColor, roughness: 0.3 });
+            
+            const bodyGeo = new THREE.BoxGeometry(1.7, 0.6, 3.2);
+            const body = new THREE.Mesh(bodyGeo, mat);
+            body.position.y = 0.4;
+            body.castShadow = true;
+            enemyGroup.add(body);
+
+            const roofMat = new THREE.MeshBasicMaterial({ color: isJoker ? 0xa855f7 : 0x10b981 });
+            const roof = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.4, 1.4), roofMat);
+            roof.position.set(0, 0.7, -0.1);
+            enemyGroup.add(roof);
+
+            enemyGroup.position.set(lane, 0, -120);
+            scene.add(enemyGroup);
+
+            enemies.push({ mesh: enemyGroup, lane: lane });
+        }
+
+        // --- Weapons & Nitro ---
+        function shootBatarang() {
+            if (!gameActive) return;
+
+            const batarangGroup = new THREE.Group();
+            const mat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+            const wing = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.05, 0.2), mat);
+            batarangGroup.add(wing);
+
+            batarangGroup.position.set(batmobile.position.x, 0.6, batmobile.position.z - 1.5);
+            scene.add(batarangGroup);
+
+            batarangs.push({ mesh: batarangGroup });
+            audio.playBatarang();
+        }
+
+        function triggerNitro() {
+            if (!gameActive || nitro < 20) return;
+            isNitroActive = true;
+            audio.playNitro();
+            setTimeout(() => { isNitroActive = false; }, 1500);
+        }
+
+        function setupInputListeners() {
+            window.addEventListener('keydown', (e) => {
+                if (keys.hasOwnProperty(e.code)) keys[e.code] = true;
+                if (e.code === 'Space') shootBatarang();
+                if (e.code === 'ShiftLeft') triggerNitro();
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (keys.hasOwnProperty(e.code)) keys[e.code] = false;
+            });
+
+            document.getElementById('btn-fire').addEventListener('click', shootBatarang);
+            document.getElementById('btn-nitro').addEventListener('click', triggerNitro);
+
+            document.querySelectorAll('.diff-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('border-yellow-500', 'bg-yellow-500/10'));
+                    const target = e.currentTarget;
+                    target.classList.add('border-yellow-500', 'bg-yellow-500/10');
+                    selectedDiff = target.getAttribute('data-diff');
+                });
+            });
+
+            document.getElementById('start-btn').addEventListener('click', () => {
+                audio.init();
+                startGame();
+            });
+
+            document.getElementById('restart-btn').addEventListener('click', () => {
+                endModal.classList.add('hidden');
+                menuModal.classList.remove('hidden');
+            });
+        }
+
+        // --- Game Lifecycle ---
+        function startGame() {
+            menuModal.classList.add('hidden');
+            hudLayer.classList.remove('hidden');
+
+            const diffConfig = DIFF_SETTINGS[selectedDiff];
+            health = 100;
+            nitro = 100;
+            score = 0;
+            enemiesKilled = 0;
+            batmobile.position.set(0, 0, 0);
+
+            enemies.forEach(e => scene.remove(e.mesh));
+            batarangs.forEach(b => scene.remove(b.mesh));
+            enemies = [];
+            batarangs = [];
+
+            updateHUD();
+            audio.startEngine();
+            gameActive = true;
+
+            clearInterval(window.enemySpawner);
+            window.enemySpawner = setInterval(spawnEnemy, diffConfig.spawnRate);
+        }
+
+        function gameOver(victory) {
+            gameActive = false;
+            clearInterval(window.enemySpawner);
+            audio.stopEngine();
+
+            hudLayer.classList.add('hidden');
+            endModal.classList.remove('hidden');
+
+            const endTitle = document.getElementById('end-title');
+            const endIcon = document.getElementById('end-icon');
+            const endSubtitle = document.getElementById('end-subtitle');
+
+            if (victory) {
+                endIcon.innerText = "🏆";
+                endTitle.innerText = "MISSIONE COMPLETA!";
+                endSubtitle.innerText = "Gotham City è di nuovo al sicuro!";
+            } else {
+                endIcon.innerText = "💥";
+                endTitle.innerText = "BATMOBILE DISTRUTTA!";
+                endSubtitle.innerText = "I criminali hanno preso il sopravvento. Riprova!";
+            }
+
+            document.getElementById('stat-score').innerText = score;
+            document.getElementById('stat-kills').innerText = enemiesKilled + " / " + DIFF_SETTINGS[selectedDiff].targetKills;
+            document.getElementById('stat-health').innerText = Math.max(0, Math.floor(health)) + "%";
+            document.getElementById('stat-diff').innerText = DIFF_SETTINGS[selectedDiff].name;
+        }
+
+        function updateHUD() {
+            healthBar.style.width = Math.max(0, health) + '%';
+            healthNum.innerText = Math.max(0, Math.floor(health)) + '%';
+            
+            nitroBar.style.width = Math.max(0, nitro) + '%';
+            nitroNum.innerText = Math.max(0, Math.floor(nitro)) + '%';
+
+            scoreVal.innerText = score;
+            speedVal.innerText = Math.floor(currentSpeed * 290);
+
+            // Update Radar Dots
+            radarDots.innerHTML = '';
+            enemies.forEach(enemy => {
+                const dot = document.createElement('div');
+                dot.className = 'absolute w-2 h-2 bg-red-500 rounded-full shadow-[0_0_6px_#ef4444] transform -translate-x-1/2 -translate-y-1/2';
+                
+                const relX = (enemy.mesh.position.x / 12) * 40 + 50;
+                const relZ = (enemy.mesh.position.z / 120) * 40 + 50;
+                
+                dot.style.left = `${Math.min(90, Math.max(10, relX))}%`;
+                dot.style.top = `${Math.min(90, Math.max(10, relZ))}%`;
+                radarDots.appendChild(dot);
+            });
+        }
+
+        // --- Main Frame Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (gameActive) {
+                const diffConfig = DIFF_SETTINGS[selectedDiff];
+
+                // Determine Steering & Acceleration from Joystick OR Keyboard
+                let steerInput = joystickVector.x;
+                let throttleInput = joystickVector.y;
+
+                if (keys.KeyA) steerInput = -1;
+                if (keys.KeyD) steerInput = 1;
+                if (keys.KeyW) throttleInput = 1;
+                if (keys.KeyS) throttleInput = -0.5;
+
+                // Nitro handling
+                let speedMultiplier = 1.0;
+                if (isNitroActive && nitro > 0) {
+                    speedMultiplier = 1.7;
+                    nitro = Math.max(0, nitro - 0.8);
+                } else if (nitro < 100) {
+                    nitro = Math.min(100, nitro + 0.1);
+                }
+
+                // Compute overall speed
+                currentSpeed = (diffConfig.speedBase + (throttleInput * 0.25)) * speedMultiplier;
+
+                // Batmobile X position steering
+                batmobile.position.x += steerInput * 0.22;
+                batmobile.position.x = Math.max(-5.5, Math.min(5.5, batmobile.position.x));
+
+                // Steering Tilt Animation
+                batmobile.rotation.z = -steerInput * 0.15;
+                batmobile.rotation.y = -steerInput * 0.08;
+
+                // Flame scaling
+                const flame = batmobile.getObjectByName("jetFlame");
+                if (flame) {
+                    flame.scale.z = isNitroActive ? 2.2 : (0.8 + throttleInput * 0.5);
+                }
+
+                audio.updateEnginePitch(currentSpeed);
+
+                // Rain Animation
+                if (rainParticles) {
+                    const pos = rainParticles.geometry.attributes.position.array;
+                    for (let i = 1; i < pos.length; i += 3) {
+                        pos[i] -= 1.2;
+                        if (pos[i] < 0) pos[i] = 30;
+                    }
+                    rainParticles.geometry.attributes.position.needsUpdate = true;
+                }
+
+                // Batarangs update
+                for (let i = batarangs.length - 1; i >= 0; i--) {
+                    let b = batarangs[i];
+                    b.mesh.position.z -= 1.3;
+                    b.mesh.rotation.y += 0.3;
+
+                    if (b.mesh.position.z < -130) {
+                        scene.remove(b.mesh);
+                        batarangs.splice(i, 1);
+                    }
+                }
+
+                // Enemies update
+                for (let i = enemies.length - 1; i >= 0; i--) {
+                    let enemy = enemies[i];
+                    enemy.mesh.position.z += currentSpeed * 20;
+
+                    // Hit by Batarang
+                    for (let j = batarangs.length - 1; j >= 0; j--) {
+                        let b = batarangs[j];
+                        const distZ = Math.abs(b.mesh.position.z - enemy.mesh.position.z);
+                        const distX = Math.abs(b.mesh.position.x - enemy.mesh.position.x);
+
+                        if (distZ < 1.5 && distX < 1.3) {
+                            audio.playExplosion();
+                            score += 150;
+                            enemiesKilled++;
+
+                            scene.remove(enemy.mesh);
+                            scene.remove(b.mesh);
+                            enemies.splice(i, 1);
+                            batarangs.splice(j, 1);
+
+                            if (enemiesKilled >= diffConfig.targetKills) {
+                                gameOver(true);
+                            }
+                            break;
+                        }
+                    }
+
+                    if (!enemies[i]) continue;
+
+                    // Collision with Batmobile
+                    const distZ = Math.abs(enemy.mesh.position.z - batmobile.position.z);
+                    const distX = Math.abs(enemy.mesh.position.x - batmobile.position.x);
+
+                    if (distZ < 2.2 && distX < 1.4) {
+                        health -= diffConfig.damageMul;
+                        audio.playExplosion();
+                        scene.remove(enemy.mesh);
+                        enemies.splice(i, 1);
+                        updateHUD();
+
+                        if (health <= 0) {
+                            gameOver(false);
+                        }
+                    } else if (enemy.mesh.position.z > 10) {
+                        scene.remove(enemy.mesh);
+                        enemies.splice(i, 1);
+                    }
+                }
+
+                // City Infinite Loop
+                cityBuildings.forEach(b => {
+                    b.position.z += currentSpeed * 15;
+                    if (b.position.z > 20) {
+                        b.position.z -= 280;
+                    }
+                });
+
+                score += 1;
+                updateHUD();
+            }
+
+            if (batSignalMesh) {
+                batSignalMesh.rotation.y = Math.sin(Date.now() * 0.0005) * 0.2;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        window.onload = () => {
+            init3D();
+            animate();
+        };
+    </script>
+</body>
+</html>
+```
