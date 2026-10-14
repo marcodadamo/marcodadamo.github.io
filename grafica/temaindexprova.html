@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marco D'Adamo — Digital Enterprise</title>
+    <!-- PWA Manifest Link -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0a0b10">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"Fira Code"', 'monospace'],
+                    },
+                    colors: {
+                        dark: {
+                            900: '#0a0b10',
+                            800: '#12141c',
+                            700: '#1a1d29',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0a0b10;
+            color: #f3f4f6;
+        }
+        .glass-card {
+            background: rgba(18, 20, 28, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glow-effect:hover {
+            box-shadow: 0 0 30px -5px rgba(99, 102, 241, 0.3);
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+    <!-- Header / Navbar -->
+    <header class="fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5">
+        <div class="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-lg shadow-lg shadow-indigo-500/30 text-white">
+                    M
+                </div>
+                <div>
+                    <span class="font-bold text-lg tracking-tight block text-white">Marco D'Adamo</span>
+                    <span class="text-xs text-indigo-400 font-medium">Digital Enterprise Project</span>
+                </div>
+            </div>
+
+            <!-- Navbar Desktop -->
+            <nav class="hidden md:flex items-center space-x-5 text-sm font-medium text-gray-300">
+                <a href="menu.html" class="hover:text-indigo-400 transition-colors">Progetti</a>
+
+                <!-- Pulsante Giochi -->
+                <button id="openGamesModal" class="hover:text-indigo-400 transition-colors text-indigo-400 flex items-center space-x-1.5 font-semibold bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/20 hover:border-indigo-500/40">
+                    <span>🎮 Giochi</span>
+                </button>
+
+                <!-- Pulsante Installa App (Desktop) -->
+                <button id="installAppBtn" class="hidden hover:text-white transition-colors text-emerald-400 flex items-center space-x-1.5 font-semibold bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20 hover:border-emerald-500/40">
+                    <span>📱 Installa App</span>
+                </button>
+
+                <a href="https://www.linkedin.com/in/marco-d-adamo/" target="_blank" class="hover:text-indigo-400 transition-colors">LinkedIn</a>
+                <a href="https://marcodadamo.github.io/fotocamera/foto.html" target="_blank" class="hover:text-indigo-400 transition-colors">StudioMarco Pro</a>
+                <a href="https://forum.italia.it/u/marco_dadamo/summary" target="_blank" class="hover:text-indigo-400 transition-colors">Developers Italia</a>
+            </nav>
+
+            <!-- Pulsanti Mobile Header -->
+            <div class="flex items-center space-x-2 md:hidden">
+                <button id="openGamesModalMobile" class="text-indigo-400 font-semibold bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/25 text-xs flex items-center space-x-1">
+                    <span>🎮 Giochi</span>
+                </button>
+                <button id="mobileMenuBtn" class="p-2 text-gray-300 hover:text-white rounded-lg hover:bg-white/5 transition-colors focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Menu a tendina Mobile. -->
+        <div id="mobileMenu" class="hidden md:hidden glass-card border-t border-white/5 px-6 py-4 space-y-2 relative z-50 pointer-events-auto">
+            <nav class="flex flex-col space-y-1 text-sm font-medium text-gray-300">
+                <a href="menu.html" class="mobile-link block py-2.5 px-3 rounded-lg hover:bg-white/10 hover:text-indigo-400 transition-colors">Progetti</a>
+
+                <!-- Pulsante Installa App (Mobile) -->
+                <button id="installAppBtnMobile" class="hidden w-full text-left py-2.5 px-3 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold flex items-center space-x-2">
+                    <span>📱 Installa App sul Dispositivo</span>
+                </button>
+
+                <a href="https://www.linkedin.com/in/marco-d-adamo/" target="_blank" class="mobile-link block py-2.5 px-3 rounded-lg hover:bg-white/10 hover:text-indigo-400 transition-colors">LinkedIn</a>
+                <a href="https://marcodadamo.github.io/fotocamera/foto.html" target="_blank" class="mobile-link block py-2.5 px-3 rounded-lg hover:bg-white/10 hover:text-indigo-400 transition-colors">StudioMarco Pro</a>
+                <a href="https://forum.italia.it/u/marco_dadamo/summary" target="_blank" class="mobile-link block py-2.5 px-3 rounded-lg hover:bg-white/10 hover:text-indigo-400 transition-colors">Developers Italia</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-6 pt-32 pb-20 flex-grow w-full">
+
+        <!-- Hero Section -->
+        <section class="mb-20 text-center relative">
+            <div class="absolute inset-0 -z-10 flex items-center justify-center">
+                <div class="w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px]"></div>
+            </div>
+            <span class="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 mb-6">
+                <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+                <span>Digital Enterprise Project</span>
+            </span>
+            <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 bg-gradient-to-r from-white via-gray-200 to-indigo-300 bg-clip-text text-transparent">
+                Communication, Design, Marketing & Development
+            </h1>
+            <p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+                Un percorso IT strategico progettato per accompagnare le aziende nella loro trasformazione digitale, sviluppo di brand e innovazione organizzativa.
+            </p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="menu.html" class="px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 font-semibold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] transition-all">
+                    Esplora i Progetti
+                </a>
+                <a href="https://www.linkedin.com/in/marco-d-adamo/" target="_blank" class="px-8 py-4 rounded-xl glass-card font-semibold text-gray-300 hover:text-white glow-effect transition-all">
+                    Contattami su LinkedIn
+                </a>
+            </div>
+        </section>
+
+        <!-- Features / Grid Section -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+
+            <!-- Card 1 -->
+            <div class="glass-card rounded-2xl p-8 glow-effect transition-all duration-300">
+                <div class="text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-3">Section 01 // Creative</div>
+                <h2 class="text-2xl font-bold mb-4 text-white">Graphic & Marketing</h2>
+                <p class="text-gray-400 leading-relaxed">
+                    Curiamo ogni dettaglio visuale e strategico della brand identity, utilizzando i più avanzati strumenti di grafica e design per dare valore comunicativo e commerciale al tuo business.
+                </p>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="glass-card rounded-2xl p-8 glow-effect transition-all duration-300 flex flex-col justify-between">
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-3">Section 02 // Engineering</div>
+                    <h2 class="text-2xl font-bold mb-4 text-white">Open Source Development</h2>
+                    <p class="text-gray-400 leading-relaxed mb-6">
+                        Realizziamo progetti software trasparenti e modulari. Sviluppiamo soluzioni Open Source gestite tramite repository GitHub e workflow in riga di comando.
+                    </p>
+                </div>
+                <div class="bg-dark-900 border border-white/5 rounded-xl p-4 font-mono text-sm text-indigo-300 flex items-center justify-between">
+                    <span class="text-xs text-gray-500">bash</span>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Methodology Section -->
+        <section class="glass-card rounded-2xl p-8 md:p-12 mb-16 glow-effect transition-all duration-300">
+            <div class="max-w-3xl">
+                <div class="text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-3">Methodology & Architecture</div>
+                <h2 class="text-3xl font-bold mb-6 text-white">Gestione Archivi & Struttura Dati</h2>
+                <p class="text-gray-400 leading-relaxed text-lg">
+                    Questa metodologia operativa è studiata per interagire a un alto livello di precisione: dalla memorizzazione dei dati all'organizzazione degli archivi storici, garantendo massima scalabilità e sicurezza per qualsiasi entità aziendale.
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/5 bg-dark-800/50 py-8">
+        <div class="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between text-sm text-gray-500">
+            <p>© Marco D'Adamo. Tutti i diritti riservati.</p>
+            <p class="mt-4 sm:mt-0">Published with <a href="https://marcodadamo.github.io" class="text-indigo-400 hover:underline" target="_blank">Marco D'Adamo</a></p>
+        </div>
+    </footer>
+
+    <!-- Modal Scelta Giochi Matematici & Istruttivi (Slider) -->
+    <div id="gamesModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md hidden transition-opacity duration-300">
+        <div class="glass-card max-w-lg w-full rounded-2xl p-6 md:p-8 border border-white/10 shadow-2xl relative transform transition-all scale-95 opacity-0 overflow-hidden" id="modalContent">
+            <!-- Pulsante chiusura -->
+            <button id="closeGamesModal" class="absolute top-4 right-4 text-gray-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition-colors z-20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+
+            <!-- Slider Container -->
+            <div class="overflow-hidden w-full relative">
+                <div id="modalSlider" class="flex transition-transform duration-300 ease-in-out w-[200%]">
+                    
+                    <!-- Schermata 1: Giochi Matematici -->
+                    <div class="w-1/2 pr-2">
+                        <div class="text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-2">Marco D'Adamo Developer</div>
+                        <div class="text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-2">Matematica & Interattività</div>
+                        <h3 class="text-2xl font-bold text-white mb-2">Giochi Matematici</h3>
+                        <p class="text-gray-400 text-sm mb-6">Seleziona una modalità per iniziare a giocare:</p>
+
+                        <div class="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
+                            <a href="https://marcodadamo.github.io/giocomatematica/giocotabellinebase.html" target="_blank" class="block group glass-card p-4 rounded-xl border border-white/5 hover:border-indigo-500/50 hover:bg-indigo-600/10 transition-all">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-bold text-white group-hover:text-indigo-400 transition-colors">Gioco Tabelline Base</h4>
+                                        <p class="text-xs text-gray-400 mt-0.5">Allenati con le tabelline in modalità classica.</p>
+                                    </div>
+                                    <span class="p-2 rounded-lg bg-indigo-500/20 text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                    </span>
+                                </div>
+                            </a>
+
+                            <a href="https://marcodadamo.github.io/giocomatematica/giocotabellineround.html" target="_blank" class="block group glass-card p-4 rounded-xl border border-white/5 hover:border-indigo-500/50 hover:bg-indigo-600/10 transition-all">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-bold text-white group-hover:text-indigo-400 transition-colors">Gioco Tabelline Round</h4>
+                                        <p class="text-xs text-gray-400 mt-0.5">Sfide a round e a tempo per testare la velocità.</p>
+                                    </div>
+                                    <span class="p-2 rounded-lg bg-indigo-500/20 text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                    </span>
+                                </div>
+                            </a>
+
+                            <a href="https://marcodadamo.github.io/giocomatematica/giocotabellinemultiplayer.html" target="_blank" class="block group glass-card p-4 rounded-xl border border-white/5 hover:border-indigo-500/50 hover:bg-indigo-600/10 transition-all">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-bold text-white group-hover:text-indigo-400 transition-colors">Gioco Tabelline Multiplayer</h4>
+                                        <p class="text-xs text-gray-400 mt-0.5">Sfida altri utenti in tempo reale.</p>
+                                    </div>
+                                    <span class="p-2 rounded-lg bg-indigo-500/20 text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                    </span>
+                                </div>
+                            </a>
+
+                            <a href="https://marcodadamo.github.io/giocomatematica/abacotito.html" target="_blank" class="block group glass-card p-4 rounded-xl border border-white/5 hover:border-indigo-500/50 hover:bg-indigo-600/10 transition-all">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-bold text-white group-hover:text-indigo-400 transition-colors">Gioco Abaco Tito</h4>
+                                        <p class="text-xs text-gray-400 mt-0.5">Allenati con l'abaco in modalità classica.</p>
+                                    </div>
+                                    <span class="p-2 rounded-lg bg-indigo-500/20 text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                    </span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Schermata 2: Giochi Istruttivi -->
+                    <div class="w-1/2 pl-2">
+                        <div class="text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-2">Marco D'Adamo Developer</div>
+                        <div class="text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-2">Formazione & Lingue</div>
+                        <h3 class="text-2xl font-bold text-white mb-2">GIOCHI ISTRUTTIVI</h3>
+                        <p class="text-gray-400 text-sm mb-6">Seleziona una categoria didattica:</p>
+
+                        <div class="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
+                            <a href="https://marcodadamo.github.io/giochistruttivi/giocodinglese.html" target="_blank" class="block group glass-card p-4 rounded-xl border border-white/5 hover:border-indigo-500/50 hover:bg-indigo-600/10 transition-all">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-bold text-white group-hover:text-indigo-400 transition-colors">Gioco di Inglese</h4>
+                                        <p class="text-xs text-gray-400 mt-0.5">Mettiti alla prova con il gioco interattivo di lingua inglese.</p>
+                                    </div>
+                                    <span class="p-2 rounded-lg bg-indigo-500/20 text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                    </span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Controlli Scorrimento Destra / Sinistra -->
+            <div class="flex items-center justify-between mt-6 pt-4 border-t border-white/10">
+                <button id="prevSlide" class="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-semibold flex items-center space-x-1.5 transition-colors opacity-50 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    <span>Indietro</span>
+                </button>
+                <span id="slideIndicator" class="text-xs font-semibold text-indigo-400">1 / 2</span>
+                <button id="nextSlide" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer">
+                    <span>Avanti</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JavaScript Gestione PWA e Menu -->
+    <script>
+        // Gestione PWA (Installazione)
+        let deferredPrompt;
+        const installBtn = document.getElementById('installAppBtn');
+        const installBtnMobile = document.getElementById('installAppBtnMobile');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Mostra i pulsanti di installazione
+            if (installBtn) installBtn.classList.remove('hidden');
+            if (installBtnMobile) installBtnMobile.classList.remove('hidden');
+        });
+
+        const triggerInstall = async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('Utente ha accettato l\'installazione PWA');
+                }
+                deferredPrompt = null;
+                if (installBtn) installBtn.classList.add('hidden');
+                if (installBtnMobile) installBtnMobile.classList.add('hidden');
+                mobileMenu.classList.add('hidden');
+            }
+        };
+
+        if (installBtn) installBtn.addEventListener('click', triggerInstall);
+        if (installBtnMobile) installBtnMobile.addEventListener('click', triggerInstall);
+
+        // Registrazione Service Worker per PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then((reg) => console.log('Service Worker registrato con successo', reg))
+                    .catch((err) => console.log('Registrazione Service Worker fallita', err));
+            });
+        }
+
+        // Gestione Menu Mobile e Modale Giochi
+        const modal = document.getElementById('gamesModal');
+        const modalContent = document.getElementById('modalContent');
+        const openBtn = document.getElementById('openGamesModal');
+        const openBtnMobile = document.getElementById('openGamesModalMobile');
+        const closeBtn = document.getElementById('closeGamesModal');
+
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileLinks = document.querySelectorAll('.mobile-link');
+
+        // Slider controls
+        let currentSlide = 0;
+        const totalSlides = 2;
+        const modalSlider = document.getElementById('modalSlider');
+        const prevSlideBtn = document.getElementById('prevSlide');
+        const nextSlideBtn = document.getElementById('nextSlide');
+        const slideIndicator = document.getElementById('slideIndicator');
+
+        function updateSlider() {
+            modalSlider.style.transform = `translateX(-${currentSlide * 50}%)`;
+            slideIndicator.textContent = `${currentSlide + 1} / ${totalSlides}`;
+            prevSlideBtn.style.opacity = currentSlide === 0 ? '0.5' : '1';
+            nextSlideBtn.style.opacity = currentSlide === totalSlides - 1 ? '0.5' : '1';
+        }
+
+        prevSlideBtn.addEventListener('click', () => {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlider();
+            }
+        });
+
+        nextSlideBtn.addEventListener('click', () => {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlider();
+            }
+        });
+
+        mobileMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+            });
+        });
+
+        function openModal() {
+            currentSlide = 0;
+            updateSlider();
+            mobileMenu.classList.add('hidden');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            modalContent.classList.remove('scale-100', 'opacity-100');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        openBtn.addEventListener('click', openModal);
+        openBtnMobile.addEventListener('click', openModal);
+        closeBtn.addEventListener('click', closeModal);
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+        });
+    </script>
+
+</body>
+</html>
