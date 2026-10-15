@@ -1,4 +1,4 @@
-const CACHE_NAME = 'marco-dadamo-v3'; // Incrementa la versione (es. v2, v3, v4) quando pubblichi modifiche
+const CACHE_NAME = 'marco-dadamo-v4'; // Incrementa la versione (es. v2, v3, v4) quando pubblichi modifiche
 const ASSETS_TO_CACHE = [
   './',
   './temaindex.html',
