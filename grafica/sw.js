@@ -1,23 +1,17 @@
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open('marcodadamo-pwa-v1').then((cache) => {
-      return cache.addAll(['temaindex.html']);
-    })
-  );
-});
+const CACHE_NAME = 'marco-dadamo-v3'; // Incrementa la versione (es. v2, v3, v4) quando pubblichi modifiche
+const ASSETS_TO_CACHE = [
+  './',
+  './temaindex.html',
+  './manifest.json'
+];
 
-self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then((response) => {
-      return response || fetch(e.request);
-    })
-  );
-});
-
-const CACHE_NAME = 'marco-dadamo-v1'; // Incrementa la versione (es. v2, v3) quando pubblichi modifiche
-
-// Installazione del Service Worker
+// Installazione del Service Worker e pre-caching
 self.addEventListener('install', (event) => {
+    event.waitUntil(
+        caches.open(CACHE_NAME).then((cache) => {
+            return cache.addAll(ASSETS_TO_CACHE);
+        })
+    );
     self.skipWaiting(); // Forza l'attivazione immediata del nuovo Service Worker
 });
 
@@ -35,6 +29,15 @@ self.addEventListener('activate', (event) => {
         })
     );
     self.clients.claim();
+});
+
+// Gestione delle richieste di rete (Fetch)
+self.addEventListener('fetch', (event) => {
+    event.respondWith(
+        caches.match(event.request).then((response) => {
+            return response || fetch(event.request);
+        })
+    );
 });
 
 // Ascolta il comando per saltare l'attesa inviato dalla pagina
