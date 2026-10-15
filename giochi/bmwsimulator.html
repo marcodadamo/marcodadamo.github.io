@@ -1,0 +1,1181 @@
+```html
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D BMW Driving Simulator - Multi-Level Edition</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            background: #020617;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .hud-font {
+            font-family: 'Orbitron', sans-serif;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        /* Custom scrollbar for menu overlay */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(16, 185, 129, 0.5);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden bg-slate-950 text-white">
+
+    <!-- Three.js Canvas Container -->
+    <div id="canvas-container" class="absolute inset-0 z-0"></div>
+
+    <!-- MAIN HUD OVERLAY -->
+    <div id="hud-overlay" class="absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-4 md:p-6 hidden">
+        
+        <!-- Top Bar: Speedometer, Progress & Level Details -->
+        <div class="flex flex-col gap-3">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                
+                <!-- Speedometer & Gear -->
+                <div class="bg-slate-900/85 backdrop-blur-md border border-emerald-500/40 rounded-2xl p-3 md:p-4 shadow-2xl flex items-center gap-5 pointer-events-auto">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] md:text-xs font-bold text-emerald-400 tracking-wider hud-font">VELOCITÀ</span>
+                        <div class="flex items-baseline gap-1">
+                            <span id="speed-display" class="text-3xl md:text-5xl font-black hud-font text-white">0</span>
+                            <span class="text-[10px] md:text-xs text-gray-400 font-bold">KM/H</span>
+                        </div>
+                    </div>
+                    <div class="h-10 w-[1px] bg-emerald-500/30"></div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] md:text-xs font-bold text-amber-400 tracking-wider hud-font">MARCIA</span>
+                        <span id="gear-display" class="text-xl md:text-3xl font-black hud-font text-amber-300">D</span>
+                    </div>
+                </div>
+
+                <!-- Level & Target Info -->
+                <div class="flex flex-wrap gap-2 md:gap-3 pointer-events-auto items-center">
+                    <div class="bg-slate-900/85 backdrop-blur-md border border-sky-500/40 rounded-xl px-4 py-2 shadow-xl flex flex-col items-center">
+                        <span class="text-[10px] font-bold text-sky-400 hud-font">LIVELLO</span>
+                        <span id="level-badge" class="text-sm md:text-base font-black hud-font text-sky-200">1: PRINCIPIANTE</span>
+                    </div>
+                    <div class="bg-slate-900/85 backdrop-blur-md border border-amber-500/40 rounded-xl px-4 py-2 shadow-xl flex flex-col items-center">
+                        <span class="text-[10px] font-bold text-amber-400 hud-font">METEO</span>
+                        <span id="weather-badge" class="text-sm md:text-base font-black hud-font text-amber-200">☀️ SOLEGGIATO</span>
+                    </div>
+                    <div class="bg-slate-900/85 backdrop-blur-md border border-purple-500/40 rounded-xl px-4 py-2 shadow-xl flex flex-col items-center">
+                        <span class="text-[10px] font-bold text-purple-400 hud-font">SORPASSI</span>
+                        <span id="overtakes-display" class="text-sm md:text-base font-black hud-font text-purple-200">0</span>
+                    </div>
+
+                    <!-- CAMERA VIEW SWITCHER BUTTON -->
+                    <button id="cam-switch-btn" onclick="cycleCameraView()" class="bg-emerald-600/90 hover:bg-emerald-500 border border-emerald-400 active:scale-95 text-white font-bold rounded-xl px-4 py-2 shadow-lg flex flex-col items-center transition-all cursor-pointer">
+                        <span class="text-[10px] font-bold text-emerald-200 hud-font">TELECAMERA (C)</span>
+                        <span id="cam-mode-badge" class="text-xs font-black hud-font text-white flex items-center gap-1.5">
+                            <i class="fa-solid fa-camera"></i> <span id="cam-name">ESTERNA</span>
+                        </span>
+                    </button>
+                </div>
+
+                <!-- Score & Distance -->
+                <div class="bg-slate-900/85 backdrop-blur-md border border-emerald-500/40 rounded-2xl p-3 md:p-4 shadow-2xl flex items-center gap-4 pointer-events-auto">
+                    <div class="flex flex-col items-end">
+                        <span class="text-[10px] md:text-xs font-bold text-emerald-400 tracking-wider hud-font">OBIETTIVO</span>
+                        <div class="flex items-baseline gap-1">
+                            <span id="distance-display" class="text-xl md:text-3xl font-black hud-font text-emerald-300">0</span>
+                            <span id="target-display" class="text-xs text-gray-400 font-bold">/ 1500 m</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Level Progress Bar -->
+            <div class="w-full bg-slate-900/90 border border-white/10 rounded-full h-3 overflow-hidden shadow-inner p-0.5 pointer-events-auto">
+                <div id="progress-bar" class="bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 h-full rounded-full transition-all duration-200" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Center Alert Banner -->
+        <div id="message-banner" class="self-center bg-emerald-600/90 backdrop-blur-md border border-emerald-400 px-6 py-2 rounded-full text-white font-bold hud-font tracking-widest text-xs md:text-sm opacity-0 transition-opacity duration-300 shadow-xl">
+            SISTEMA PRONTO
+        </div>
+
+        <!-- Bottom Controls Bar -->
+        <div class="flex justify-between items-end gap-4 pointer-events-auto">
+            <!-- Keyboard Controls Guide -->
+            <div class="hidden lg:flex flex-col bg-slate-900/85 backdrop-blur-md border border-white/10 rounded-2xl p-3 text-xs text-gray-300 gap-1 shadow-xl">
+                <span class="font-bold text-emerald-400 hud-font mb-0.5">COMANDI TASTIERA</span>
+                <div>🚀 Acceleratore: <span class="text-white font-semibold">W / Freccia Su</span></div>
+                <div>🛑 Freno / Retro: <span class="text-white font-semibold">S / Freccia Giù</span></div>
+                <div>🔄 Sterzo: <span class="text-white font-semibold">A-D / Frecce Sinistra-Destra</span></div>
+                <div>📹 Cambio Camera: <span class="text-emerald-300 font-semibold">Tasto C</span></div>
+            </div>
+
+            <!-- On-Screen Virtual Joystick -->
+            <div class="flex flex-col items-center mx-auto lg:mx-0">
+                <span class="text-[10px] text-emerald-300 font-bold mb-1 hud-font tracking-widest">JOYSTICK VIRTUAL</span>
+                <div id="joystick-base" class="relative w-32 h-32 md:w-36 md:h-36 bg-slate-900/85 border-2 border-emerald-500/50 rounded-full flex items-center justify-center backdrop-blur-md shadow-2xl touch-none cursor-pointer">
+                    <div class="absolute w-full h-[1px] bg-emerald-500/20"></div>
+                    <div class="absolute h-full w-[1px] bg-emerald-500/20"></div>
+                    <div id="joystick-knob" class="absolute w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-full shadow-lg shadow-emerald-500/50 flex items-center justify-center transition-transform duration-75">
+                        <div class="w-5 h-5 rounded-full border border-white/40 bg-white/20"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="w-24 hidden lg:block"></div>
+        </div>
+    </div>
+
+    <!-- START / LEVEL SELECTION SCREEN OVERLAY -->
+    <div id="start-screen" class="absolute inset-0 z-30 bg-slate-950/95 backdrop-blur-xl flex flex-col items-center justify-center p-4 md:p-6 text-center overflow-y-auto">
+        <div class="max-w-3xl w-full bg-gradient-to-b from-slate-900 to-slate-950 border border-emerald-500/30 rounded-3xl p-6 md:p-10 shadow-2xl shadow-emerald-500/10 flex flex-col items-center my-auto">
+            
+            <!-- BMW Badge & Title -->
+            <div class="flex items-center gap-1.5 mb-3">
+                <div class="w-8 h-2 bg-blue-600 rounded-sm"></div>
+                <div class="w-8 h-2 bg-purple-600 rounded-sm"></div>
+                <div class="w-8 h-2 bg-red-600 rounded-sm"></div>
+            </div>
+            <h1 class="text-3xl md:text-5xl font-black hud-font tracking-wider bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent mb-2">
+                BMW M SIMULATOR
+            </h1>
+            <p class="text-gray-300 text-xs md:text-sm max-w-lg mb-6">
+                Scegli il tuo livello di difficoltà. Guida la tua BMW su piste pulite immerse nel verde e terra marrone, affrontando traffico e tempo dinamico di giorno!
+            </p>
+
+            <!-- Level Selector Cards Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mb-8">
+                
+                <!-- Level 1 Card -->
+                <div onclick="selectLevel(1)" id="lvl-card-1" class="level-card cursor-pointer bg-slate-800/80 hover:bg-slate-800 border-2 border-emerald-500/60 rounded-2xl p-4 flex flex-col justify-between transition-all transform hover:scale-[1.02] text-left relative overflow-hidden group">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-bold hud-font text-emerald-400">LIVELLO 1</span>
+                        <span class="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold">1500 m</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">Principiante 🟢</h3>
+                    <p class="text-xs text-gray-300 mb-3">Traffico scarso e lento, clima soleggiato e guida fluida per imparare i comandi.</p>
+                    <div class="text-[10px] text-gray-400 font-mono">Meteo: Sole ☀️ | Velocità AI: Bassa</div>
+                </div>
+
+                <!-- Level 2 Card -->
+                <div onclick="selectLevel(2)" id="lvl-card-2" class="level-card cursor-pointer bg-slate-800/80 hover:bg-slate-800 border-2 border-sky-500/60 rounded-2xl p-4 flex flex-col justify-between transition-all transform hover:scale-[1.02] text-left relative overflow-hidden group">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-bold hud-font text-sky-400">LIVELLO 2</span>
+                        <span class="text-xs bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded-full font-bold">2500 m</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">Intermedio 🔵</h3>
+                    <p class="text-xs text-gray-300 mb-3">Traffico moderato, transizione meteo da sole a nuvole e curve più marcate.</p>
+                    <div class="text-[10px] text-gray-400 font-mono">Meteo: Sole/Nuvole ☁️ | Velocità AI: Media</div>
+                </div>
+
+                <!-- Level 3 Card -->
+                <div onclick="selectLevel(3)" id="lvl-card-3" class="level-card cursor-pointer bg-slate-800/80 hover:bg-slate-800 border-2 border-purple-500/60 rounded-2xl p-4 flex flex-col justify-between transition-all transform hover:scale-[1.02] text-left relative overflow-hidden group">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-bold hud-font text-purple-400">LIVELLO 3</span>
+                        <span class="text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full font-bold">3500 m</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">Esperto 🟣</h3>
+                    <p class="text-xs text-gray-300 mb-3">Traffico denso con sorpassi dinamici, pioggia battente e asfalto bagnato.</p>
+                    <div class="text-[10px] text-gray-400 font-mono">Meteo: Pioggia 🌧️ | Velocità AI: Alta</div>
+                </div>
+
+                <!-- Level 4 Card -->
+                <div onclick="selectLevel(4)" id="lvl-card-4" class="level-card cursor-pointer bg-slate-800/80 hover:bg-slate-800 border-2 border-amber-500/60 rounded-2xl p-4 flex flex-col justify-between transition-all transform hover:scale-[1.02] text-left relative overflow-hidden group">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-xs font-bold hud-font text-amber-400">LIVELLO 4</span>
+                        <span class="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-bold">5000 m</span>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-1">Leggenda 🟡</h3>
+                    <p class="text-xs text-gray-300 mb-3">Traffico velocissimo, cambi meteo estremi e sfida di controllo ad altissima velocità.</p>
+                    <div class="text-[10px] text-gray-400 font-mono">Meteo: Dinamico ⚡ | Velocità AI: Massima</div>
+                </div>
+
+            </div>
+
+            <!-- Start Selected Level Button -->
+            <button id="start-btn" onclick="startSelectedLevel()" class="w-full py-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-white font-bold text-lg rounded-2xl shadow-lg shadow-emerald-500/30 transition-all transform hover:scale-[1.01] active:scale-95 hud-font tracking-wider">
+                AVVIA LIVELLO 1 🚀
+            </button>
+        </div>
+    </div>
+
+    <!-- LEVEL VICTORY SCREEN OVERLAY -->
+    <div id="victory-screen" class="absolute inset-0 z-30 bg-slate-950/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center hidden">
+        <div class="max-w-md w-full bg-slate-900 border border-emerald-500/40 rounded-3xl p-8 shadow-2xl flex flex-col items-center">
+            <div class="w-16 h-16 bg-emerald-500/20 border-2 border-emerald-400 rounded-full flex items-center justify-center text-emerald-400 text-3xl mb-4">
+                🏆
+            </div>
+            <h2 class="text-3xl font-black hud-font text-emerald-400 mb-1">LIVELLO COMPLETATO!</h2>
+            <p id="victory-subtitle" class="text-gray-300 text-sm mb-6">Hai completato con successo l'obiettivo di distanza!</p>
+            
+            <div class="bg-black/50 rounded-2xl p-4 w-full mb-6 border border-white/10 flex flex-col gap-2.5 text-xs">
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Tempo Impiegato:</span>
+                    <span id="vic-time" class="font-bold hud-font text-white">0s</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Velocità Massima:</span>
+                    <span id="vic-top-speed" class="font-bold hud-font text-emerald-400">0 km/h</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Sorpassi Effettuati:</span>
+                    <span id="vic-overtakes" class="font-bold hud-font text-purple-400">0</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-3 w-full">
+                <button id="next-lvl-btn" onclick="nextLevel()" class="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 transition-all hud-font">
+                    PROSSIMO LIVELLO ➔
+                </button>
+                <button onclick="showMenu()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-gray-300 font-bold rounded-xl transition-all text-xs hud-font">
+                    SELEZIONE LIVELLI ☰
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME OVER SCREEN OVERLAY -->
+    <div id="gameover-screen" class="absolute inset-0 z-30 bg-slate-950/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center hidden">
+        <div class="max-w-md w-full bg-slate-900 border border-red-500/40 rounded-3xl p-8 shadow-2xl flex flex-col items-center">
+            <div class="w-16 h-16 bg-red-500/20 border-2 border-red-500 rounded-full flex items-center justify-center text-red-500 text-3xl mb-4">
+                💥
+            </div>
+            <h2 class="text-3xl font-black hud-font text-red-500 mb-1">INCIDENTE!</h2>
+            <p class="text-gray-300 text-sm mb-6">Hai urtato una vettura nel traffico.</p>
+            
+            <div class="bg-black/50 rounded-2xl p-4 w-full mb-6 border border-white/10 flex flex-col gap-2 text-xs">
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Distanza Raggiunta:</span>
+                    <span id="fail-distance" class="font-bold hud-font text-amber-400">0 m</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-400">Livello Tentato:</span>
+                    <span id="fail-level" class="font-bold hud-font text-white">Livello 1</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-3 w-full">
+                <button onclick="retryCurrentLevel()" class="w-full py-3.5 bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 text-white font-bold rounded-xl shadow-lg shadow-red-500/30 transition-all hud-font">
+                    RIPROVA LIVELLO 🔄
+                </button>
+                <button onclick="showMenu()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-gray-300 font-bold rounded-xl transition-all text-xs hud-font">
+                    MENU PRINCIPALE ☰
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME LOGIC SCRIPT -->
+    <script>
+        // --- LEVEL CONFIGURATIONS ---
+        const LEVEL_CONFIGS = {
+            1: {
+                name: "1: PRINCIPIANTE",
+                targetDistance: 1500,
+                trafficDensity: 8,
+                trafficSpeedMin: 0.25,
+                trafficSpeedMax: 0.45,
+                weather: "SUNNY",
+                rainIntensity: 0,
+                fogDensity: 0.0012,
+                skyColor: 0x38bdf8,
+                laneChangeAI: false,
+                accentColor: "emerald"
+            },
+            2: {
+                name: "2: INTERMEDIO",
+                targetDistance: 2500,
+                trafficDensity: 12,
+                trafficSpeedMin: 0.35,
+                trafficSpeedMax: 0.65,
+                weather: "CLOUDY",
+                rainIntensity: 0,
+                fogDensity: 0.002,
+                skyColor: 0x64748b,
+                laneChangeAI: false,
+                accentColor: "sky"
+            },
+            3: {
+                name: "3: ESPERTO",
+                targetDistance: 3500,
+                trafficDensity: 16,
+                trafficSpeedMin: 0.5,
+                trafficSpeedMax: 0.85,
+                weather: "RAIN",
+                rainIntensity: 1200,
+                fogDensity: 0.0035,
+                skyColor: 0x334155,
+                laneChangeAI: true,
+                accentColor: "purple"
+            },
+            4: {
+                name: "4: LEGGENDA",
+                targetDistance: 5000,
+                trafficDensity: 22,
+                trafficSpeedMin: 0.65,
+                trafficSpeedMax: 1.1,
+                weather: "DYNAMIC",
+                rainIntensity: 2000,
+                fogDensity: 0.004,
+                skyColor: 0x1e293b,
+                laneChangeAI: true,
+                accentColor: "amber"
+            }
+        };
+
+        // --- GAME SYSTEM VARIABLES ---
+        let scene, camera, renderer;
+        let playerCar;
+        let interiorDashboardGroup = null;
+        let internalSteeringWheel = null;
+        let trafficCars = [];
+        let trackSegments = [];
+        let rainParticles = [];
+        let clouds = [];
+        let sunMesh;
+
+        // Camera Views: 0 = Chase/External (Inseguimento vicino), 1 = Hood/Bonnet (Cofano), 2 = Cockpit/Dashboard (Cruscotto)
+        let cameraMode = 0; 
+        const CAMERA_MODES = [
+            { id: 0, name: "ESTERNA", icon: "fa-car" },
+            { id: 1, name: "COFANO", icon: "fa-eye" },
+            { id: 2, name: "CRUSCOTTO", icon: "fa-gauge-high" }
+        ];
+
+        let selectedLevelId = 1;
+        let currentLevelCfg = LEVEL_CONFIGS[1];
+        let gameState = 'MENU'; // MENU, PLAYING, VICTORY, GAMEOVER
+
+        let scoreDistance = 0;
+        let currentSpeed = 0;
+        const maxSpeed = 1.6;
+        const accelerationRate = 0.008;
+        const decelerationRate = 0.012;
+        let steeringInput = 0;
+        let throttleInput = 0;
+
+        let trackWidth = 24;
+        let segmentLength = 40;
+        let totalSegments = 200;
+        let trackPoints = [];
+
+        let elapsedTime = 0;
+        let topSpeedAchieved = 0;
+        let overtakesCount = 0;
+
+        // Joystick tracking
+        let joystickActive = false;
+        let joystickCenter = { x: 0, y: 0 };
+        const maxJoystickRadius = 50;
+
+        // Key bindings
+        const keys = {};
+
+        // Web Audio Context & Oscillators
+        let audioCtx = null;
+        let engineOsc = null;
+        let engineGain = null;
+
+        // --- AUDIO ENGINE ---
+        function initAudio() {
+            if (audioCtx) return;
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                engineOsc = audioCtx.createOscillator();
+                engineGain = audioCtx.createGain();
+                engineOsc.type = 'sawtooth';
+                engineOsc.frequency.setValueAtTime(55, audioCtx.currentTime);
+                engineGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(280, audioCtx.currentTime);
+
+                engineOsc.connect(filter);
+                filter.connect(engineGain);
+                engineGain.connect(audioCtx.destination);
+                engineOsc.start();
+            } catch(e) {
+                console.log("Audio Web API not supported", e);
+            }
+        }
+
+        function updateAudioEngine() {
+            if (!audioCtx || !engineOsc) return;
+            let targetFreq = 50 + (Math.abs(currentSpeed) / maxSpeed) * 230;
+            engineOsc.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.1);
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playJingle(isVictory) {
+            if (!audioCtx) return;
+            let now = audioCtx.currentTime;
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (isVictory) {
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.setValueAtTime(554.37, now + 0.15);
+                osc.frequency.setValueAtTime(659.25, now + 0.3);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                osc.start(now);
+                osc.stop(now + 0.6);
+            } else {
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.setValueAtTime(200, now + 0.2);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            }
+        }
+
+        // --- THREE.JS INITIALIZATION ---
+        function init() {
+            const container = document.getElementById('canvas-container');
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(LEVEL_CONFIGS[1].skyColor);
+            scene.fog = new THREE.FogExp2(LEVEL_CONFIGS[1].skyColor, LEVEL_CONFIGS[1].fogDensity);
+
+            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.2, 1500);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // Sunlight & Sky Elements
+            setupEnvironmentLighting();
+
+            // Build Track with Alternating Green Grass & Brown Soil
+            generateTrackPath();
+            buildTrackMesh();
+
+            // Create Player BMW Car & Interior Dash
+            playerCar = createBMWCar(0x0055ff, true);
+            scene.add(playerCar);
+
+            // Controls & Resizing Listeners
+            window.addEventListener('resize', onWindowResize);
+            setupControls();
+
+            // Select Level 1 by Default
+            selectLevel(1);
+
+            // Animation Frame Loop
+            animate();
+        }
+
+        // --- CAMERA VIEW SWITCHING ---
+        function cycleCameraView() {
+            cameraMode = (cameraMode + 1) % CAMERA_MODES.length;
+            const currentMode = CAMERA_MODES[cameraMode];
+            
+            document.getElementById('cam-name').innerText = currentMode.name;
+            const btnIcon = document.querySelector('#cam-mode-badge i');
+            if (btnIcon) btnIcon.className = `fa-solid ${currentMode.icon}`;
+
+            showBanner(`VISTA TELECAMERA: ${currentMode.name}`);
+        }
+
+        // --- LIGHTING & CLOUDS ---
+        function setupEnvironmentLighting() {
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xfffbeb, 1.4);
+            sunLight.position.set(150, 320, 150);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            sunLight.shadow.camera.near = 0.5;
+            sunLight.shadow.camera.far = 1200;
+            const d = 250;
+            sunLight.shadow.camera.left = -d;
+            sunLight.shadow.camera.right = d;
+            sunLight.shadow.camera.top = d;
+            sunLight.shadow.camera.bottom = -d;
+            scene.add(sunLight);
+
+            // Glowing Sun Orb in Sky
+            const sunGeo = new THREE.SphereGeometry(16, 32, 32);
+            const sunMat = new THREE.MeshBasicMaterial({ color: 0xfffb88 });
+            sunMesh = new THREE.Mesh(sunGeo, sunMat);
+            sunMesh.position.set(200, 350, 200);
+            scene.add(sunMesh);
+
+            // 3D Floating Clouds
+            clouds = [];
+            const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, transparent: true, opacity: 0.85 });
+            for (let i = 0; i < 25; i++) {
+                const cloudGroup = new THREE.Group();
+                const count = 3 + Math.floor(Math.random() * 4);
+                for (let j = 0; j < count; j++) {
+                    const pGeo = new THREE.SphereGeometry(12 + Math.random() * 8, 8, 8);
+                    const pMesh = new THREE.Mesh(pGeo, cloudMat);
+                    pMesh.position.set((j - count / 2) * 10, Math.random() * 4, Math.random() * 6);
+                    cloudGroup.add(pMesh);
+                }
+                cloudGroup.position.set((Math.random() - 0.5) * 1200, 140 + Math.random() * 60, (Math.random() - 0.5) * 1200);
+                scene.add(cloudGroup);
+                clouds.push(cloudGroup);
+            }
+        }
+
+        // --- TRACK GEOMETRY & ALTERNATING TERRAIN ---
+        function generateTrackPath() {
+            trackPoints = [];
+            let x = 0, z = 0, angle = 0;
+
+            for (let i = 0; i < totalSegments; i++) {
+                let curvature = 0;
+                if (i > 15 && i < 45) curvature = 0.016;       
+                else if (i >= 45 && i < 75) curvature = -0.022; 
+                else if (i >= 75 && i < 110) curvature = 0;     
+                else if (i >= 110 && i < 150) curvature = 0.024; 
+                else if (i >= 150) curvature = -0.014;          
+
+                angle += curvature;
+                x += Math.sin(angle) * segmentLength;
+                z += Math.cos(angle) * segmentLength;
+
+                let terrainType = (Math.floor(i / 15) % 2 === 0) ? 'grass' : 'dirt';
+                trackPoints.push({ x, z, angle, curvature, terrainType });
+            }
+        }
+
+        function buildTrackMesh() {
+            const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x222226, roughness: 0.8 });
+            const lineMaterial = new THREE.MeshBasicMaterial({ color: 0xfacc15 }); 
+            const grassMat = new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.9 }); 
+            const dirtMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.95 }); 
+
+            const groundGeo = new THREE.PlaneGeometry(3500, 3500);
+            const groundMesh = new THREE.Mesh(groundGeo, grassMat);
+            groundMesh.rotation.x = -Math.PI / 2;
+            groundMesh.position.y = -0.15;
+            groundMesh.receiveShadow = true;
+            scene.add(groundMesh);
+
+            for (let i = 0; i < trackPoints.length; i++) {
+                let curr = trackPoints[i];
+                let segmentGroup = new THREE.Group();
+
+                let geom = new THREE.PlaneGeometry(trackWidth, segmentLength);
+                let roadMesh = new THREE.Mesh(geom, roadMaterial);
+                roadMesh.rotation.x = -Math.PI / 2;
+                roadMesh.receiveShadow = true;
+                segmentGroup.add(roadMesh);
+
+                let lineGeom = new THREE.PlaneGeometry(0.5, segmentLength * 0.7);
+                let lineMesh = new THREE.Mesh(lineGeom, lineMaterial);
+                lineMesh.rotation.x = -Math.PI / 2;
+                lineMesh.position.y = 0.04;
+                segmentGroup.add(lineMesh);
+
+                let shoulderMat = (curr.terrainType === 'grass') ? grassMat : dirtMat;
+                let shoulderGeo = new THREE.PlaneGeometry(60, segmentLength);
+                
+                let leftShoulder = new THREE.Mesh(shoulderGeo, shoulderMat);
+                leftShoulder.rotation.x = -Math.PI / 2;
+                leftShoulder.position.set(-trackWidth / 2 - 30, -0.02, 0);
+                leftShoulder.receiveShadow = true;
+                segmentGroup.add(leftShoulder);
+
+                let rightShoulder = new THREE.Mesh(shoulderGeo, shoulderMat);
+                rightShoulder.rotation.x = -Math.PI / 2;
+                rightShoulder.position.set(trackWidth / 2 + 30, -0.02, 0);
+                rightShoulder.receiveShadow = true;
+                segmentGroup.add(rightShoulder);
+
+                segmentGroup.position.set(curr.x, 0, curr.z);
+                segmentGroup.rotation.y = curr.angle;
+
+                scene.add(segmentGroup);
+                trackSegments.push(segmentGroup);
+            }
+        }
+
+        // --- 3D BMW M CAR MODEL & COCKPIT ---
+        function createBMWCar(colorHex, isPlayer = false) {
+            const carGroup = new THREE.Group();
+
+            const bodyMat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.2, metalness: 0.85 });
+            const blackMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.5 });
+            const glassMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.1, transparent: true, opacity: 0.75 });
+            const chromeMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.9, roughness: 0.1 });
+            const lightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const tailLightMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+
+            // BMW Main Chassis Body
+            const bodyGeo = new THREE.BoxGeometry(4.2, 1.1, 8.5);
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 1.0;
+            body.castShadow = true;
+            carGroup.add(body);
+
+            // Hood/Bonnet Accent detail
+            const hoodGeo = new THREE.BoxGeometry(3.6, 0.1, 3.2);
+            const hoodMat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.15, metalness: 0.9 });
+            const hoodMesh = new THREE.Mesh(hoodGeo, hoodMat);
+            hoodMesh.position.set(0, 1.58, 2.2);
+            carGroup.add(hoodMesh);
+
+            // BMW Cabin / Glass
+            const cabinGeo = new THREE.BoxGeometry(3.6, 0.9, 4.2);
+            const cabin = new THREE.Mesh(cabinGeo, glassMat);
+            cabin.position.set(0, 1.8, -0.2);
+            carGroup.add(cabin);
+
+            // BMW Grille & Lights
+            const grilleGeo = new THREE.BoxGeometry(1.6, 0.5, 0.2);
+            const grille = new THREE.Mesh(grilleGeo, chromeMat);
+            grille.position.set(0, 0.9, 4.26);
+            carGroup.add(grille);
+
+            const hlGeo = new THREE.BoxGeometry(1.0, 0.4, 0.3);
+            const leftHL = new THREE.Mesh(hlGeo, lightMat);
+            leftHL.position.set(1.4, 1.0, 4.25);
+            const rightHL = new THREE.Mesh(hlGeo, lightMat);
+            rightHL.position.set(-1.4, 1.0, 4.25);
+            carGroup.add(leftHL);
+            carGroup.add(rightHL);
+
+            const tlGeo = new THREE.BoxGeometry(1.2, 0.3, 0.3);
+            const leftTL = new THREE.Mesh(tlGeo, tailLightMat);
+            leftTL.position.set(1.4, 1.0, -4.25);
+            const rightTL = new THREE.Mesh(tlGeo, tailLightMat);
+            rightTL.position.set(-1.4, 1.0, -4.25);
+            carGroup.add(leftTL);
+            carGroup.add(rightTL);
+
+            // Wheels
+            const wheelGeo = new THREE.CylinderGeometry(0.7, 0.7, 0.6, 24);
+            wheelGeo.rotateZ(Math.PI / 2);
+            const wheelPositions = [
+                { x: 2.0, z: 2.6 }, { x: -2.0, z: 2.6 },
+                { x: 2.0, z: -2.6 }, { x: -2.0, z: -2.6 }
+            ];
+
+            carGroup.wheels = [];
+            wheelPositions.forEach(pos => {
+                const wheel = new THREE.Mesh(wheelGeo, blackMat);
+                wheel.position.set(pos.x, 0.7, pos.z);
+                wheel.castShadow = true;
+                carGroup.add(wheel);
+                carGroup.wheels.push(wheel);
+            });
+
+            // IF PLAYER CAR: BUILD DETAILED INTERIOR DASHBOARD & STEERING WHEEL
+            if (isPlayer) {
+                interiorDashboardGroup = new THREE.Group();
+                
+                // Dashboard Base Structure
+                const dashBaseGeo = new THREE.BoxGeometry(3.2, 0.5, 0.9);
+                const dashMat = new THREE.MeshStandardMaterial({ color: 0x090d16, roughness: 0.8 });
+                const dashBase = new THREE.Mesh(dashBaseGeo, dashMat);
+                dashBase.position.set(0, 1.65, 0.8);
+                interiorDashboardGroup.add(dashBase);
+
+                // Digital Gauge Cluster Screen
+                const screenGeo = new THREE.PlaneGeometry(1.2, 0.4);
+                const screenMat = new THREE.MeshBasicMaterial({ color: 0x0284c7 });
+                const screenMesh = new THREE.Mesh(screenGeo, screenMat);
+                screenMesh.position.set(-0.6, 1.78, 1.26);
+                screenMesh.rotation.x = -0.2;
+                interiorDashboardGroup.add(screenMesh);
+
+                // Steering Wheel Assembly
+                const wheelRingGeo = new THREE.TorusGeometry(0.38, 0.05, 12, 24);
+                const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4 });
+                internalSteeringWheel = new THREE.Mesh(wheelRingGeo, wheelMat);
+                internalSteeringWheel.position.set(-0.6, 1.68, 1.35);
+                internalSteeringWheel.rotation.x = -0.25;
+
+                // BMW M Logo Badge on Wheel Center
+                const badgeGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.02, 16);
+                badgeGeo.rotateX(Math.PI / 2);
+                const badgeMat = new THREE.MeshBasicMaterial({ color: 0x3b82f6 });
+                const badge = new THREE.Mesh(badgeGeo, badgeMat);
+                badge.position.set(0, 0, 0.02);
+                internalSteeringWheel.add(badge);
+
+                interiorDashboardGroup.add(internalSteeringWheel);
+                carGroup.add(interiorDashboardGroup);
+            }
+
+            return carGroup;
+        }
+
+        // --- TRAFFIC SPAWNER ---
+        function spawnTrafficForLevel(cfg) {
+            trafficCars.forEach(t => scene.remove(t));
+            trafficCars = [];
+
+            const colors = [0xdc2626, 0x16a34a, 0xca8a04, 0x9333ea, 0xffffff, 0x475569, 0xe11d48];
+            const laneOffsets = [-6, 0, 6];
+
+            const interval = Math.floor(trackPoints.length / cfg.trafficDensity);
+
+            for (let i = 20; i < trackPoints.length; i += interval) {
+                let pt = trackPoints[i];
+                let color = colors[Math.floor(Math.random() * colors.length)];
+                let tCar = createBMWCar(color, false);
+
+                let laneOffset = laneOffsets[Math.floor(Math.random() * laneOffsets.length)];
+                tCar.trackIndex = i;
+                tCar.laneOffset = laneOffset;
+                tCar.targetLaneOffset = laneOffset;
+                tCar.aiSpeed = cfg.trafficSpeedMin + Math.random() * (cfg.trafficSpeedMax - cfg.trafficSpeedMin);
+                tCar.overtaken = false;
+
+                tCar.position.set(
+                    pt.x + Math.cos(pt.angle + Math.PI / 2) * laneOffset,
+                    0,
+                    pt.z - Math.sin(pt.angle + Math.PI / 2) * laneOffset
+                );
+                tCar.rotation.y = pt.angle;
+
+                scene.add(tCar);
+                trafficCars.push(tCar);
+            }
+        }
+
+        // --- RAIN PARTICLE SYSTEM ---
+        function setupRainParticles(intensity) {
+            rainParticles.forEach(p => scene.remove(p));
+            rainParticles = [];
+
+            if (intensity <= 0) return;
+
+            const rainGeo = new THREE.BufferGeometry();
+            const rainCount = intensity;
+            const posArray = new Float32Array(rainCount * 3);
+
+            for (let i = 0; i < rainCount * 3; i += 3) {
+                posArray[i] = (Math.random() - 0.5) * 300;
+                posArray[i + 1] = Math.random() * 100;
+                posArray[i + 2] = (Math.random() - 0.5) * 300;
+            }
+
+            rainGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            const rainMat = new THREE.PointsMaterial({
+                color: 0x93c5fd,
+                size: 0.6,
+                transparent: true,
+                opacity: 0.6
+            });
+
+            const rainSystem = new THREE.Points(rainGeo, rainMat);
+            scene.add(rainSystem);
+            rainParticles.push(rainSystem);
+        }
+
+        function updateRain() {
+            if (rainParticles.length === 0 || !playerCar) return;
+            const system = rainParticles[0];
+            const positions = system.geometry.attributes.position.array;
+
+            for (let i = 1; i < positions.length; i += 3) {
+                positions[i] -= 2.5; 
+                if (positions[i] < 0) {
+                    positions[i] = 80;
+                }
+            }
+            system.geometry.attributes.position.needsUpdate = true;
+            system.position.x = playerCar.position.x;
+            system.position.z = playerCar.position.z;
+        }
+
+        // --- CONTROLS SETUP ---
+        function setupControls() {
+            window.addEventListener('keydown', (e) => { 
+                keys[e.key] = true; 
+                keys[e.code] = true; 
+                // Toggle Camera mode with 'C' or 'c'
+                if (e.key === 'c' || e.key === 'C') {
+                    cycleCameraView();
+                }
+            });
+            window.addEventListener('keyup', (e) => { keys[e.key] = false; keys[e.code] = false; });
+
+            const base = document.getElementById('joystick-base');
+            const knob = document.getElementById('joystick-knob');
+
+            const handleStart = (clientX, clientY) => {
+                joystickActive = true;
+                const rect = base.getBoundingClientRect();
+                joystickCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+                updateJoystick(clientX, clientY);
+                initAudio();
+            };
+
+            const handleMove = (clientX, clientY) => {
+                if (!joystickActive) return;
+                updateJoystick(clientX, clientY);
+            };
+
+            const handleEnd = () => {
+                joystickActive = false;
+                knob.style.transform = `translate(0px, 0px)`;
+                steeringInput = 0;
+                throttleInput = 0;
+            };
+
+            base.addEventListener('mousedown', (e) => handleStart(e.clientX, e.clientY));
+            window.addEventListener('mousemove', (e) => handleMove(e.clientX, e.clientY));
+            window.addEventListener('mouseup', handleEnd);
+
+            base.addEventListener('touchstart', (e) => {
+                handleStart(e.touches[0].clientX, e.touches[0].clientY);
+                e.preventDefault();
+            });
+            window.addEventListener('touchmove', (e) => {
+                handleMove(e.touches[0].clientX, e.touches[0].clientY);
+                e.preventDefault();
+            });
+            window.addEventListener('touchend', handleEnd);
+        }
+
+        function updateJoystick(clientX, clientY) {
+            let dx = clientX - joystickCenter.x;
+            let dy = clientY - joystickCenter.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance > maxJoystickRadius) {
+                dx = (dx / distance) * maxJoystickRadius;
+                dy = (dy / distance) * maxJoystickRadius;
+            }
+
+            document.getElementById('joystick-knob').style.transform = `translate(${dx}px, ${dy}px)`;
+
+            steeringInput = dx / maxJoystickRadius;
+            throttleInput = -dy / maxJoystickRadius;
+        }
+
+        function processInputs() {
+            let steer = steeringInput;
+            let throttle = throttleInput;
+
+            if (keys['a'] || keys['A'] || keys['ArrowLeft']) steer = -1;
+            if (keys['d'] || keys['D'] || keys['ArrowRight']) steer = 1;
+            if (keys['w'] || keys['W'] || keys['ArrowUp']) throttle = 1;
+            if (keys['s'] || keys['S'] || keys['ArrowDown']) throttle = -1;
+
+            if (throttle > 0) {
+                currentSpeed += accelerationRate * throttle;
+            } else if (throttle < 0) {
+                currentSpeed += decelerationRate * throttle * 1.4;
+            } else {
+                if (currentSpeed > 0) currentSpeed -= 0.005;
+                if (currentSpeed < 0) currentSpeed += 0.005;
+            }
+
+            currentSpeed = Math.max(-0.4, Math.min(maxSpeed, currentSpeed));
+
+            if (playerCar) {
+                playerCar.rotation.y -= steer * 0.03 * (Math.abs(currentSpeed) / maxSpeed + 0.2);
+                playerCar.position.x += Math.sin(playerCar.rotation.y) * currentSpeed * 12;
+                playerCar.position.z += Math.cos(playerCar.rotation.y) * currentSpeed * 12;
+
+                if (playerCar.wheels) {
+                    playerCar.wheels.forEach(w => w.rotation.x += currentSpeed * 0.5);
+                }
+
+                // Animate internal steering wheel rotation in Cockpit View
+                if (internalSteeringWheel) {
+                    internalSteeringWheel.rotation.z = -steer * 1.2;
+                }
+            }
+
+            let speedKmH = Math.round((Math.abs(currentSpeed) / maxSpeed) * 240);
+            if (speedKmH > topSpeedAchieved) topSpeedAchieved = speedKmH;
+        }
+
+        // --- LEVEL SELECTION & STATE MANAGEMENT ---
+        function selectLevel(lvl) {
+            selectedLevelId = lvl;
+            currentLevelCfg = LEVEL_CONFIGS[lvl];
+
+            document.querySelectorAll('.level-card').forEach(card => card.classList.remove('ring-4', 'ring-emerald-400', 'bg-slate-700'));
+            const activeCard = document.getElementById(`lvl-card-${lvl}`);
+            if (activeCard) activeCard.classList.add('ring-4', 'ring-emerald-400', 'bg-slate-700');
+
+            document.getElementById('start-btn').innerText = `AVVIA LIVELLO ${lvl} 🚀`;
+        }
+
+        function applyLevelSettings(cfg) {
+            scene.background.set(cfg.skyColor);
+            scene.fog.color.set(cfg.skyColor);
+            scene.fog.density = cfg.fogDensity;
+
+            setupRainParticles(cfg.rainIntensity);
+
+            document.getElementById('level-badge').innerText = cfg.name;
+            document.getElementById('target-display').innerText = `/ ${cfg.targetDistance} m`;
+
+            let weatherIcon = "☀️ SOLEGGIATO";
+            if (cfg.weather === 'CLOUDY') weatherIcon = "☁️ NUVOLOSO";
+            if (cfg.weather === 'RAIN') weatherIcon = "🌧️ PIOGGIA";
+            if (cfg.weather === 'DYNAMIC') weatherIcon = "⚡ DINAMICO";
+            document.getElementById('weather-badge').innerText = weatherIcon;
+
+            spawnTrafficForLevel(cfg);
+        }
+
+        function startSelectedLevel() {
+            initAudio();
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('hud-overlay').classList.remove('hidden');
+
+            applyLevelSettings(currentLevelCfg);
+
+            gameState = 'PLAYING';
+            scoreDistance = 0;
+            currentSpeed = 0.2;
+            elapsedTime = 0;
+            topSpeedAchieved = 0;
+            overtakesCount = 0;
+
+            if (playerCar) {
+                playerCar.position.set(0, 0, 0);
+                playerCar.rotation.set(0, 0, 0);
+            }
+
+            showBanner(`LIVELLO ${selectedLevelId} AVVIATO! INIZIA LA GUIDA`);
+        }
+
+        function nextLevel() {
+            document.getElementById('victory-screen').classList.add('hidden');
+            if (selectedLevelId < 4) {
+                selectLevel(selectedLevelId + 1);
+                startSelectedLevel();
+            } else {
+                showMenu();
+            }
+        }
+
+        function retryCurrentLevel() {
+            document.getElementById('gameover-screen').classList.add('hidden');
+            startSelectedLevel();
+        }
+
+        function showMenu() {
+            gameState = 'MENU';
+            document.getElementById('victory-screen').classList.add('hidden');
+            document.getElementById('gameover-screen').classList.add('hidden');
+            document.getElementById('hud-overlay').classList.add('hidden');
+            document.getElementById('start-screen').classList.remove('hidden');
+        }
+
+        // --- GAME LOOP & CAMERA POSITIONING ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (gameState === 'PLAYING') {
+                elapsedTime += 0.016; 
+                processInputs();
+                updateTrafficAI();
+                updateRain();
+                updateHUD();
+                checkCollisionsAndVictory();
+
+                // DYNAMIC 3-MODE CAMERA UPDATE LOGIC
+                if (playerCar) {
+                    const carPos = playerCar.position;
+                    const rotY = playerCar.rotation.y;
+
+                    if (cameraMode === 0) {
+                        // MODE 0: Close External Third-Person Chase (Macchina esterna da vicino)
+                        let targetCamX = carPos.x - Math.sin(rotY) * 10.5;
+                        let targetCamZ = carPos.z - Math.cos(rotY) * 10.5;
+                        let targetCamY = carPos.y + 3.8;
+
+                        camera.position.x += (targetCamX - camera.position.x) * 0.15;
+                        camera.position.z += (targetCamZ - camera.position.z) * 0.15;
+                        camera.position.y += (targetCamY - camera.position.y) * 0.15;
+
+                        camera.lookAt(carPos.x, carPos.y + 1.2, carPos.z + Math.cos(rotY) * 4);
+                        if (interiorDashboardGroup) interiorDashboardGroup.visible = true;
+
+                    } else if (cameraMode === 1) {
+                        // MODE 1: Bonnet / Hood View (Vista dal Cofano)
+                        let hoodCamX = carPos.x + Math.sin(rotY) * 2.2;
+                        let hoodCamZ = carPos.z + Math.cos(rotY) * 2.2;
+                        let hoodCamY = carPos.y + 1.7;
+
+                        camera.position.set(hoodCamX, hoodCamY, hoodCamZ);
+                        camera.lookAt(
+                            carPos.x + Math.sin(rotY) * 30,
+                            carPos.y + 1.6,
+                            carPos.z + Math.cos(rotY) * 30
+                        );
+                        if (interiorDashboardGroup) interiorDashboardGroup.visible = false;
+
+                    } else if (cameraMode === 2) {
+                        // MODE 2: Interior Cockpit / Dashboard View (Vista dal Cruscotto/Abitacolo)
+                        let cockpitCamX = carPos.x - Math.sin(rotY) * 0.6 + Math.cos(rotY) * -0.55;
+                        let cockpitCamZ = carPos.z - Math.cos(rotY) * 0.6 - Math.sin(rotY) * -0.55;
+                        let cockpitCamY = carPos.y + 1.85;
+
+                        camera.position.set(cockpitCamX, cockpitCamY, cockpitCamZ);
+                        camera.lookAt(
+                            carPos.x + Math.sin(rotY) * 25,
+                            carPos.y + 1.6,
+                            carPos.z + Math.cos(rotY) * 25
+                        );
+                        if (interiorDashboardGroup) interiorDashboardGroup.visible = true;
+                    }
+                }
+
+                scoreDistance += Math.round(Math.abs(currentSpeed) * 2);
+                updateAudioEngine();
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // --- TRAFFIC AI ---
+        function updateTrafficAI() {
+            const laneOffsets = [-6, 0, 6];
+
+            trafficCars.forEach(tCar => {
+                tCar.trackIndex = (tCar.trackIndex + tCar.aiSpeed * 0.1) % trackPoints.length;
+                let idx = Math.floor(tCar.trackIndex);
+                let pt = trackPoints[idx];
+
+                if (currentLevelCfg.laneChangeAI && Math.random() < 0.002) {
+                    tCar.targetLaneOffset = laneOffsets[Math.floor(Math.random() * laneOffsets.length)];
+                }
+
+                tCar.laneOffset += (tCar.targetLaneOffset - tCar.laneOffset) * 0.05;
+
+                if (pt) {
+                    tCar.position.x = pt.x + Math.cos(pt.angle + Math.PI / 2) * tCar.laneOffset;
+                    tCar.position.z = pt.z - Math.sin(pt.angle + Math.PI / 2) * tCar.laneOffset;
+                    tCar.rotation.y = pt.angle;
+                }
+
+                if (playerCar && !tCar.overtaken && playerCar.position.z > tCar.position.z) {
+                    tCar.overtaken = true;
+                    overtakesCount++;
+                    document.getElementById('overtakes-display').innerText = overtakesCount;
+                }
+            });
+        }
+
+        // --- COLLISIONS & VICTORY CONDITIONAL ---
+        function checkCollisionsAndVictory() {
+            if (!playerCar) return;
+
+            for (let tCar of trafficCars) {
+                if (playerCar.position.distanceTo(tCar.position) < 4.0) {
+                    triggerGameOver();
+                    return;
+                }
+            }
+
+            let nearestPt = trackPoints[0];
+            let minDist = 999;
+            for (let pt of trackPoints) {
+                let d = Math.hypot(playerCar.position.x - pt.x, playerCar.position.z - pt.z);
+                if (d < minDist) {
+                    minDist = d;
+                    nearestPt = pt;
+                }
+            }
+
+            if (minDist > trackWidth / 2 + 5) {
+                currentSpeed *= 0.95;
+                showBanner("FUORI STRADA / TERRENO BIANCO!");
+            }
+
+            if (scoreDistance >= currentLevelCfg.targetDistance) {
+                triggerVictory();
+            }
+        }
+
+        function updateHUD() {
+            let speedKmH = Math.round((Math.abs(currentSpeed) / maxSpeed) * 240);
+            document.getElementById('speed-display').innerText = speedKmH;
+            document.getElementById('distance-display').innerText = scoreDistance;
+
+            let pct = Math.min(100, (scoreDistance / currentLevelCfg.targetDistance) * 100);
+            document.getElementById('progress-bar').style.width = `${pct}%`;
+        }
+
+        function showBanner(text) {
+            const banner = document.getElementById('message-banner');
+            banner.innerText = text;
+            banner.style.opacity = '1';
+            setTimeout(() => { banner.style.opacity = '0'; }, 1500);
+        }
+
+        function triggerVictory() {
+            gameState = 'VICTORY';
+            playJingle(true);
+
+            document.getElementById('vic-time').innerText = `${Math.round(elapsedTime)}s`;
+            document.getElementById('vic-top-speed').innerText = `${topSpeedAchieved} km/h`;
+            document.getElementById('vic-overtakes').innerText = overtakesCount;
+
+            const nextBtn = document.getElementById('next-lvl-btn');
+            if (selectedLevelId >= 4) {
+                nextBtn.innerText = "CAMPIONATO COMPLETATO! 🏆";
+                document.getElementById('victory-subtitle').innerText = "Complimenti! Hai superato tutti e 4 i livelli!";
+            } else {
+                nextBtn.innerText = "PROSSIMO LIVELLO ➔";
+                document.getElementById('victory-subtitle').innerText = `Hai completato il Livello ${selectedLevelId}!`;
+            }
+
+            document.getElementById('victory-screen').classList.remove('hidden');
+        }
+
+        function triggerGameOver() {
+            gameState = 'GAMEOVER';
+            playJingle(false);
+
+            document.getElementById('fail-distance').innerText = `${scoreDistance} m`;
+            document.getElementById('fail-level').innerText = currentLevelCfg.name;
+
+            document.getElementById('gameover-screen').classList.remove('hidden');
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
+```
