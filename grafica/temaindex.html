@@ -182,6 +182,22 @@
 
     </main>
 
+    <!-- Banner Notifica Aggiornamento PWA -->
+    <div id="updateNotification" class="fixed bottom-6 right-6 z-50 hidden transform transition-all duration-300 translate-y-10 opacity-0">
+        <div class="glass-card bg-indigo-950/90 border border-indigo-500/30 p-4 rounded-2xl shadow-2xl flex items-center space-x-4 max-w-sm">
+            <div class="w-10 h-10 rounded-xl bg-indigo-600/30 text-indigo-400 flex items-center justify-center font-bold shrink-0">
+                🚀
+            </div>
+            <div class="flex-grow">
+                <h4 class="text-sm font-bold text-white">Nuovo aggiornamento disponibile!</h4>
+                <p class="text-xs text-gray-300 mt-0.5">È disponibile una nuova versione per la web app.</p>
+            </div>
+            <button id="reloadAppBtn" class="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-colors shrink-0 shadow-lg shadow-indigo-500/30">
+                Aggiorna
+            </button>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="border-t border-white/5 bg-dark-800/50 py-8">
         <div class="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between text-sm text-gray-500">
@@ -295,7 +311,7 @@
                                 </div>
                             </a>
                         </div>
-                        
+
                     </div>
 
                 </div>
@@ -327,7 +343,6 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            // Mostra i pulsanti di installazione
             if (installBtn) installBtn.classList.remove('hidden');
             if (installBtnMobile) installBtnMobile.classList.remove('hidden');
         });
@@ -349,13 +364,60 @@
         if (installBtn) installBtn.addEventListener('click', triggerInstall);
         if (installBtnMobile) installBtnMobile.addEventListener('click', triggerInstall);
 
-        // Registrazione Service Worker per PWA
+        // Registrazione Service Worker per PWA e Notifica Aggiornamenti
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then((reg) => console.log('Service Worker registrato con successo', reg))
-                    .catch((err) => console.log('Registrazione Service Worker fallita', err));
+                navigator.serviceWorker.register('sw.js').then((registration) => {
+                    console.log('Service Worker registrato con successo', registration);
+
+                    // Controlla se c'è un aggiornamento in attesa al caricamento
+                    if (registration.waiting) {
+                        showUpdateNotification(registration);
+                    }
+
+                    // Rileva quando viene trovato un nuovo Service Worker
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        if (newWorker) {
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    showUpdateNotification(registration);
+                                }
+                            });
+                        }
+                    });
+                }).catch((err) => console.log('Registrazione Service Worker fallita', err));
+
+                // Ricarica la pagina quando il nuovo SW prende il controllo
+                let refreshing = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (!refreshing) {
+                        window.location.reload();
+                        refreshing = true;
+                    }
+                });
             });
+        }
+
+        // Funzione per mostrare il banner di aggiornamento
+        function showUpdateNotification(registration) {
+            const updateNotification = document.getElementById('updateNotification');
+            const reloadAppBtn = document.getElementById('reloadAppBtn');
+
+            if (updateNotification) {
+                updateNotification.classList.remove('hidden');
+                setTimeout(() => {
+                    updateNotification.classList.remove('translate-y-10', 'opacity-0');
+                    updateNotification.classList.add('translate-y-0', 'opacity-100');
+                }, 50);
+
+                reloadAppBtn.addEventListener('click', () => {
+                    if (registration.waiting) {
+                        // Invia il messaggio al Service Worker per saltare l'attesa
+                        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                    }
+                });
+            }
         }
 
         // Gestione Menu Mobile e Modale Giochi
