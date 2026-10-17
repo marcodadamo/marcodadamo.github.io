@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Super Mario 3D - Voxel Edition</title>
+    <!-- Tailwind CSS for UI HUD & Overlays -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Google Font for Mario Retro Vibe -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Press Start 2P', cursive, monospace;
+            background-color: #5c94fc;
+            user-select: none;
+            touch-action: none;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        .text-shadow-mario {
+            text-shadow: 3px 3px 0px #000;
+        }
+        .touch-btn {
+            background: rgba(255, 255, 255, 0.25);
+            border: 3px solid rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(4px);
+            user-select: none;
+        }
+        .touch-btn:active {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden">
+
+    <!-- TOP HUD OVERLAY -->
+    <div id="hud" class="absolute top-0 left-0 w-full p-4 md:p-6 flex justify-between items-start pointer-events-none z-10 text-white text-xs md:text-sm">
+        <div class="flex gap-4 md:gap-8 bg-black/40 p-3 md:p-4 rounded-2xl border-4 border-white/20 backdrop-blur-md">
+            <div>
+                <p class="text-[10px] md:text-xs text-yellow-400 mb-1">MARIO</p>
+                <p id="hud-score" class="text-shadow-mario">000000</p>
+            </div>
+            <div>
+                <p class="text-[10px] md:text-xs text-yellow-400 mb-1">COINS</p>
+                <p id="hud-coins" class="text-shadow-mario">ðŸª™ x00</p>
+            </div>
+            <div>
+                <p class="text-[10px] md:text-xs text-red-400 mb-1">LIVES</p>
+                <p id="hud-lives" class="text-shadow-mario">â¤ï¸ x3</p>
+            </div>
+        </div>
+        <div class="bg-black/40 p-3 md:p-4 rounded-2xl border-4 border-white/20 backdrop-blur-md text-right">
+            <p class="text-[10px] md:text-xs text-cyan-400 mb-1">WORLD</p>
+            <p class="text-shadow-mario">1-1</p>
+        </div>
+    </div>
+
+    <!-- START / OVERLAY SCREEN -->
+    <div id="screen-overlay" class="absolute inset-0 bg-black/85 flex flex-col items-center justify-center z-30 text-white text-center p-6 transition-opacity duration-300">
+        <h1 class="text-3xl md:text-5xl text-yellow-400 mb-3 text-shadow-mario leading-tight">SUPER MARIO 3D</h1>
+        <p class="text-xs md:text-sm text-cyan-300 mb-6 text-shadow-mario">VOXEL EDITION</p>
+        
+        <div class="bg-blue-950/80 border-4 border-yellow-400 p-4 md:p-6 rounded-2xl max-w-md w-full mb-8 text-left text-[11px] md:text-xs leading-relaxed space-y-2">
+            <p class="text-yellow-300 text-center font-bold mb-3">CONTROLS</p>
+            <p>â€¢ <span class="text-yellow-400">WASD / Arrows</span>: Move Mario</p>
+            <p>â€¢ <span class="text-yellow-400">Spacebar</span>: Jump</p>
+            <p>â€¢ <span class="text-yellow-400">Touch D-Pad</span>: Mobile Controls</p>
+            <hr class="border-white/20 my-2">
+            <p class="text-gray-300">â€¢ Hit <span class="text-yellow-400">[?] Blocks</span> from below for coins!</p>
+            <p class="text-gray-300">â€¢ Stomp <span class="text-red-400">Goombas</span> from above!</p>
+            <p class="text-gray-300">â€¢ Reach the <span class="text-green-400">Flagpole</span> to Win!</p>
+        </div>
+
+        <button id="start-btn" class="bg-red-600 hover:bg-red-500 text-white font-bold py-4 px-8 rounded-2xl border-4 border-white text-sm md:text-base text-shadow-mario transition transform hover:scale-105 active:scale-95 cursor-pointer shadow-2xl">
+            START GAME
+        </button>
+    </div>
+
+    <!-- TOUCH CONTROLS FOR MOBILE -->
+    <div id="touch-controls" class="absolute bottom-14 left-0 w-full px-6 flex justify-between items-end pointer-events-none z-20 md:hidden">
+        <!-- D-PAD -->
+        <div class="relative w-36 h-36 pointer-events-auto">
+            <button id="btn-up" class="touch-btn absolute top-0 left-12 w-12 h-12 rounded-xl text-white font-bold flex items-center justify-center">â–²</button>
+            <button id="btn-left" class="touch-btn absolute top-12 left-0 w-12 h-12 rounded-xl text-white font-bold flex items-center justify-center">â—€</button>
+            <button id="btn-right" class="touch-btn absolute top-12 right-0 w-12 h-12 rounded-xl text-white font-bold flex items-center justify-center">â–¶</button>
+            <button id="btn-down" class="touch-btn absolute bottom-0 left-12 w-12 h-12 rounded-xl text-white font-bold flex items-center justify-center">â–¼</button>
+        </div>
+        <!-- JUMP BUTTON -->
+        <div class="pointer-events-auto mb-2">
+            <button id="btn-jump" class="touch-btn w-20 h-20 rounded-full text-white font-bold text-sm flex items-center justify-center shadow-lg border-4 border-yellow-400 bg-red-600/80">JUMP</button>
+        </div>
+    </div>
+
+    <!-- MESSAGE DIALOG (Alternative to browser alert) -->
+    <div id="msg-dialog" class="hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-900/95 border-4 border-yellow-400 p-6 rounded-2xl text-white text-center z-40 max-w-xs w-full shadow-2xl">
+        <p id="msg-text" class="text-xs md:text-sm mb-6 leading-relaxed"></p>
+        <button id="msg-btn" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 px-6 rounded-xl border-2 border-white text-xs cursor-pointer">CONTINUE</button>
+    </div>
+
+    <script>
+        // --- WEB AUDIO SYNTHESIZER ---
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+            }
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+            playTone(freq, type, duration, startGain = 0.1, endGain = 0.01) {
+                if (!this.ctx) return;
+                try {
+                    let osc = this.ctx.createOscillator();
+                    let gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(startGain, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(endGain, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            }
+            jump() {
+                this.init();
+                if (!this.ctx) return;
+                let osc = this.ctx.createOscillator();
+                let gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(450, this.ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.15);
+            }
+            coin() {
+                this.init();
+                if (!this.ctx) return;
+                let now = this.ctx.currentTime;
+                let osc = this.ctx.createOscillator();
+                let gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(987.77, now); // B5
+                osc.frequency.setValueAtTime(1318.51, now + 0.08); // E6
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            }
+            stomp() {
+                this.init();
+                this.playTone(120, 'sawtooth', 0.15, 0.2);
+            }
+            bump() {
+                this.init();
+                this.playTone(80, 'triangle', 0.12, 0.2);
+            }
+            win() {
+                this.init();
+                if (!this.ctx) return;
+                let now = this.ctx.currentTime;
+                const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
+                notes.forEach((freq, idx) => {
+                    let osc = this.ctx.createOscillator();
+                    let gain = this.ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+                    gain.gain.setValueAtTime(0.1, now + idx * 0.1);
+                    gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.1 + 0.12);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.1);
+                    osc.stop(now + idx * 0.1 + 0.12);
+                });
+            }
+            die() {
+                this.init();
+                if (!this.ctx) return;
+                let now = this.ctx.currentTime;
+                const notes = [400, 350, 300, 250, 200, 150];
+                notes.forEach((freq, idx) => {
+                    let osc = this.ctx.createOscillator();
+                    let gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    gain.gain.setValueAtTime(0.15, now + idx * 0.08);
+                    gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.08 + 0.08);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 0.08);
+                });
+            }
+        }
+
+        const audio = new SoundEngine();
+
+        // --- GAME ENGINE GLOBAL STATE ---
+        let scene, camera, renderer;
+        let marioGroup, marioBody, leftLeg, rightLeg, leftArm, rightArm;
+        let gameState = 'START'; // START, PLAYING, GAMEOVER, WIN
+        let score = 0, coins = 0, lives = 3;
+
+        // Physics & Movement
+        const marioVel = new THREE.Vector3();
+        let isGrounded = false;
+        const GRAVITY = 28;
+        const JUMP_FORCE = 12;
+        const MOVE_SPEED = 8;
+
+        // Level Elements
+        let platforms = [];
+        let blocks = [];
+        let coinsList = [];
+        let goombas = [];
+        let flagPole = null;
+
+        // Input Tracking
+        const keys = { forward: false, backward: false, left: false, right: false, jump: false };
+
+        // Helper Box3 containers for collision detection
+        const marioBox = new THREE.Box3();
+        const tempBox = new THREE.Box3();
+
+        // Custom Dialog System
+        function showCustomMsg(text, onOk) {
+            const msgDialog = document.getElementById('msg-dialog');
+            const msgText = document.getElementById('msg-text');
+            const msgBtn = document.getElementById('msg-btn');
+            
+            msgText.innerText = text;
+            msgDialog.classList.remove('hidden');
+
+            const handleOk = () => {
+                msgDialog.classList.add('hidden');
+                msgBtn.removeEventListener('click', handleOk);
+                if (onOk) onOk();
+            };
+            msgBtn.addEventListener('click', handleOk);
+        }
+
+        // --- VOXEL CREATION HELPER ---
+        function createVoxelMesh(width, height, depth, color) {
+            const geometry = new THREE.BoxGeometry(width, height, depth);
+            const material = new THREE.MeshLambertMaterial({ color: color });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            return mesh;
+        }
+
+        // --- BUILD MARIO CHARACTER ---
+        function createMario() {
+            marioGroup = new THREE.Group();
+
+            // Colors
+            const RED = 0xe70000;
+            const BLUE = 0x0000d8;
+            const BROWN = 0x8b4513;
+            const SKIN = 0xffcc99;
+            const YELLOW = 0xffd700;
+
+            // Torso / Overalls
+            const torso = createVoxelMesh(0.7, 0.7, 0.5, BLUE);
+            torso.position.y = 0.75;
+            marioGroup.add(torso);
+
+            // Shirt chest
+            const shirt = createVoxelMesh(0.5, 0.3, 0.52, RED);
+            shirt.position.y = 0.85;
+            marioGroup.add(shirt);
+
+            // Yellow Overall Buttons
+            const btn1 = createVoxelMesh(0.1, 0.1, 0.54, YELLOW);
+            btn1.position.set(-0.2, 0.75, 0);
+            const btn2 = createVoxelMesh(0.1, 0.1, 0.54, YELLOW);
+            btn2.position.set(0.2, 0.75, 0);
+            marioGroup.add(btn1, btn2);
+
+            // Head
+            const head = createVoxelMesh(0.65, 0.55, 0.6, SKIN);
+            head.position.y = 1.35;
+            marioGroup.add(head);
+
+            // Cap
+            const capBase = createVoxelMesh(0.75, 0.2, 0.7, RED);
+            capBase.position.y = 1.65;
+            const capVisor = createVoxelMesh(0.75, 0.1, 0.3, RED);
+            capVisor.position.set(0, 1.6, 0.35);
+            marioGroup.add(capBase, capVisor);
+
+            // Mustache & Nose
+            const stache = createVoxelMesh(0.5, 0.12, 0.15, BROWN);
+            stache.position.set(0, 1.25, 0.32);
+            const nose = createVoxelMesh(0.22, 0.2, 0.2, SKIN);
+            nose.position.set(0, 1.38, 0.35);
+            const eyeL = createVoxelMesh(0.08, 0.15, 0.05, 0x000000);
+            eyeL.position.set(-0.18, 1.42, 0.31);
+            const eyeR = createVoxelMesh(0.08, 0.15, 0.05, 0x000000);
+            eyeR.position.set(0.18, 1.42, 0.31);
+            marioGroup.add(stache, nose, eyeL, eyeR);
+
+            // Arms
+            leftArm = createVoxelMesh(0.22, 0.5, 0.22, RED);
+            leftArm.position.set(-0.45, 0.8, 0);
+            rightArm = createVoxelMesh(0.22, 0.5, 0.22, RED);
+            rightArm.position.set(0.45, 0.8, 0);
+            
+            // White Gloves
+            const gloveL = createVoxelMesh(0.26, 0.2, 0.26, 0xffffff);
+            gloveL.position.set(-0.45, 0.5, 0);
+            const gloveR = createVoxelMesh(0.26, 0.2, 0.26, 0xffffff);
+            gloveR.position.set(0.45, 0.5, 0);
+            marioGroup.add(leftArm, rightArm, gloveL, gloveR);
+
+            // Legs & Shoes
+            leftLeg = createVoxelMesh(0.28, 0.4, 0.3, BLUE);
+            leftLeg.position.set(-0.2, 0.3, 0);
+            rightLeg = createVoxelMesh(0.28, 0.4, 0.3, BLUE);
+            rightLeg.position.set(0.2, 0.3, 0);
+
+            const shoeL = createVoxelMesh(0.3, 0.22, 0.45, BROWN);
+            shoeL.position.set(-0.2, 0.11, 0.05);
+            const shoeR = createVoxelMesh(0.3, 0.22, 0.45, BROWN);
+            shoeR.position.set(0.2, 0.11, 0.05);
+
+            marioGroup.add(leftLeg, rightLeg, shoeL, shoeR);
+
+            marioGroup.position.set(0, 1, 0);
+            scene.add(marioGroup);
+        }
+
+        // --- BUILD GOOMBA ENEMY ---
+        function createGoomba(x, y, z, moveRange = 4) {
+            const group = new THREE.Group();
+
+            // Head / Mushroom Body
+            const body = createVoxelMesh(0.9, 0.7, 0.9, 0x8b4513);
+            body.position.y = 0.55;
+            group.add(body);
+
+            const stem = createVoxelMesh(0.65, 0.35, 0.65, 0xffddaa);
+            stem.position.y = 0.2;
+            group.add(stem);
+
+            // Eyes
+            const eye1 = createVoxelMesh(0.12, 0.3, 0.05, 0x000000);
+            eye1.position.set(-0.2, 0.45, 0.46);
+            const eye2 = createVoxelMesh(0.12, 0.3, 0.05, 0x000000);
+            eye2.position.set(0.2, 0.45, 0.46);
+            group.add(eye1, eye2);
+
+            // Feet
+            const footL = createVoxelMesh(0.35, 0.2, 0.4, 0x331a00);
+            footL.position.set(-0.3, 0.1, 0);
+            const footR = createVoxelMesh(0.35, 0.2, 0.4, 0x331a00);
+            footR.position.set(0.3, 0.1, 0);
+            group.add(footL, footR);
+
+            group.position.set(x, y, z);
+            scene.add(group);
+
+            goombas.push({
+                mesh: group,
+                startX: x,
+                range: moveRange,
+                dir: 1,
+                speed: 2,
+                alive: true
+            });
+        }
+
+        // --- BUILD QUESTION BLOCK & BRICK ---
+        function createBlock(x, y, z, type = 'question') {
+            const color = type === 'question' ? 0xf39c12 : 0xb84300;
+            const block = createVoxelMesh(1, 1, 1, color);
+            block.position.set(x, y, z);
+
+            if (type === 'question') {
+                // Add "?" symbol onto block faces
+                const qGeo = new THREE.BoxGeometry(0.3, 0.5, 0.05);
+                const qMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                const qMesh = new THREE.Mesh(qGeo, qMat);
+                qMesh.position.set(0, 0, 0.52);
+                block.add(qMesh);
+            }
+
+            scene.add(block);
+            blocks.push({
+                mesh: block,
+                type: type,
+                active: true,
+                startY: y
+            });
+            platforms.push(block);
+        }
+
+        // --- BUILD COIN ---
+        function createCoin(x, y, z) {
+            const geo = new THREE.CylinderGeometry(0.35, 0.35, 0.1, 16);
+            const mat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8, roughness: 0.2 });
+            const coin = new THREE.Mesh(geo, mat);
+            coin.rotation.x = Math.PI / 2;
+            coin.position.set(x, y, z);
+            coin.castShadow = true;
+            scene.add(coin);
+
+            coinsList.push({ mesh: coin, collected: false });
+        }
+
+        // --- BUILD PIPE ---
+        function createPipe(x, y, z, height = 2) {
+            const pipeGroup = new THREE.Group();
+            const mainMat = new THREE.MeshLambertMaterial({ color: 0x00a800 });
+
+            // Main Body
+            const bodyGeo = new THREE.CylinderGeometry(0.8, 0.8, height, 16);
+            const body = new THREE.Mesh(bodyGeo, mainMat);
+            body.position.y = height / 2;
+            body.castShadow = true;
+            body.receiveShadow = true;
+            pipeGroup.add(body);
+
+            // Rim Top
+            const rimGeo = new THREE.CylinderGeometry(0.95, 0.95, 0.5, 16);
+            const rim = new THREE.Mesh(rimGeo, mainMat);
+            rim.position.y = height - 0.25;
+            rim.castShadow = true;
+            rim.receiveShadow = true;
+            pipeGroup.add(rim);
+
+            pipeGroup.position.set(x, y, z);
+            scene.add(pipeGroup);
+
+            // Collidable platform bounding body
+            const boundingBox = createVoxelMesh(1.6, height, 1.6, 0x00a800);
+            boundingBox.position.set(x, y + height / 2, z);
+            boundingBox.visible = false;
+            scene.add(boundingBox);
+            platforms.push(boundingBox);
+        }
+
+        // --- BUILD CLOUDS & SCENERY ---
+        function createCloud(x, y, z) {
+            const cloudGroup = new THREE.Group();
+            const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 });
+            
+            const b1 = new THREE.Mesh(new THREE.BoxGeometry(2, 0.8, 1), mat);
+            const b2 = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1), mat);
+            b2.position.set(-0.4, 0.2, 0);
+            const b3 = new THREE.Mesh(new THREE.BoxGeometry(1, 0.8, 1), mat);
+            b3.position.set(0.6, 0.1, 0);
+
+            cloudGroup.add(b1, b2, b3);
+            cloudGroup.position.set(x, y, z);
+            scene.add(cloudGroup);
+        }
+
+        // --- BUILD FLAGPOLE / WIN TARGET ---
+        function createFlagPole(x, y, z) {
+            const group = new THREE.Group();
+
+            // Base
+            const base = createVoxelMesh(1.5, 0.8, 1.5, 0x888888);
+            base.position.y = 0.4;
+            group.add(base);
+
+            // Pole
+            const poleGeo = new THREE.CylinderGeometry(0.1, 0.1, 10, 12);
+            const poleMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.5 });
+            const pole = new THREE.Mesh(poleGeo, poleMat);
+            pole.position.y = 5.4;
+            group.add(pole);
+
+            // Top Ball
+            const ballGeo = new THREE.SphereGeometry(0.35, 16, 16);
+            const ballMat = new THREE.MeshLambertMaterial({ color: 0xffd700 });
+            const ball = new THREE.Mesh(ballGeo, ballMat);
+            ball.position.y = 10.5;
+            group.add(ball);
+
+            // Green Flag
+            const flag = createVoxelMesh(1.8, 1.2, 0.08, 0x00a800);
+            flag.position.set(0.9, 9.5, 0);
+            group.add(flag);
+
+            group.position.set(x, y, z);
+            scene.add(group);
+
+            flagPole = { group: group, x: x, z: z };
+        }
+
+        // --- WORLD LEVEL GENERATION ---
+        function buildLevel() {
+            // Main Grass Floor
+            const groundGeo = new THREE.BoxGeometry(140, 2, 16);
+            const groundMat = new THREE.MeshLambertMaterial({ color: 0x2ecc71 });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.position.set(50, -1, 0);
+            ground.receiveShadow = true;
+            scene.add(ground);
+            platforms.push(ground);
+
+            // Dirt Underneath
+            const dirtGeo = new THREE.BoxGeometry(140, 10, 16);
+            const dirtMat = new THREE.MeshLambertMaterial({ color: 0x8b4513 });
+            const dirt = new THREE.Mesh(dirtGeo, dirtMat);
+            dirt.position.set(50, -7, 0);
+            scene.add(dirt);
+
+            // Gap Pit in World
+            // Split ground by creating a gap around x = 32 to 38
+            ground.scale.x = 0.4;
+            ground.position.x = 10;
+            
+            const ground2 = new THREE.Mesh(groundGeo, groundMat);
+            ground2.scale.x = 0.55;
+            ground2.position.set(70, -1, 0);
+            ground2.receiveShadow = true;
+            scene.add(ground2);
+            platforms.push(ground2);
+
+            // Clouds
+            createCloud(5, 12, -4);
+            createCloud(25, 14, -5);
+            createCloud(50, 11, -3);
+            createCloud(75, 15, -6);
+
+            // Question Blocks & Bricks
+            createBlock(8, 4, 0, 'question');
+            createBlock(12, 4, 0, 'brick');
+            createBlock(13, 4, 0, 'question');
+            createBlock(14, 4, 0, 'brick');
+            createBlock(15, 4, 0, 'question');
+            createBlock(13, 8, 0, 'question'); // Elevated block
+
+            // Elevated Block Platform Staircase
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j <= i; j++) {
+                    createBlock(45 + i, 1 + j, 0, 'brick');
+                }
+            }
+
+            // Pipes
+            createPipe(20, 0, 0, 2);
+            createPipe(28, 0, 0, 3);
+            createPipe(60, 0, 0, 2.5);
+
+            // Coins
+            createCoin(8, 5.5, 0);
+            createCoin(13, 9.5, 0);
+            createCoin(20, 3.2, 0);
+            createCoin(28, 4.2, 0);
+            createCoin(34, 3, 0); // Above gap
+            createCoin(36, 4, 0);
+            createCoin(55, 2, 0);
+            createCoin(57, 2, 0);
+            createCoin(59, 2, 0);
+
+            // Goombas
+            createGoomba(18, 0, 0, 3);
+            createGoomba(24, 0, 0, 2.5);
+            createGoomba(52, 0, 0, 4);
+
+            // End Flag
+            createFlagPole(85, 0, 0);
+        }
+
+        // --- INIT THREE.JS SCENE ---
+        function initEngine() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x5c94fc);
+            scene.fog = new THREE.FogExp2(0x5c94fc, 0.008);
+
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.body.appendChild(renderer.domElement);
+
+            // Lighting
+            const ambient = new THREE.AmbientLight(0xffffff, 0.65);
+            scene.add(ambient);
+
+            const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+            sun.position.set(30, 40, 20);
+            sun.castShadow = true;
+            sun.shadow.mapSize.width = 2048;
+            sun.shadow.mapSize.height = 2048;
+            sun.shadow.camera.near = 0.5;
+            sun.shadow.camera.far = 150;
+            const d = 40;
+            sun.shadow.camera.left = -d;
+            sun.shadow.camera.right = d;
+            sun.shadow.camera.top = d;
+            sun.shadow.camera.bottom = -d;
+            scene.add(sun);
+
+            // Build Level & Player
+            createMario();
+            buildLevel();
+
+            // Bind Event Listeners
+            setupControls();
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        // --- INPUT CONTROLS SETUP ---
+        function setupControls() {
+            window.addEventListener('keydown', (e) => {
+                if (gameState !== 'PLAYING') return;
+                switch (e.code) {
+                    case 'KeyW': case 'ArrowUp': keys.forward = true; break;
+                    case 'KeyS': case 'ArrowDown': keys.backward = true; break;
+                    case 'KeyA': case 'ArrowLeft': keys.left = true; break;
+                    case 'KeyD': case 'ArrowRight': keys.right = true; break;
+                    case 'Space': 
+                        if (!keys.jump && isGrounded) {
+                            marioVel.y = JUMP_FORCE;
+                            isGrounded = false;
+                            audio.jump();
+                        }
+                        keys.jump = true; 
+                        break;
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                switch (e.code) {
+                    case 'KeyW': case 'ArrowUp': keys.forward = false; break;
+                    case 'KeyS': case 'ArrowDown': keys.backward = false; break;
+                    case 'KeyA': case 'ArrowLeft': keys.left = false; break;
+                    case 'KeyD': case 'ArrowRight': keys.right = false; break;
+                    case 'Space': keys.jump = false; break;
+                }
+            });
+
+            // Touch UI Listeners
+            const bindTouch = (id, keyName) => {
+                const btn = document.getElementById(id);
+                if (!btn) return;
+                btn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (keyName === 'jump') {
+                        if (isGrounded) {
+                            marioVel.y = JUMP_FORCE;
+                            isGrounded = false;
+                            audio.jump();
+                        }
+                        keys.jump = true;
+                    } else {
+                        keys[keyName] = true;
+                    }
+                });
+                btn.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    keys[keyName] = false;
+                });
+            };
+
+            bindTouch('btn-up', 'forward');
+            bindTouch('btn-down', 'backward');
+            bindTouch('btn-left', 'left');
+            bindTouch('btn-right', 'right');
+            bindTouch('btn-jump', 'jump');
+        }
+
+        // --- GAME LOOP & PHYSICS UPDATE ---
+        let clock = new THREE.Clock();
+
+        function updateGame() {
+            const delta = Math.min(clock.getDelta(), 0.05);
+
+            if (gameState !== 'PLAYING') return;
+
+            // 1. Horizontal Movement Logic
+            const moveDir = new THREE.Vector3(0, 0, 0);
+            if (keys.right || keys.forward) moveDir.x += 1;
+            if (keys.left || keys.backward) moveDir.x -= 1;
+
+            if (moveDir.length() > 0) {
+                moveDir.normalize();
+                marioGroup.position.x += moveDir.x * MOVE_SPEED * delta;
+                
+                // Rotate Mario towards movement direction
+                const targetAngle = moveDir.x > 0 ? 0 : Math.PI;
+                marioGroup.rotation.y = THREE.MathUtils.lerp(marioGroup.rotation.y, targetAngle, 0.2);
+
+                // Run Animation (Arm / Leg Swing)
+                const time = clock.getElapsedTime() * 12;
+                leftLeg.rotation.z = Math.sin(time) * 0.6;
+                rightLeg.rotation.z = -Math.sin(time) * 0.6;
+                leftArm.rotation.z = -Math.sin(time) * 0.6;
+                rightArm.rotation.z = Math.sin(time) * 0.6;
+            } else {
+                // Idle limbs
+                leftLeg.rotation.z = 0;
+                rightLeg.rotation.z = 0;
+                leftArm.rotation.z = 0;
+                rightArm.rotation.z = 0;
+            }
+
+            // 2. Vertical Physics & Gravity
+            marioVel.y -= GRAVITY * delta;
+            marioGroup.position.y += marioVel.y * delta;
+
+            // Keep Mario constrained on the Z axis (Side-scrolling 3D constraint)
+            marioGroup.position.z = THREE.MathUtils.lerp(marioGroup.position.z, 0, 0.1);
+
+            // Update Mario Bounding Box
+            marioBox.setFromObject(marioGroup);
+
+            // 3. Platform & Block Collision
+            isGrounded = false;
+
+            for (let platform of platforms) {
+                tempBox.setFromObject(platform);
+
+                if (marioBox.intersectsBox(tempBox)) {
+                    // Check if falling onto platform top
+                    if (marioVel.y <= 0 && marioGroup.position.y >= tempBox.max.y - 0.4) {
+                        marioGroup.position.y = tempBox.max.y;
+                        marioVel.y = 0;
+                        isGrounded = true;
+                    } 
+                    // Hit block from below
+                    else if (marioVel.y > 0 && marioGroup.position.y + 1.8 <= tempBox.min.y + 0.4) {
+                        marioVel.y = -2; // Bounce back down
+                        
+                        // Check if hitting a specific interactive block
+                        const hitBlock = blocks.find(b => b.mesh === platform);
+                        if (hitBlock && hitBlock.active) {
+                            audio.bump();
+                            if (hitBlock.type === 'question') {
+                                hitBlock.active = false;
+                                hitBlock.mesh.material.color.setHex(0x7f8c8d); // Turn brown/grey
+                                audio.coin();
+                                score += 200;
+                                coins += 1;
+                                updateHUD();
+
+                                // Pop coin effect animation
+                                const popCoin = createVoxelMesh(0.4, 0.4, 0.1, 0xffd700);
+                                popCoin.position.set(hitBlock.mesh.position.x, hitBlock.mesh.position.y + 1.2, hitBlock.mesh.position.z);
+                                scene.add(popCoin);
+                                setTimeout(() => scene.remove(popCoin), 250);
+                            }
+                        }
+                    }
+                    // Side Collision Pushback
+                    else {
+                        if (marioGroup.position.x < tempBox.min.x) marioGroup.position.x = tempBox.min.x - 0.45;
+                        if (marioGroup.position.x > tempBox.max.x) marioGroup.position.x = tempBox.max.x + 0.45;
+                    }
+                }
+            }
+
+            // 4. Collectible Coins Logic
+            coinsList.forEach(item => {
+                if (item.collected) return;
+                item.mesh.rotation.z += delta * 4;
+
+                tempBox.setFromObject(item.mesh);
+                if (marioBox.intersectsBox(tempBox)) {
+                    item.collected = true;
+                    scene.remove(item.mesh);
+                    audio.coin();
+                    coins += 1;
+                    score += 100;
+                    updateHUD();
+                }
+            });
+
+            // 5. Goombas Logic & Interaction
+            goombas.forEach(g => {
+                if (!g.alive) return;
+
+                // Move Goomba back and forth
+                g.mesh.position.x += g.dir * g.speed * delta;
+                if (Math.abs(g.mesh.position.x - g.startX) > g.range) {
+                    g.dir *= -1;
+                }
+
+                tempBox.setFromObject(g.mesh);
+                if (marioBox.intersectsBox(tempBox)) {
+                    // Check if Mario jumped on top of Goomba
+                    if (marioVel.y < 0 && marioGroup.position.y > g.mesh.position.y + 0.4) {
+                        g.alive = false;
+                        audio.stomp();
+                        marioVel.y = JUMP_FORCE * 0.7; // Bounce off enemy
+                        score += 200;
+                        updateHUD();
+
+                        // Squash Goomba animation
+                        g.mesh.scale.set(1.3, 0.2, 1.3);
+                        setTimeout(() => scene.remove(g.mesh), 300);
+                    } else {
+                        // Player takes damage / lose life
+                        handlePlayerDamage();
+                    }
+                }
+            });
+
+            // 6. Win Condition (Flagpole)
+            if (flagPole && Math.abs(marioGroup.position.x - flagPole.x) < 0.8) {
+                gameState = 'WIN';
+                audio.win();
+                showCustomMsg("ðŸŽ‰ LEVEL COMPLETE!\nYou reached the flagpole!", () => {
+                    resetGame();
+                });
+            }
+
+            // 7. Pitfall Death Condition
+            if (marioGroup.position.y < -6) {
+                handlePlayerDamage();
+            }
+
+            // 8. Dynamic Camera Follow
+            camera.position.x = THREE.MathUtils.lerp(camera.position.x, marioGroup.position.x + 3, 0.08);
+            camera.position.y = THREE.MathUtils.lerp(camera.position.y, Math.max(marioGroup.position.y + 3, 4), 0.08);
+            camera.position.z = THREE.MathUtils.lerp(camera.position.z, 12, 0.08);
+            camera.lookAt(marioGroup.position.x + 2, marioGroup.position.y + 1, 0);
+        }
+
+        function handlePlayerDamage() {
+            lives -= 1;
+            updateHUD();
+            audio.die();
+
+            if (lives <= 0) {
+                gameState = 'GAMEOVER';
+                showCustomMsg("ðŸ’¥ GAME OVER!\nMario ran out of lives.", () => {
+                    resetGame();
+                });
+            } else {
+                // Respawn Mario back to safety
+                marioGroup.position.set(0, 3, 0);
+                marioVel.set(0, 0, 0);
+            }
+        }
+
+        function updateHUD() {
+            document.getElementById('hud-score').innerText = String(score).padStart(6, '0');
+            document.getElementById('hud-coins').innerText = `ðŸª™ x${String(coins).padStart(2, '0')}`;
+            document.getElementById('hud-lives').innerText = `â¤ï¸ x${lives}`;
+        }
+
+        function resetGame() {
+            lives = 3;
+            score = 0;
+            coins = 0;
+            updateHUD();
+            
+            marioGroup.position.set(0, 3, 0);
+            marioVel.set(0, 0, 0);
+
+            // Reset Enemies
+            goombas.forEach(g => {
+                g.alive = true;
+                g.mesh.scale.set(1, 1, 1);
+                g.mesh.position.x = g.startX;
+            });
+
+            gameState = 'PLAYING';
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- ANIMATION LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+            updateGame();
+            renderer.render(scene, camera);
+        }
+
+        // --- GAME START TRIGGER ---
+        document.getElementById('start-btn').addEventListener('click', () => {
+            const overlay = document.getElementById('screen-overlay');
+            overlay.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+
+            audio.init();
+            gameState = 'PLAYING';
+        });
+
+        // Initialize Engine & Load Application
+        window.onload = function() {
+            initEngine();
+            animate();
+        };
+    </script>
+</body>
+</html>
