@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Il Super Muletto 3D - Gioco per Bambini</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font: Fredoka -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            font-family: 'Fredoka', cursive, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #38bdf8;
+        }
+
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .animate-bounce-slow {
+            animation: bounce-slow 2s infinite ease-in-out;
+        }
+
+        /* Large Touch Controls */
+        .control-btn {
+            background: linear-gradient(145deg, #ffffff, #e2e8f0);
+            box-shadow: 0 8px 0 #94a3b8, 0 12px 15px rgba(0,0,0,0.3);
+            transition: all 0.1s ease;
+        }
+
+        .control-btn:active, .control-btn.active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 #94a3b8, 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .action-btn {
+            background: linear-gradient(145deg, #22c55e, #16a34a);
+            box-shadow: 0 8px 0 #15803d, 0 12px 15px rgba(0,0,0,0.3);
+        }
+
+        .action-btn:active, .action-btn.active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 #15803d, 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        #canvas3d {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .avatar-opt {
+            transition: all 0.2s ease;
+        }
+
+        .avatar-opt.selected {
+            transform: scale(1.15);
+            border-color: #f59e0b;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+        }
+    </style>
+</head>
+<body class="flex flex-col justify-between items-center select-none overflow-hidden">
+
+    <!-- 3D CANVAS CONTAINER -->
+    <div class="absolute inset-0 z-0">
+        <canvas id="canvas3d"></canvas>
+    </div>
+
+    <!-- 1. SCHERMATA REGISTRAZIONE NOME -->
+    <div id="nameScreen" class="absolute inset-0 z-30 bg-sky-400/95 backdrop-blur-md flex flex-col items-center justify-center p-4">
+        <div class="bg-white p-6 sm:p-8 rounded-3xl border-8 border-yellow-400 shadow-2xl max-w-md w-full text-center animate-bounce-slow">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-amber-500 mb-2">🚜 IL MULETTO POTITO! 🚚</h1>
+            <p class="text-xl font-bold text-slate-700 mb-4">Come ti chiami?</p>
+
+            <input type="text" id="playerNameInput" placeholder="Scrivi il tuo nome..." maxLength="12" 
+                class="w-full text-2xl font-bold text-center py-3 px-4 rounded-2xl border-4 border-sky-400 focus:outline-none focus:border-amber-400 mb-4 shadow-inner text-sky-900 placeholder-slate-300">
+
+            <!-- Avatar selection -->
+            <p class="text-lg font-bold text-slate-600 mb-2">Scegli il tuo Avatar:</p>
+            <div class="flex justify-center gap-3 mb-6">
+                <button onclick="selectAvatar('🐻')" class="avatar-opt selected text-4xl p-2 bg-amber-100 rounded-2xl border-4 border-transparent">🐻</button>
+                <button onclick="selectAvatar('🦁')" class="avatar-opt text-4xl p-2 bg-amber-100 rounded-2xl border-4 border-transparent">🦁</button>
+                <button onclick="selectAvatar('🐰')" class="avatar-opt text-4xl p-2 bg-amber-100 rounded-2xl border-4 border-transparent">🐰</button>
+                <button onclick="selectAvatar('🤖')" class="avatar-opt text-4xl p-2 bg-amber-100 rounded-2xl border-4 border-transparent">🤖</button>
+                <button onclick="selectAvatar('🦄')" class="avatar-opt text-4xl p-2 bg-amber-100 rounded-2xl border-4 border-transparent">🦄</button>
+            </div>
+
+            <button onclick="confirmPlayerName()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-white text-2xl font-bold py-4 rounded-2xl border-b-8 border-emerald-700 shadow-lg active:scale-95 transition">
+                GIOCA ORA! 🚀
+            </button>
+        </div>
+    </div>
+
+    <!-- 2. SCHERMATA SELEZIONE LIVELLI E MODALITÀ -->
+    <div id="levelScreen" class="absolute inset-0 z-30 bg-sky-400/95 backdrop-blur-md hidden flex flex-col items-center justify-center p-4">
+        <div class="bg-white p-6 sm:p-8 rounded-3xl border-8 border-amber-400 shadow-2xl max-w-xl w-full text-center">
+
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-2">
+                    <span id="playerAvatarDisplay" class="text-4xl">🐻</span>
+                    <span id="welcomePlayerName" class="text-2xl font-bold text-sky-900">Ciao!</span>
+                </div>
+                <button onclick="showNameScreen()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-xl border-2 border-slate-300 text-sm">
+                    ✏️ Cambia Nome
+                </button>
+            </div>
+
+            <h2 class="text-3xl font-extrabold text-amber-500 mb-4">SCEGLI IL LIVELLO</h2>
+
+            <!-- Level buttons (1 to 5) -->
+            <div class="grid grid-cols-5 gap-2 sm:gap-3 mb-6">
+                <button onclick="selectLevel(1)" class="level-btn bg-emerald-400 hover:bg-emerald-300 text-white p-3 sm:p-4 rounded-2xl border-b-4 border-emerald-600 shadow-lg active:scale-95 transition flex flex-col items-center">
+                    <span class="text-2xl sm:text-3xl font-black">1</span>
+                    <span class="text-xs font-bold mt-1">1 Pacco</span>
+                </button>
+                <button onclick="selectLevel(2)" class="level-btn bg-sky-400 hover:bg-sky-300 text-white p-3 sm:p-4 rounded-2xl border-b-4 border-sky-600 shadow-lg active:scale-95 transition flex flex-col items-center">
+                    <span class="text-2xl sm:text-3xl font-black">2</span>
+                    <span class="text-xs font-bold mt-1">2 Pacchi</span>
+                </button>
+                <button onclick="selectLevel(3)" class="level-btn bg-amber-400 hover:bg-amber-300 text-amber-950 p-3 sm:p-4 rounded-2xl border-b-4 border-amber-600 shadow-lg active:scale-95 transition flex flex-col items-center">
+                    <span class="text-2xl sm:text-3xl font-black">3</span>
+                    <span class="text-xs font-bold mt-1">3 Pacchi</span>
+                </button>
+                <button onclick="selectLevel(4)" class="level-btn bg-purple-400 hover:bg-purple-300 text-white p-3 sm:p-4 rounded-2xl border-b-4 border-purple-600 shadow-lg active:scale-95 transition flex flex-col items-center">
+                    <span class="text-2xl sm:text-3xl font-black">4</span>
+                    <span class="text-xs font-bold mt-1">4 Pacchi</span>
+                </button>
+                <button onclick="selectLevel(5)" class="level-btn bg-rose-400 hover:bg-rose-300 text-white p-3 sm:p-4 rounded-2xl border-b-4 border-rose-600 shadow-lg active:scale-95 transition flex flex-col items-center">
+                    <span class="text-2xl sm:text-3xl font-black">5</span>
+                    <span class="text-xs font-bold mt-1">5 Pacchi</span>
+                </button>
+            </div>
+
+            <!-- Game Mode Toggle (Normal vs Timed) -->
+            <div class="bg-amber-50 p-4 rounded-2xl border-2 border-amber-200 mb-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <span class="text-lg font-bold text-amber-900">Modalità di Gioco:</span>
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button id="modeNormalBtn" onclick="setGameMode(false)" class="flex-1 sm:flex-none px-4 py-2 rounded-xl font-bold bg-emerald-500 text-white border-2 border-emerald-600 shadow-md">
+                        🌈 Normale (Senza fretta)
+                    </button>
+                    <button id="modeTimedBtn" onclick="setGameMode(true)" class="flex-1 sm:flex-none px-4 py-2 rounded-xl font-bold bg-slate-200 text-slate-700 border-2 border-slate-300">
+                        ⏱️ Sfida a Tempo
+                    </button>
+                </div>
+            </div>
+
+            <button onclick="startSelectedGame()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-white text-2xl font-bold py-4 rounded-2xl border-b-8 border-emerald-700 shadow-lg active:scale-95 transition">
+                INIZIA PARTITA! 🚜
+            </button>
+        </div>
+    </div>
+
+    <!-- GAME TOP HEADER OVERLAY -->
+    <header class="absolute top-0 left-0 right-0 w-full px-4 pt-3 pb-2 flex justify-between items-center z-20 pointer-events-none bg-gradient-to-b from-black/20 to-transparent">
+
+        <!-- Left group: Sound + Home/Level Select -->
+        <div class="flex items-center gap-2 sm:gap-3 pointer-events-auto">
+            <button id="soundToggleBtn" onclick="toggleAudio()" class="bg-amber-400 hover:bg-amber-300 text-amber-950 font-bold p-3 rounded-2xl border-4 border-amber-500 shadow-lg flex items-center justify-center text-lg active:scale-95 transition">
+                <i id="soundIcon" class="fas fa-volume-up text-xl sm:text-2xl"></i>
+            </button>
+
+            <button onclick="goToLevelSelect()" class="bg-sky-500 hover:bg-sky-400 text-white font-bold px-3 py-2.5 rounded-2xl border-4 border-sky-600 shadow-lg flex items-center gap-2 text-base sm:text-lg active:scale-95 transition">
+                <i class="fas fa-th-large"></i>
+                <span class="hidden sm:inline">Scegli Livello</span>
+            </button>
+        </div>
+
+        <!-- Banner Prompt for Kids -->
+        <div id="instructionBanner" class="bg-white/95 backdrop-blur-sm px-4 sm:px-6 py-2 rounded-full border-4 border-sky-400 shadow-xl text-center flex items-center gap-2 sm:gap-3 animate-bounce-slow max-w-md pointer-events-auto">
+            <span id="targetColorBadge" class="w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-white shadow-md bg-red-500 inline-block"></span>
+            <span id="instructionText" class="text-lg sm:text-2xl font-bold text-sky-900">
+                Forza Campione!
+            </span>
+        </div>
+
+        <!-- Right group: Score & Timer -->
+        <div class="flex items-center gap-2 sm:gap-3 pointer-events-auto">
+            <div id="timerDisplay" class="hidden bg-amber-400/95 backdrop-blur-sm px-3 py-1.5 rounded-2xl border-4 border-amber-500 shadow-lg flex items-center gap-1.5 text-amber-950 font-bold text-xl">
+                <i class="fas fa-clock text-amber-950 animate-pulse"></i>
+                <span id="timerText">60</span>s
+            </div>
+
+            <div class="bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-2xl border-4 border-amber-400 shadow-lg flex items-center gap-2">
+                <i class="fas fa-star text-amber-400 text-2xl sm:text-3xl animate-bounce"></i>
+                <span id="scoreText" class="text-2xl sm:text-3xl font-bold text-slate-800">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- VICTORY OVERLAY BANNER -->
+    <div id="victoryOverlay" class="absolute inset-0 bg-black/40 backdrop-blur-md hidden flex flex-col justify-center items-center gap-4 z-20 pointer-events-auto">
+        <div class="bg-white p-6 sm:p-8 rounded-3xl border-8 border-yellow-400 text-center shadow-2xl animate-bounce-slow max-w-sm mx-4">
+            <div class="text-6xl mb-2">🎉 🚚 🌟</div>
+            <h2 id="victoryTitle" class="text-3xl sm:text-4xl font-extrabold text-amber-500 mb-2">SUPER BRAVO!</h2>
+            <p id="victorySubtitle" class="text-xl font-bold text-slate-700 mb-6">Hai caricato tutti i pacchi!</p>
+            <div class="flex flex-col gap-3">
+                <button onclick="nextLevel()" class="bg-emerald-500 hover:bg-emerald-400 text-white text-xl font-bold py-3 rounded-2xl border-b-6 border-emerald-700 shadow-lg active:scale-95 transition">
+                    PROSSIMO LIVELLO 🚀
+                </button>
+                <button onclick="goToLevelSelect()" class="bg-sky-500 hover:bg-sky-400 text-white text-lg font-bold py-2.5 rounded-2xl border-b-4 border-sky-700 shadow-lg active:scale-95 transition">
+                    SCEGLI LIVELLO 🎯
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TIME OUT OVERLAY BANNER -->
+    <div id="timeOutOverlay" class="absolute inset-0 bg-black/40 backdrop-blur-md hidden flex flex-col justify-center items-center gap-4 z-20 pointer-events-auto">
+        <div class="bg-white p-6 sm:p-8 rounded-3xl border-8 border-rose-400 text-center shadow-2xl max-w-sm mx-4">
+            <div class="text-6xl mb-2">⏰ 🚛 💨</div>
+            <h2 class="text-3xl font-extrabold text-rose-500 mb-2">TEMPO SCADUTO!</h2>
+            <p class="text-lg font-bold text-slate-700 mb-6">Ci sei quasi riuscito! Vuoi riprovare?</p>
+            <div class="flex flex-col gap-3">
+                <button onclick="startSelectedGame()" class="bg-emerald-500 hover:bg-emerald-400 text-white text-xl font-bold py-3 rounded-2xl border-b-6 border-emerald-700 shadow-lg active:scale-95 transition">
+                    RIPROVA ORA! 🔄
+                </button>
+                <button onclick="goToLevelSelect()" class="bg-sky-500 hover:bg-sky-400 text-white text-lg font-bold py-2.5 rounded-2xl border-b-4 border-sky-700 shadow-lg active:scale-95 transition">
+                    SCEGLI LIVELLO 🎯
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOUCH CONTROLS (Spostati ancora più in basso con pb-2 e absolute bottom-0) -->
+    <footer class="absolute bottom-0 left-0 right-0 w-full max-w-4xl mx-auto px-4 pb-4 sm:pb-6 pt-1 z-20 pointer-events-none">
+        <div class="grid grid-cols-3 gap-2 md:gap-4 items-center max-w-md mx-auto sm:max-w-xl pointer-events-auto">
+
+            <!-- Steering Controls (Left/Right) -->
+            <div class="flex justify-center gap-3">
+                <button id="btnLeft" class="control-btn w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex justify-center items-center text-3xl text-slate-700 active:bg-sky-100">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <button id="btnRight" class="control-btn w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex justify-center items-center text-3xl text-slate-700 active:bg-sky-100">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Fork Lift Action Button (Center) -->
+            <div class="flex justify-center">
+                <button id="btnFork" onclick="toggleForkAction()" class="action-btn w-20 h-20 sm:w-24 sm:h-24 rounded-3xl flex flex-col justify-center items-center text-white text-3xl active:scale-95 transition border-4 border-green-300">
+                    <i id="forkBtnIcon" class="fas fa-angles-up"></i>
+                    <span id="forkBtnText" class="text-xs font-extrabold mt-1 uppercase">ALZA</span>
+                </button>
+            </div>
+
+            <!-- Drive Controls (Forward/Backward) -->
+            <div class="flex justify-center gap-3">
+                <button id="btnUp" class="control-btn w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex justify-center items-center text-3xl text-emerald-600 active:bg-emerald-50">
+                    <i class="fas fa-arrow-up"></i>
+                </button>
+                <button id="btnDown" class="control-btn w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex justify-center items-center text-3xl text-amber-600 active:bg-amber-50">
+                    <i class="fas fa-arrow-down"></i>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- GAME CODE -->
+    <script>
+        // --- WEB AUDIO API SOUND SYSTEM ---
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+                this.engineOsc = null;
+                this.engineGain = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                    this.startEngineSound();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            startEngineSound() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    this.engineOsc = this.ctx.createOscillator();
+                    this.engineGain = this.ctx.createGain();
+
+                    this.engineOsc.type = 'sawtooth';
+                    this.engineOsc.frequency.setValueAtTime(50, this.ctx.currentTime);
+
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(180, this.ctx.currentTime);
+
+                    this.engineGain.gain.setValueAtTime(0.025, this.ctx.currentTime);
+
+                    this.engineOsc.connect(filter);
+                    filter.connect(this.engineGain);
+                    this.engineGain.connect(this.ctx.destination);
+
+                    this.engineOsc.start();
+                } catch (e) {}
+            }
+
+            setEngineSpeed(moving) {
+                if (!this.ctx || this.muted || !this.engineOsc) return;
+                const now = this.ctx.currentTime;
+                if (moving) {
+                    this.engineOsc.frequency.setTargetAtTime(95, now, 0.1);
+                    this.engineGain.gain.setTargetAtTime(0.06, now, 0.1);
+                } else {
+                    this.engineOsc.frequency.setTargetAtTime(50, now, 0.1);
+                    this.engineGain.gain.setTargetAtTime(0.025, now, 0.1);
+                }
+            }
+
+            playBeep() {
+                if (this.muted || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(850, now);
+
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.12);
+            }
+
+            playForkSound(lifting) {
+                if (this.muted || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'triangle';
+                const startFreq = lifting ? 220 : 400;
+                const endFreq = lifting ? 450 : 200;
+
+                osc.frequency.setValueAtTime(startFreq, now);
+                osc.frequency.linearRampToValueAtTime(endFreq, now + 0.35);
+
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.35);
+            }
+
+            playPickup() {
+                if (this.muted || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(320, now);
+                osc.frequency.exponentialRampToValueAtTime(750, now + 0.14);
+
+                gain.gain.setValueAtTime(0.18, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.14);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.14);
+            }
+
+            playSuccess() {
+                if (this.muted || !this.ctx) return;
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const now = this.ctx.currentTime + idx * 0.09;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now);
+
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                });
+            }
+
+            playLevelWin() {
+                if (this.muted || !this.ctx) return;
+                const notes = [392, 523, 659, 783, 1046];
+                notes.forEach((freq, idx) => {
+                    const now = this.ctx.currentTime + idx * 0.12;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now);
+
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.45);
+                });
+            }
+        }
+
+        const soundFX = new SoundFX();
+
+        function toggleAudio() {
+            soundFX.muted = !soundFX.muted;
+            const icon = document.getElementById('soundIcon');
+            const btn = document.getElementById('soundToggleBtn');
+            if (soundFX.muted) {
+                icon.className = "fas fa-volume-mute text-xl sm:text-2xl text-rose-700";
+                btn.className = "bg-slate-300 text-slate-600 font-bold p-3 rounded-2xl border-4 border-slate-400 shadow-lg flex items-center justify-center text-lg";
+                if (soundFX.engineGain) soundFX.engineGain.gain.setValueAtTime(0, soundFX.ctx.currentTime);
+            } else {
+                icon.className = "fas fa-volume-up text-xl sm:text-2xl";
+                btn.className = "bg-amber-400 hover:bg-amber-300 text-amber-950 font-bold p-3 rounded-2xl border-4 border-amber-500 shadow-lg flex items-center justify-center text-lg";
+                if (soundFX.ctx) soundFX.init();
+            }
+        }
+
+        // --- PALLET COLOR DEFINITIONS ---
+        const PALLET_COLORS = [
+            { id: 'red', name: 'ROSSO', hex: 0xef4444, cssHex: '#ef4444' },
+            { id: 'blue', name: 'BLU', hex: 0x3b82f6, cssHex: '#3b82f6' },
+            { id: 'green', name: 'VERDE', hex: 0x22c55e, cssHex: '#22c55e' },
+            { id: 'yellow', name: 'GIALLO', hex: 0xeab308, cssHex: '#eab308' },
+            { id: 'purple', name: 'VIOLA', hex: 0xa855f7, cssHex: '#a855f7' }
+        ];
+
+        // --- GAME PLAYER STATE & CONFIG ---
+        let playerName = "Campione";
+        let playerAvatar = "🐻";
+        let selectedLevel = 1;
+        let isTimedMode = false;
+        let timerSeconds = 60;
+        let timerInterval = null;
+
+        // --- THREE.JS SCENE VARIABLES ---
+        let scene, camera, renderer;
+        let forkliftGroup, forkCarriage, steeringWheels = [];
+        let pallets = [], trucks = [], environmentDecorations = [];
+        let targetHighlightMesh = null;
+        let guideArrowMesh = null;
+
+        let score = 0;
+        let keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+        let touchState = { up: false, down: false, left: false, right: false };
+
+        let forkliftState = {
+            x: -8,
+            z: 0,
+            angle: 0,
+            speed: 0,
+            maxSpeed: 0.16,
+            acceleration: 0.008,
+            friction: 0.92,
+            steeringAngle: 0,
+            maxSteering: 0.04,
+            forkLifted: false,
+            forkHeight: 0,
+            loadedPallet: null
+        };
+
+        let currentTargetColor = null;
+        let backupBeepTimer = 0;
+
+        // --- PLAYER REGISTRATION & NAVIGATION LOGIC ---
+        function selectAvatar(avatar) {
+            playerAvatar = avatar;
+            document.querySelectorAll('.avatar-opt').forEach(btn => {
+                btn.classList.remove('selected');
+                if (btn.innerText === avatar) btn.classList.add('selected');
+            });
+        }
+
+        function confirmPlayerName() {
+            const input = document.getElementById('playerNameInput');
+            const val = input.value.trim();
+            if (val.length > 0) {
+                playerName = val;
+            } else {
+                playerName = "Campione";
+            }
+            document.getElementById('nameScreen').classList.add('hidden');
+            document.getElementById('levelScreen').classList.remove('hidden');
+            document.getElementById('welcomePlayerName').innerText = `Ciao ${playerName}!`;
+            document.getElementById('playerAvatarDisplay').innerText = playerAvatar;
+        }
+
+        function showNameScreen() {
+            document.getElementById('levelScreen').classList.add('hidden');
+            document.getElementById('nameScreen').classList.remove('hidden');
+        }
+
+        function selectLevel(lvl) {
+            selectedLevel = lvl;
+            document.querySelectorAll('.level-btn').forEach((btn, idx) => {
+                if (idx + 1 === lvl) {
+                    btn.classList.add('ring-4', 'ring-amber-300', 'scale-105');
+                } else {
+                    btn.classList.remove('ring-4', 'ring-amber-300', 'scale-105');
+                }
+            });
+        }
+
+        function setGameMode(timed) {
+            isTimedMode = timed;
+            const btnNorm = document.getElementById('modeNormalBtn');
+            const btnTimed = document.getElementById('modeTimedBtn');
+
+            if (timed) {
+                btnTimed.className = "flex-1 sm:flex-none px-4 py-2 rounded-xl font-bold bg-amber-500 text-white border-2 border-amber-600 shadow-md";
+                btnNorm.className = "flex-1 sm:flex-none px-4 py-2 rounded-xl font-bold bg-slate-200 text-slate-700 border-2 border-slate-300";
+            } else {
+                btnNorm.className = "flex-1 sm:flex-none px-4 py-2 rounded-xl font-bold bg-emerald-500 text-white border-2 border-emerald-600 shadow-md";
+                btnTimed.className = "flex-1 sm:flex-none px-4 py-2 rounded-xl font-bold bg-slate-200 text-slate-700 border-2 border-slate-300";
+            }
+        }
+
+        function goToLevelSelect() {
+            clearInterval(timerInterval);
+            document.getElementById('victoryOverlay').classList.add('hidden');
+            document.getElementById('timeOutOverlay').classList.add('hidden');
+            document.getElementById('levelScreen').classList.remove('hidden');
+        }
+
+        function startSelectedGame() {
+            document.getElementById('levelScreen').classList.add('hidden');
+            document.getElementById('victoryOverlay').classList.add('hidden');
+            document.getElementById('timeOutOverlay').classList.add('hidden');
+            initGame();
+        }
+
+        // --- THREE.JS SCENE SETUP ---
+        function init3D() {
+            const container = document.getElementById('canvas3d');
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x7dd3fc);
+            scene.fog = new THREE.FogExp2(0x7dd3fc, 0.012);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+            renderer = new THREE.WebGLRenderer({ canvas: container, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            sunLight.position.set(20, 40, 20);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            const d = 30;
+            sunLight.shadow.camera.left = -d;
+            sunLight.shadow.camera.right = d;
+            sunLight.shadow.camera.top = d;
+            sunLight.shadow.camera.bottom = -d;
+            scene.add(sunLight);
+
+            // Target Ring Mesh
+            const ringGeo = new THREE.RingGeometry(1.2, 1.6, 32);
+            ringGeo.rotateX(-Math.PI / 2);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0xffb703, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+            targetHighlightMesh = new THREE.Mesh(ringGeo, ringMat);
+            targetHighlightMesh.position.y = 0.05;
+            scene.add(targetHighlightMesh);
+
+            // Helper Guide Arrow Mesh (Level 1 visual aid)
+            const arrowShape = new THREE.Shape();
+            arrowShape.moveTo(0, 1.5);
+            arrowShape.lineTo(1, 0);
+            arrowShape.lineTo(0.4, 0);
+            arrowShape.lineTo(0.4, -1.5);
+            arrowShape.lineTo(-0.4, -1.5);
+            arrowShape.lineTo(-0.4, 0);
+            arrowShape.lineTo(-1, 0);
+            arrowShape.closePath();
+            const arrowGeo = new THREE.ShapeGeometry(arrowShape);
+            arrowGeo.rotateX(-Math.PI / 2);
+            const arrowMat = new THREE.MeshBasicMaterial({ color: 0x22c55e, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
+            guideArrowMesh = new THREE.Mesh(arrowGeo, arrowMat);
+            guideArrowMesh.position.y = 2.5;
+            scene.add(guideArrowMesh);
+
+            createEnvironment();
+            createForkliftModel();
+
+            window.addEventListener('resize', onWindowResize);
+            selectLevel(1);
+        }
+
+        // --- PROCEDURAL 3D MODELS ---
+        function createEnvironment() {
+            const groundGeo = new THREE.PlaneGeometry(100, 100);
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x86efac, roughness: 0.8 });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            const padGeo = new THREE.BoxGeometry(45, 0.2, 35);
+            const padMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.5 });
+            const pad = new THREE.Mesh(padGeo, padMat);
+            pad.position.set(0, 0, 0);
+            pad.receiveShadow = true;
+            scene.add(pad);
+
+            const gridHelper = new THREE.GridHelper(45, 18, 0xcbd5e1, 0x94a3b8);
+            gridHelper.position.y = 0.11;
+            scene.add(gridHelper);
+
+            for (let i = 0; i < 12; i++) {
+                const cloud = createCloud();
+                cloud.position.set((Math.random() - 0.5) * 80, 18 + Math.random() * 8, (Math.random() - 0.5) * 80);
+                scene.add(cloud);
+            }
+
+            for (let i = 0; i < 16; i++) {
+                const tree = createToyTree();
+                const angle = (i / 16) * Math.PI * 2;
+                const radius = 24 + Math.random() * 10;
+                tree.position.set(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+                scene.add(tree);
+            }
+        }
+
+        function createCloud() {
+            const group = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, flatShading: true });
+            const p1 = new THREE.Mesh(new THREE.DodecahedronGeometry(2.5), mat);
+            const p2 = new THREE.Mesh(new THREE.DodecahedronGeometry(1.8), mat);
+            p2.position.set(2, -0.3, 0);
+            const p3 = new THREE.Mesh(new THREE.DodecahedronGeometry(1.8), mat);
+            p3.position.set(-2, -0.3, 0);
+            group.add(p1, p2, p3);
+            return group;
+        }
+
+        function createToyTree() {
+            const group = new THREE.Group();
+            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x854d0e, roughness: 0.9 });
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.6, 2.5, 8), trunkMat);
+            trunk.position.y = 1.25;
+            trunk.castShadow = true;
+            group.add(trunk);
+
+            const leavesMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.6, flatShading: true });
+            const c1 = new THREE.Mesh(new THREE.ConeGeometry(2.2, 3, 8), leavesMat);
+            c1.position.y = 3;
+            c1.castShadow = true;
+            const c2 = new THREE.Mesh(new THREE.ConeGeometry(1.6, 2.5, 8), leavesMat);
+            c2.position.y = 4.2;
+            c2.castShadow = true;
+            group.add(c1, c2);
+
+            return group;
+        }
+
+        function createForkliftModel() {
+            forkliftGroup = new THREE.Group();
+
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.3 });
+            const darkMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.7 });
+            const metalMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.6, roughness: 0.3 });
+
+            const bodyGeo = new THREE.BoxGeometry(2.2, 1.2, 1.6);
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.set(-0.2, 0.9, 0);
+            body.castShadow = true;
+            forkliftGroup.add(body);
+
+            const weightGeo = new THREE.BoxGeometry(0.8, 0.9, 1.55);
+            const weight = new THREE.Mesh(weightGeo, darkMat);
+            weight.position.set(-1.3, 0.75, 0);
+            weight.castShadow = true;
+            forkliftGroup.add(weight);
+
+            const roofPillarGeo = new THREE.CylinderGeometry(0.06, 0.06, 1.4);
+            const p1 = new THREE.Mesh(roofPillarGeo, darkMat); p1.position.set(-0.9, 1.8, 0.65);
+            const p2 = new THREE.Mesh(roofPillarGeo, darkMat); p2.position.set(-0.9, 1.8, -0.65);
+            const p3 = new THREE.Mesh(roofPillarGeo, darkMat); p3.position.set(0.6, 1.8, 0.65);
+            const p4 = new THREE.Mesh(roofPillarGeo, darkMat); p4.position.set(0.6, 1.8, -0.65);
+            const roofTop = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.1, 1.4), bodyMat);
+            roofTop.position.set(-0.15, 2.5, 0);
+            forkliftGroup.add(p1, p2, p3, p4, roofTop);
+
+            // Googly Eyes
+            const eyeWhiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const eyeBlackMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+
+            const eye1 = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), eyeWhiteMat);
+            eye1.position.set(0.9, 1.3, 0.35);
+            const pupil1 = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), eyeBlackMat);
+            pupil1.position.set(1.05, 1.3, 0.35);
+
+            const eye2 = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), eyeWhiteMat);
+            eye2.position.set(0.9, 1.3, -0.35);
+            const pupil2 = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), eyeBlackMat);
+            pupil2.position.set(1.05, 1.3, -0.35);
+
+            forkliftGroup.add(eye1, pupil1, eye2, pupil2);
+
+            const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.25, 12), new THREE.MeshBasicMaterial({ color: 0xef4444 }));
+            beacon.position.set(-0.8, 2.65, 0);
+            forkliftGroup.add(beacon);
+
+            // Wheels
+            const wheelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.35, 24);
+            wheelGeo.rotateX(Math.PI / 2);
+
+            const w1 = new THREE.Mesh(wheelGeo, darkMat); w1.position.set(0.6, 0.45, 0.95); w1.castShadow = true;
+            const w2 = new THREE.Mesh(wheelGeo, darkMat); w2.position.set(0.6, 0.45, -0.95); w2.castShadow = true;
+            const w3 = new THREE.Mesh(wheelGeo, darkMat); w3.position.set(-0.8, 0.45, 0.95); w3.castShadow = true;
+            const w4 = new THREE.Mesh(wheelGeo, darkMat); w4.position.set(-0.8, 0.45, -0.95); w4.castShadow = true;
+
+            forkliftGroup.add(w1, w2, w3, w4);
+            steeringWheels = [w3, w4];
+
+            // Mast
+            const mastGeo = new THREE.BoxGeometry(0.12, 2.6, 0.12);
+            const mastLeft = new THREE.Mesh(mastGeo, metalMat); mastLeft.position.set(0.95, 1.3, 0.45);
+            const mastRight = new THREE.Mesh(mastGeo, metalMat); mastRight.position.set(0.95, 1.3, -0.45);
+            forkliftGroup.add(mastLeft, mastRight);
+
+            // Fork Carriage
+            forkCarriage = new THREE.Group();
+            forkCarriage.position.set(1.0, 0.3, 0);
+
+            const crossBar = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 1.1), metalMat);
+            crossBar.position.set(0, 0.2, 0);
+
+            const prong1 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.08, 0.16), metalMat); prong1.position.set(0.5, 0.04, 0.3); prong1.castShadow = true;
+            const prong2 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.08, 0.16), metalMat); prong2.position.set(0.5, 0.04, -0.3); prong2.castShadow = true;
+
+            forkCarriage.add(crossBar, prong1, prong2);
+            forkliftGroup.add(forkCarriage);
+
+            scene.add(forkliftGroup);
+        }
+
+        function createPalletMesh(colorObj) {
+            const group = new THREE.Group();
+            const woodMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.8 });
+            const boardGeo = new THREE.BoxGeometry(1.6, 0.08, 1.6);
+
+            const pTop = new THREE.Mesh(boardGeo, woodMat); pTop.position.y = 0.22; pTop.castShadow = true;
+            const pBot = new THREE.Mesh(boardGeo, woodMat); pBot.position.y = 0.04; pBot.castShadow = true;
+
+            const blockGeo = new THREE.BoxGeometry(0.2, 0.14, 1.6);
+            const b1 = new THREE.Mesh(blockGeo, woodMat); b1.position.set(0.65, 0.13, 0);
+            const b2 = new THREE.Mesh(blockGeo, woodMat); b2.position.set(-0.65, 0.13, 0);
+            const b3 = new THREE.Mesh(blockGeo, woodMat); b3.position.set(0, 0.13, 0);
+
+            group.add(pTop, pBot, b1, b2, b3);
+
+            const boxMat = new THREE.MeshStandardMaterial({ color: colorObj.hex, roughness: 0.4 });
+            const box = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), boxMat);
+            box.position.y = 0.86;
+            box.castShadow = true;
+            group.add(box);
+
+            const ribbonMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
+            const r1 = new THREE.Mesh(new THREE.BoxGeometry(1.22, 1.22, 0.2), ribbonMat); r1.position.y = 0.86;
+            const r2 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.22, 1.22), ribbonMat); r2.position.y = 0.86;
+            group.add(r1, r2);
+
+            return group;
+        }
+
+        function createTruckMesh(colorObj) {
+            const group = new THREE.Group();
+            const truckMat = new THREE.MeshStandardMaterial({ color: colorObj.hex, roughness: 0.4 });
+            const darkMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8 });
+            const glassMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.1 });
+
+            const bed = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.2, 2.2), truckMat);
+            bed.position.set(-0.4, 0.5, 0);
+            bed.castShadow = true;
+            group.add(bed);
+
+            const wallLeft = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.8, 0.15), truckMat); wallLeft.position.set(-0.4, 1.0, 1.025);
+            const wallRight = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.8, 0.15), truckMat); wallRight.position.set(-0.4, 1.0, -1.025);
+            const wallFront = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.8, 2.2), truckMat); wallFront.position.set(-1.525, 1.0, 0);
+            group.add(wallLeft, wallRight, wallFront);
+
+            const cab = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.6, 2.1), truckMat);
+            cab.position.set(1.4, 1.2, 0);
+            cab.castShadow = true;
+
+            const glass = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.8, 1.8), glassMat);
+            glass.position.set(2.06, 1.4, 0);
+            group.add(cab, glass);
+
+            const wheelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.35, 20);
+            wheelGeo.rotateX(Math.PI / 2);
+
+            const w1 = new THREE.Mesh(wheelGeo, darkMat); w1.position.set(1.3, 0.45, 1.15);
+            const w2 = new THREE.Mesh(wheelGeo, darkMat); w2.position.set(1.3, 0.45, -1.15);
+            const w3 = new THREE.Mesh(wheelGeo, darkMat); w3.position.set(-1.0, 0.45, 1.15);
+            const w4 = new THREE.Mesh(wheelGeo, darkMat); w4.position.set(-1.0, 0.45, -1.15);
+            group.add(w1, w2, w3, w4);
+
+            return group;
+        }
+
+        // --- GAME LOOP & LOGIC ---
+        function initGame() {
+            soundFX.init();
+            score = 0;
+            document.getElementById('scoreText').innerText = score;
+            startNewLevel();
+        }
+
+        function startNewLevel() {
+            document.getElementById('victoryOverlay').classList.add('hidden');
+            document.getElementById('timeOutOverlay').classList.add('hidden');
+
+            forkliftState.x = -8;
+            forkliftState.z = 0;
+            forkliftState.angle = 0;
+            forkliftState.speed = 0;
+            forkliftState.forkLifted = false;
+            forkliftState.forkHeight = 0;
+            forkliftState.loadedPallet = null;
+
+            updateForkliftMeshPosition();
+            updateForkButtonUI();
+
+            pallets.forEach(p => scene.remove(p.mesh));
+            trucks.forEach(t => scene.remove(t.mesh));
+            pallets = [];
+            trucks = [];
+
+            // Spawn number of pallets based on selected level (Level 1 = 1, Level 5 = 5)
+            const count = selectedLevel;
+            const shuffled = [...PALLET_COLORS].sort(() => 0.5 - Math.random());
+            const activeColors = shuffled.slice(0, count);
+
+            activeColors.forEach((color, i) => {
+                const pMesh = createPalletMesh(color);
+                const px = -2 + Math.random() * 3;
+                const pz = -10 + (i * (20 / Math.max(count, 2))) + (Math.random() * 2 - 1);
+
+                pMesh.position.set(px, 0, pz);
+                scene.add(pMesh);
+
+                pallets.push({
+                    color: color,
+                    mesh: pMesh,
+                    x: px,
+                    z: pz,
+                    delivered: false
+                });
+            });
+
+            const truckX = 14;
+            activeColors.forEach((color, i) => {
+                const tMesh = createTruckMesh(color);
+                const tz = -10 + (i * (20 / Math.max(count, 2)));
+                tMesh.position.set(truckX, 0, tz);
+                scene.add(tMesh);
+
+                trucks.push({
+                    color: color,
+                    mesh: tMesh,
+                    x: truckX,
+                    z: tz,
+                    loaded: false
+                });
+            });
+
+            // Timed Mode Timer setup
+            clearInterval(timerInterval);
+            const timerDisplay = document.getElementById('timerDisplay');
+            if (isTimedMode) {
+                timerSeconds = 30 + (selectedLevel * 15); // e.g. Level 1 = 45s, Level 5 = 105s
+                document.getElementById('timerText').innerText = timerSeconds;
+                timerDisplay.classList.remove('hidden');
+
+                timerInterval = setInterval(() => {
+                    timerSeconds--;
+                    document.getElementById('timerText').innerText = timerSeconds;
+                    if (timerSeconds <= 0) {
+                        clearInterval(timerInterval);
+                        triggerTimeOut();
+                    }
+                }, 1000);
+            } else {
+                timerDisplay.classList.add('hidden');
+            }
+
+            pickNextTarget();
+        }
+
+        function pickNextTarget() {
+            const remaining = pallets.filter(p => !p.delivered);
+            if (remaining.length > 0) {
+                if (forkliftState.loadedPallet) {
+                    currentTargetColor = forkliftState.loadedPallet.color;
+                    updateInstructionBanner(`Porta il pacco al camion ${currentTargetColor.name}!`);
+                } else {
+                    currentTargetColor = remaining[0].color;
+                    updateInstructionBanner(`Dai ${playerName}, carica il pacco ${currentTargetColor.name}!`);
+                }
+            } else {
+                triggerLevelWin();
+            }
+        }
+
+        function updateInstructionBanner(text) {
+            document.getElementById('instructionText').innerText = text;
+            document.getElementById('targetColorBadge').style.backgroundColor = currentTargetColor ? currentTargetColor.cssHex : '#ffffff';
+        }
+
+        // --- CONTROLS SETUP ---
+        window.addEventListener('keydown', (e) => {
+            soundFX.init();
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') keys.ArrowUp = true;
+            if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') keys.ArrowDown = true;
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.ArrowLeft = true;
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.ArrowRight = true;
+            if (e.key === ' ' || e.key === 'Enter') {
+                toggleForkAction();
+                e.preventDefault();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') keys.ArrowUp = false;
+            if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') keys.ArrowDown = false;
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.ArrowLeft = false;
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.ArrowRight = false;
+        });
+
+        function setupTouchBtn(btnId, stateKey) {
+            const btn = document.getElementById(btnId);
+            const start = (e) => {
+                e.preventDefault();
+                soundFX.init();
+                touchState[stateKey] = true;
+                btn.classList.add('active');
+            };
+            const end = (e) => {
+                e.preventDefault();
+                touchState[stateKey] = false;
+                btn.classList.remove('active');
+            };
+            btn.addEventListener('touchstart', start);
+            btn.addEventListener('touchend', end);
+            btn.addEventListener('mousedown', start);
+            btn.addEventListener('mouseup', end);
+            btn.addEventListener('mouseleave', end);
+        }
+
+        setupTouchBtn('btnUp', 'up');
+        setupTouchBtn('btnDown', 'down');
+        setupTouchBtn('btnLeft', 'left');
+        setupTouchBtn('btnRight', 'right');
+
+        function toggleForkAction() {
+            soundFX.init();
+            forkliftState.forkLifted = !forkliftState.forkLifted;
+            soundFX.playForkSound(forkliftState.forkLifted);
+            updateForkButtonUI();
+
+            if (forkliftState.forkLifted && !forkliftState.loadedPallet) {
+                tryPickUpPallet();
+            } else if (!forkliftState.forkLifted && forkliftState.loadedPallet) {
+                tryDropPallet();
+            }
+        }
+
+        function updateForkButtonUI() {
+            const icon = document.getElementById('forkBtnIcon');
+            const text = document.getElementById('forkBtnText');
+            const btn = document.getElementById('btnFork');
+
+            if (forkliftState.forkLifted) {
+                icon.className = "fas fa-angles-down";
+                text.innerText = "ABBASSA";
+                btn.className = "action-btn w-20 h-20 sm:w-24 sm:h-24 rounded-3xl flex flex-col justify-center items-center text-white text-3xl active:scale-95 transition border-4 border-amber-300 !bg-amber-500";
+            } else {
+                icon.className = "fas fa-angles-up";
+                text.innerText = "ALZA";
+                btn.className = "action-btn w-20 h-20 sm:w-24 sm:h-24 rounded-3xl flex flex-col justify-center items-center text-white text-3xl active:scale-95 transition border-4 border-green-300 !bg-emerald-500";
+            }
+        }
+
+        // --- UPDATE & PHYSICS ---
+        function updateGameLogic() {
+            const isUp = keys.ArrowUp || touchState.up;
+            const isDown = keys.ArrowDown || touchState.down;
+            const isLeft = keys.ArrowLeft || touchState.left;
+            const isRight = keys.ArrowRight || touchState.right;
+
+            soundFX.setEngineSpeed(isUp || isDown);
+
+            if (isUp) {
+                forkliftState.speed = Math.min(forkliftState.speed + forkliftState.acceleration, forkliftState.maxSpeed);
+            } else if (isDown) {
+                forkliftState.speed = Math.max(forkliftState.speed - forkliftState.acceleration, -forkliftState.maxSpeed * 0.6);
+                backupBeepTimer++;
+                if (backupBeepTimer % 22 === 0) soundFX.playBeep();
+            } else {
+                forkliftState.speed *= forkliftState.friction;
+                if (Math.abs(forkliftState.speed) < 0.001) forkliftState.speed = 0;
+            }
+
+            if (Math.abs(forkliftState.speed) > 0.005) {
+                const dir = forkliftState.speed > 0 ? 1 : -1;
+                if (isLeft) forkliftState.angle += forkliftState.maxSteering * dir;
+                if (isRight) forkliftState.angle -= forkliftState.maxSteering * dir;
+            }
+
+            forkliftState.x += Math.cos(forkliftState.angle) * forkliftState.speed;
+            forkliftState.z -= Math.sin(forkliftState.angle) * forkliftState.speed;
+
+            forkliftState.x = Math.max(-18, Math.min(18, forkliftState.x));
+            forkliftState.z = Math.max(-15, Math.min(15, forkliftState.z));
+
+            const targetHeight = forkliftState.forkLifted ? 1.4 : 0;
+            forkliftState.forkHeight += (targetHeight - forkliftState.forkHeight) * 0.12;
+
+            updateForkliftMeshPosition();
+
+            if (!forkliftState.loadedPallet) {
+                autoPickupCheck();
+            } else {
+                const forkDistance = 1.6;
+                const px = forkliftState.x + Math.cos(forkliftState.angle) * forkDistance;
+                const pz = forkliftState.z - Math.sin(forkliftState.angle) * forkDistance;
+                forkliftState.loadedPallet.mesh.position.set(px, forkliftState.forkHeight + 0.1, pz);
+                forkliftState.loadedPallet.mesh.rotation.y = forkliftState.angle;
+
+                checkTruckDelivery();
+            }
+
+            updateTargetHighlight();
+
+            const camOffset = new THREE.Vector3(-10, 12, 12);
+            const targetCamPos = new THREE.Vector3(
+                forkliftState.x + camOffset.x,
+                camOffset.y,
+                forkliftState.z + camOffset.z
+            );
+            camera.position.lerp(targetCamPos, 0.05);
+            camera.lookAt(forkliftState.x, 1.5, forkliftState.z);
+        }
+
+        function updateForkliftMeshPosition() {
+            forkliftGroup.position.set(forkliftState.x, 0, forkliftState.z);
+            forkliftGroup.rotation.y = forkliftState.angle;
+            forkCarriage.position.y = 0.3 + forkliftState.forkHeight;
+        }
+
+        function autoPickupCheck() {
+            pallets.forEach(pallet => {
+                if (pallet.delivered) return;
+                const dist = Math.hypot(forkliftState.x - pallet.x, forkliftState.z - pallet.z);
+                if (dist < 2.2) {
+                    forkliftState.loadedPallet = pallet;
+                    forkliftState.forkLifted = true;
+                    updateForkButtonUI();
+                    soundFX.playPickup();
+                    showFloatingText(`Bravo ${playerName}!`);
+                    pickNextTarget();
+                }
+            });
+        }
+
+        function tryPickUpPallet() {
+            if (forkliftState.loadedPallet) return;
+            pallets.forEach(pallet => {
+                if (pallet.delivered) return;
+                const dist = Math.hypot(forkliftState.x - pallet.x, forkliftState.z - pallet.z);
+                if (dist < 3.0) {
+                    forkliftState.loadedPallet = pallet;
+                    soundFX.playPickup();
+                    pickNextTarget();
+                }
+            });
+        }
+
+        function tryDropPallet() {
+            if (!forkliftState.loadedPallet) return;
+            forkliftState.loadedPallet = null;
+            soundFX.playForkSound(false);
+            pickNextTarget();
+        }
+
+        function checkTruckDelivery() {
+            if (!forkliftState.loadedPallet) return;
+
+            const pallet = forkliftState.loadedPallet;
+            trucks.forEach(truck => {
+                if (truck.color.id === pallet.color.id && !truck.loaded) {
+                    const dist = Math.hypot(pallet.mesh.position.x - truck.x, pallet.mesh.position.z - truck.z);
+                    if (dist < 3.2) {
+                        pallet.delivered = true;
+                        truck.loaded = true;
+
+                        pallet.mesh.position.set(truck.x - 0.4, 0.6, truck.z);
+                        pallet.mesh.rotation.y = 0;
+
+                        forkliftState.loadedPallet = null;
+                        score += 10;
+                        document.getElementById('scoreText').innerText = score;
+
+                        soundFX.playSuccess();
+                        showFloatingText(`Super ${playerName}! ⭐`);
+                        pickNextTarget();
+                    }
+                }
+            });
+        }
+
+        function updateTargetHighlight() {
+            if (!currentTargetColor) {
+                targetHighlightMesh.visible = false;
+                guideArrowMesh.visible = false;
+                return;
+            }
+
+            let targetX = 0, targetZ = 0;
+
+            if (!forkliftState.loadedPallet) {
+                const targetPallet = pallets.find(p => !p.delivered && p.color.id === currentTargetColor.id);
+                if (targetPallet) {
+                    targetX = targetPallet.mesh.position.x;
+                    targetZ = targetPallet.mesh.position.z;
+                    targetHighlightMesh.position.set(targetX, 0.05, targetZ);
+                    targetHighlightMesh.visible = true;
+                }
+            } else {
+                const targetTruck = trucks.find(t => t.color.id === currentTargetColor.id);
+                if (targetTruck) {
+                    targetX = targetTruck.x;
+                    targetZ = targetTruck.z;
+                    targetHighlightMesh.position.set(targetX, 0.05, targetZ);
+                    targetHighlightMesh.visible = true;
+                }
+            }
+
+            // Level 1 Visual Guide Arrow pointing directly to target
+            if (selectedLevel === 1 && targetHighlightMesh.visible) {
+                guideArrowMesh.visible = true;
+                guideArrowMesh.position.set(targetX, 2.5 + Math.sin(Date.now() * 0.005) * 0.4, targetZ);
+            } else {
+                guideArrowMesh.visible = false;
+            }
+        }
+
+        function showFloatingText(text) {
+            const banner = document.createElement('div');
+            banner.className = 'fixed font-extrabold text-3xl sm:text-4xl text-amber-400 drop-shadow-lg pointer-events-none transition-all duration-1000 transform -translate-x-1/2 -translate-y-1/2 z-30 animate-bounce text-center';
+            banner.style.left = '50%';
+            banner.style.top = '40%';
+            banner.innerText = text;
+            document.body.appendChild(banner);
+
+            setTimeout(() => {
+                banner.style.transform = 'translate(-50%, -120px) scale(1.3)';
+                banner.style.opacity = '0';
+            }, 50);
+
+            setTimeout(() => banner.remove(), 1050);
+        }
+
+        function triggerLevelWin() {
+            clearInterval(timerInterval);
+            soundFX.playLevelWin();
+            confetti({
+                particleCount: 120,
+                spread: 80,
+                origin: { y: 0.6 }
+            });
+
+            document.getElementById('victoryTitle').innerText = `SUPER ${playerName.toUpperCase()}!`;
+            document.getElementById('victoryOverlay').classList.remove('hidden');
+        }
+
+        function triggerTimeOut() {
+            document.getElementById('timeOutOverlay').classList.remove('hidden');
+        }
+
+        function nextLevel() {
+            if (selectedLevel < 5) {
+                selectedLevel++;
+            }
+            startSelectedGame();
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            updateGameLogic();
+            renderer.render(scene, camera);
+        }
+
+        window.onload = () => {
+            init3D();
+            animate();
+        };
+    </script>
+</body>
+</html>
