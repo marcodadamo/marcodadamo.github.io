@@ -1,0 +1,1439 @@
+```html
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>San Francesco: Il Cammino della Pace (3D Full Responsive Edition)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Three.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Quicksand:wght@400;600;700&display=swap');
+
+    * {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: 'Quicksand', sans-serif;
+      background-color: #0c0a09;
+    }
+
+    .font-cinzel {
+      font-family: 'Cinzel', serif;
+    }
+
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    /* Glassmorphism Styling */
+    .glass-panel {
+      background: rgba(24, 18, 12, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(212, 175, 55, 0.38);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.65);
+    }
+
+    .golden-text {
+      color: #fef08a;
+      text-shadow: 0 0 12px rgba(246, 224, 94, 0.6);
+    }
+
+    /* Touch Controls */
+    .touch-action-btn {
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.85) 0%, rgba(180, 83, 9, 0.95) 100%);
+      border: 2px solid rgba(254, 240, 138, 0.85);
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+    }
+    .touch-action-btn:active {
+      transform: scale(0.90);
+      background: rgba(251, 191, 36, 1);
+    }
+
+    /* Collapsible HUD Animations */
+    .collapsible-content {
+      max-height: 380px;
+      opacity: 1;
+      transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, padding 0.3s ease;
+      overflow: hidden;
+    }
+
+    .collapsible-content.collapsed {
+      max-height: 0;
+      opacity: 0;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      border: none !important;
+    }
+
+    /* Modal Animation */
+    @keyframes modalPop {
+      from { opacity: 0; transform: scale(0.92) translateY(12px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-modal {
+      animation: modalPop 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.3);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(212, 175, 55, 0.6);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="text-amber-100">
+
+  <!-- 3D Canvas -->
+  <div id="canvas-container"></div>
+
+  <!-- UI OVERLAY LAYER -->
+  <div id="ui-layer" class="relative z-10 w-full h-full pointer-events-none flex flex-col justify-between p-2 sm:p-4 lg:p-6">
+    
+    <!-- Top Bar Header (Adaptive for Mobile, Tablet, Desktop) -->
+    <div class="flex justify-between items-start w-full gap-2">
+      <!-- Title & Player Badge -->
+      <div class="glass-panel p-2.5 sm:p-4 rounded-2xl max-w-[220px] sm:max-w-xs md:max-w-md pointer-events-auto">
+        <div class="flex items-center justify-between gap-2 border-b border-amber-500/20 pb-1 mb-1">
+          <h1 class="font-cinzel text-xs sm:text-base md:text-lg font-bold golden-text truncate flex items-center gap-1.5">
+            <i class="fa-solid fa-dove text-amber-400"></i> <span id="game-title">San Francesco 3D</span>
+          </h1>
+          <span id="player-badge" class="text-[10px] sm:text-xs bg-amber-500/20 border border-amber-400/40 px-2 py-0.5 rounded-full font-semibold text-amber-200 truncate">
+            Pellegrino: -
+          </span>
+        </div>
+        <p id="level-subtitle" class="text-[11px] sm:text-xs md:text-sm text-amber-200/90 font-cinzel font-semibold truncate">
+          Livello 1: Il Cantico delle Creature
+        </p>
+      </div>
+
+      <!-- Quick Controls Menu -->
+      <div class="flex gap-1.5 sm:gap-2 pointer-events-auto">
+        <button id="level-menu-btn" title="Seleziona Livello" class="glass-panel p-2.5 sm:p-3 rounded-xl text-amber-300 hover:text-amber-100 transition flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 active:scale-95">
+          <i class="fa-solid fa-map text-base sm:text-lg"></i>
+        </button>
+        <button id="sound-btn" title="Audio" class="glass-panel p-2.5 sm:p-3 rounded-xl text-amber-300 hover:text-amber-100 transition flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 active:scale-95">
+          <i id="sound-icon" class="fa-solid fa-volume-high text-base sm:text-lg"></i>
+        </button>
+        <button id="help-btn" title="Guida" class="glass-panel p-2.5 sm:p-3 rounded-xl text-amber-300 hover:text-amber-100 transition flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 active:scale-95">
+          <i class="fa-solid fa-book-open text-base sm:text-lg"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Objective & Harmony Panel (Collapsible HUD) -->
+    <div class="absolute top-16 sm:top-20 right-2 sm:right-4 lg:right-6 pointer-events-auto max-w-[240px] sm:max-w-xs w-full">
+      <div class="glass-panel p-2.5 sm:p-4 rounded-2xl text-xs space-y-2.5 transition-all duration-300">
+        
+        <!-- Objective Header with Toggle Button -->
+        <div class="flex justify-between items-center border-b border-amber-500/30 pb-1.5">
+          <div class="flex items-center gap-1.5">
+            <i class="fa-solid fa-scroll text-amber-400 text-xs sm:text-sm"></i>
+            <span class="font-cinzel font-bold text-amber-200 text-[11px] sm:text-xs md:text-sm tracking-wide">OBIETTIVI DI PACE</span>
+          </div>
+          <button id="toggle-objectives-btn" title="Comprimi/Espandi Obiettivi" class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-amber-500/20 hover:bg-amber-500/40 border border-amber-400/50 flex items-center justify-center text-amber-200 transition active:scale-90">
+            <i id="toggle-objectives-icon" class="fa-solid fa-minus text-[10px] sm:text-xs"></i>
+          </button>
+        </div>
+
+        <!-- Harmony Progress Bar -->
+        <div class="space-y-1">
+          <div class="flex justify-between items-center text-amber-200 font-bold font-cinzel text-[10px] sm:text-[11px]">
+            <span>ARMONIA CREATO</span>
+            <span id="harmony-percentage" class="golden-text">0%</span>
+          </div>
+          <div class="w-full bg-black/60 h-2 sm:h-2.5 rounded-full overflow-hidden p-0.5 border border-amber-500/30">
+            <div id="harmony-bar" class="bg-gradient-to-r from-amber-500 via-emerald-400 to-amber-300 h-full w-0 rounded-full transition-all duration-500"></div>
+          </div>
+        </div>
+
+        <!-- Expandable / Collapsible Objective Details List -->
+        <div id="objectives-collapsible-wrapper" class="collapsible-content space-y-1.5 border-t border-amber-500/20 pt-2">
+          <div id="objectives-container" class="space-y-1.5 max-h-36 sm:max-h-48 overflow-y-auto pr-1">
+            <!-- Dynamic objectives injected here -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Dialogue / Greeting Popup Box -->
+    <div id="dialogue-box" class="hidden pointer-events-auto self-center mb-4 sm:mb-8 max-w-lg w-full glass-panel p-4 sm:p-6 rounded-2xl border-2 border-amber-400/50 animate-modal text-center relative shadow-2xl">
+      <div class="text-amber-400 text-xl sm:text-3xl mb-2">
+        <i id="dialogue-icon" class="fa-solid fa-comments"></i>
+      </div>
+      <p id="dialogue-speaker" class="text-xs sm:text-sm text-amber-300 font-bold uppercase tracking-wider mb-1">Abitante di Assisi</p>
+      <p id="dialogue-text" class="text-xs sm:text-sm md:text-base italic font-cinzel text-amber-100 leading-relaxed px-2">
+        "Pace e Bene, San Francesco! Che la gioia sia con te!"
+      </p>
+      <button id="dialogue-close" class="mt-4 px-5 py-2 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-amber-950 font-bold text-xs rounded-full transition shadow-lg transform active:scale-95">
+        RISPONDI: "PACE E BENE A TE!"
+      </button>
+    </div>
+
+    <!-- Interactive On-Screen Action Prompt -->
+    <div id="action-prompt" class="hidden pointer-events-auto self-center mb-16 sm:mb-12 glass-panel px-5 py-2 rounded-full border border-amber-300/60 animate-bounce text-center">
+      <span class="text-xs sm:text-sm font-bold text-amber-200 uppercase tracking-widest flex items-center gap-2">
+        <i id="action-icon" class="fa-solid fa-hand-holding-heart text-amber-400 text-sm sm:text-base"></i>
+        <span id="action-prompt-text">Premi [SPAZIO] o Tocca per salutare</span>
+      </span>
+    </div>
+
+    <!-- Touch Mobile Joystick and Action Button -->
+    <div class="flex justify-between items-end w-full pointer-events-auto lg:hidden pb-1 sm:pb-2">
+      <!-- Joystick for Movement -->
+      <div class="relative w-24 h-24 sm:w-28 sm:h-28 glass-panel rounded-full p-2 flex items-center justify-center touch-none" id="touch-joystick">
+        <div id="joystick-stick" class="w-8 h-8 sm:w-10 sm:h-10 bg-amber-500/70 rounded-full border border-amber-200 shadow-md"></div>
+      </div>
+      
+      <!-- Right Action Button -->
+      <button id="touch-action-btn" class="touch-action-btn w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-amber-100 text-xl sm:text-2xl shadow-xl transition active:scale-90">
+        <i class="fa-solid fa-hand-sparkles"></i>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Player Name Registration Modal -->
+  <div id="player-modal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md">
+    <div class="glass-panel p-5 sm:p-8 rounded-3xl max-w-md w-full text-center space-y-4 sm:space-y-5 border-2 border-amber-400/60 animate-modal shadow-2xl">
+      <div class="text-amber-400 text-4xl sm:text-5xl">
+        <i class="fa-solid fa-cross"></i>
+      </div>
+      <h2 class="font-cinzel text-xl sm:text-3xl font-bold golden-text">Benvenuto Pellegrino</h2>
+      <p class="text-xs sm:text-sm text-amber-100/90 leading-relaxed">
+        Prima di intraprendere il cammino di pace di San Francesco d'Assisi, registra il tuo nome.
+      </p>
+
+      <form id="player-form" class="space-y-3 sm:space-y-4">
+        <div class="text-left">
+          <label class="block text-xs font-cinzel font-bold text-amber-300 mb-1">IL TUO NOME:</label>
+          <div class="relative">
+            <i class="fa-solid fa-user text-amber-400 absolute left-3.5 top-3 text-xs sm:text-sm"></i>
+            <input type="text" id="player-name-input" required maxlength="24" placeholder="es. Fratello Marco o Sorella Chiara" 
+                   class="w-full bg-black/60 border border-amber-500/50 rounded-xl pl-9 sm:pl-10 pr-3 py-2.5 text-xs sm:text-sm text-amber-100 placeholder-amber-400/50 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400">
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3 sm:py-3.5 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400 text-amber-950 font-cinzel font-bold text-xs sm:text-sm rounded-xl transition shadow-xl transform active:scale-95">
+          INIZIA IL CAMMINO DI PACE
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Level Complete Victory Modal -->
+  <div id="victory-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md">
+    <div class="glass-panel p-5 sm:p-8 rounded-3xl max-w-md sm:max-w-lg w-full text-center space-y-4 sm:space-y-5 border-2 border-amber-400/60 animate-modal">
+      <div class="text-amber-400 text-4xl sm:text-5xl animate-pulse">
+        <i class="fa-solid fa-crown"></i>
+      </div>
+      <h2 id="victory-title" class="font-cinzel text-xl sm:text-3xl font-bold golden-text">Pace e Bene!</h2>
+      <p id="victory-desc" class="text-xs sm:text-sm text-amber-100/90 leading-relaxed font-cinzel">
+        Hai completato con successo tutti gli obiettivi di pace del livello.
+      </p>
+      <div id="victory-quote" class="bg-black/40 p-3 sm:p-4 rounded-xl border border-amber-500/20 text-xs italic text-amber-200">
+        "Dove è odio, ch'io porti l'Amore..."
+      </div>
+      <button id="next-level-btn" class="w-full py-3 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-amber-950 font-cinzel font-bold text-xs sm:text-sm rounded-xl transition shadow-xl transform active:scale-95">
+        PROSSIMO LIVELLO
+      </button>
+    </div>
+  </div>
+
+  <!-- Level Select Modal -->
+  <div id="level-select-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md">
+    <div class="glass-panel p-4 sm:p-6 rounded-3xl max-w-md sm:max-w-xl w-full space-y-3.5 border border-amber-400/40 animate-modal">
+      <div class="flex justify-between items-center border-b border-amber-500/30 pb-2.5">
+        <h2 class="font-cinzel text-base sm:text-xl font-bold golden-text flex items-center gap-2">
+          <i class="fa-solid fa-map-location-dot"></i> SELEZIONA LIVELLO
+        </h2>
+        <button id="close-level-select" class="text-amber-300 hover:text-white text-lg sm:text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="levels-list" class="space-y-2 max-h-80 sm:max-h-96 overflow-y-auto pr-1"></div>
+    </div>
+  </div>
+
+  <!-- Help / Instructions Modal -->
+  <div id="intro-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md">
+    <div class="glass-panel p-5 sm:p-8 rounded-3xl max-w-lg w-full text-center space-y-4 border-2 border-amber-400/50 animate-modal">
+      <div class="text-amber-400 text-4xl sm:text-5xl">
+        <i class="fa-solid fa-book-open"></i>
+      </div>
+      <h2 class="font-cinzel text-xl sm:text-3xl font-bold golden-text">Guida al Cammino</h2>
+      <p class="text-xs sm:text-sm text-amber-100/90 leading-relaxed">
+        Muoviti nei paesaggi 3D di Assisi, parla con i passanti che si fermano a salutarti, fai volare gli uccelli e unisciti a San Francesco nel cammino di pace!
+      </p>
+
+      <div class="text-xs text-left text-amber-200/90 space-y-2 bg-black/40 p-3.5 rounded-2xl font-sans border border-amber-500/20">
+        <div class="font-bold text-amber-300 font-cinzel mb-1 flex items-center gap-1">
+          <i class="fa-solid fa-gamepad"></i> CONTROLLI GIOCO:
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          <div>• <b>Tastiera PC</b>: WASD / Frecce</div>
+          <div>• <b>Azione PC</b>: SPAZIO / Tasto E</div>
+          <div>• <b>Smartphone/Tablet</b>: Joystick Touch SX</div>
+          <div>• <b>Azione Touch</b>: Pulsante Luminoso DX</div>
+          <div>• <b>Pulsante ➖/➕</b>: Riduce/Espande HUD</div>
+        </div>
+      </div>
+
+      <button id="close-help-btn" class="w-full py-3 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400 text-amber-950 font-cinzel font-bold text-xs sm:text-sm rounded-xl transition shadow-xl transform active:scale-95">
+        TORNA AL GIOCO
+      </button>
+    </div>
+  </div>
+
+  <!-- GAME SCRIPT ENGINE -->
+  <script>
+    /* =========================================================================
+       1. PEACEFUL AUDIO SYNTHESIZER (Lute, Woodwind, Chirps & Bells)
+       ========================================================================= */
+    class PeacefulAudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.isMuted = false;
+        this.isPlaying = false;
+        this.scale = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25];
+        this.chords = [
+          [261.63, 329.63, 392.00, 523.25], // C Maj
+          [220.00, 261.63, 329.63, 440.00], // A Min
+          [174.61, 220.00, 261.63, 349.23], // F Maj
+          [196.00, 246.94, 293.66, 392.00]  // G Maj
+        ];
+        this.chordIndex = 0;
+      }
+
+      init() {
+        if (this.ctx) return;
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioCtx();
+        this.startMusic();
+      }
+
+      startMusic() {
+        if (!this.ctx || this.isPlaying) return;
+        this.isPlaying = true;
+        this.playChordPad();
+        this.loopArpeggio();
+        this.loopNatureChirps();
+      }
+
+      playChordPad() {
+        if (!this.isPlaying || this.isMuted) return;
+        const chord = this.chords[this.chordIndex];
+        this.chordIndex = (this.chordIndex + 1) % this.chords.length;
+
+        chord.forEach(freq => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq / 2, this.ctx.currentTime);
+
+          gain.gain.setValueAtTime(0, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.018, this.ctx.currentTime + 3);
+          gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 8);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start();
+          osc.stop(this.ctx.currentTime + 8.5);
+        });
+
+        setTimeout(() => this.playChordPad(), 7000);
+      }
+
+      loopArpeggio() {
+        if (!this.isMuted && this.isPlaying) {
+          const randomNote = this.scale[Math.floor(Math.random() * this.scale.length)];
+          this.playPluckedNote(randomNote, 0.04);
+        }
+        setTimeout(() => this.loopArpeggio(), 400 + Math.random() * 800);
+      }
+
+      playPluckedNote(freq, volume = 0.05) {
+        if (!this.ctx || this.isMuted) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+        gain.gain.setValueAtTime(volume, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 1.8);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + 1.9);
+      }
+
+      loopNatureChirps() {
+        if (!this.isMuted && this.isPlaying && Math.random() > 0.35) {
+          this.playBirdChirp();
+        }
+        setTimeout(() => this.loopNatureChirps(), 2500 + Math.random() * 4000);
+      }
+
+      playBirdChirp() {
+        if (!this.ctx || this.isMuted) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+
+        const baseFreq = 2200 + Math.random() * 600;
+        osc.frequency.setValueAtTime(baseFreq, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq + 400, this.ctx.currentTime + 0.1);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq - 200, this.ctx.currentTime + 0.25);
+
+        gain.gain.setValueAtTime(0.02, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.28);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.3);
+      }
+
+      playBellSound() {
+        if (!this.ctx || this.isMuted) return;
+        [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(f, this.ctx.currentTime + i * 0.1);
+
+          gain.gain.setValueAtTime(0.12, this.ctx.currentTime + i * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + i * 0.1 + 3.0);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(this.ctx.currentTime + i * 0.1);
+          osc.stop(this.ctx.currentTime + i * 0.1 + 3.1);
+        });
+      }
+
+      toggleMute() {
+        this.isMuted = !this.isMuted;
+        return this.isMuted;
+      }
+    }
+
+    const audioSys = new PeacefulAudioEngine();
+
+    /* =========================================================================
+       2. LEVEL DEFINITIONS & GAME STATE
+       ========================================================================= */
+    const GAME_LEVELS = [
+      {
+        id: 1,
+        title: "Il Cantico delle Creature",
+        location: "Assisi e la Valle Umbra",
+        desc: "Accogli i passanti e raccogli i 7 elementi sacri del Cantico.",
+        skyColor: 0x87ceeb,
+        fogColor: 0xaaccff,
+        groundColor: 0x558833,
+        objectives: [
+          { id: 'cantico_sole', name: 'Frate Sole', icon: 'fa-sun', quote: 'Laudato si\', mi\' Signore, cum tucte le tue creature, spetialmente messor lo frate sole.', color: 0xffaa00, pos: {x: -25, z: -25} },
+          { id: 'cantico_luna', name: 'Sora Luna e Stelle', icon: 'fa-moon', quote: 'Laudato si\', mi\' Signore, per sora luna e le stelle, in cielo l\'ài formate clarite e pretiose.', color: 0xddddff, pos: {x: 35, z: -35} },
+          { id: 'cantico_vento', name: 'Frate Vento', icon: 'fa-wind', quote: 'Laudato si\', mi\' Signore, per frate vento e per aere e nubilo e sereno e omne tempo.', color: 0x88e0ff, pos: {x: -45, z: 20} },
+          { id: 'cantico_acqua', name: 'Sora Acqua', icon: 'fa-droplet', quote: 'Laudato si\', mi\' Signore, per sora acqua, la quale è multo utile e humile e pretiosa e casta.', color: 0x3399ff, pos: {x: 25, z: 25} },
+          { id: 'cantico_fuoco', name: 'Frate Fuoco', icon: 'fa-fire', quote: 'Laudato si\', mi\' Signore, per frate focu, per lo quale ennallumini la nocte, ed ello è bello.', color: 0xff5500, pos: {x: -15, z: 55} },
+          { id: 'cantico_terra', name: 'Madre Terra', icon: 'fa-seedling', quote: 'Laudato si\', mi\' Signore, per sora nostra matre terra, la quale ne sustenta e governa.', color: 0x44aa44, pos: {x: 30, z: 65} },
+          { id: 'cantico_morte', name: 'Sora Morte Corporale', icon: 'fa-heart', quote: 'Laudato si\', mi\' Signore, per sora nostra morte corporale, da la quale nullo homo vivente pò skappare.', color: 0xea80fc, pos: {x: 0, z: -60} }
+        ]
+      },
+      {
+        id: 2,
+        title: "La Predica agli Uccelli e agli Animali",
+        location: "Bosco di Cannara",
+        desc: "Ascolta il canto degli uccelli in volo e benedici le creature del bosco.",
+        skyColor: 0x9be2f9,
+        fogColor: 0xbde5f8,
+        groundColor: 0x4d822b,
+        objectives: [
+          { id: 'anim_uccelli1', name: 'Stormo di Colombe in Volo', icon: 'fa-dove', quote: 'Fratelli miei uccelli, molto siete tenuti a Dio vostro creatore e sempre dovete lodarlo.', type: 'bird', pos: {x: -20, z: -15} },
+          { id: 'anim_uccelli2', name: 'Rondini del Bosco', icon: 'fa-feather', quote: 'Gli uccelli si posano intorno a Francesco ascoltando in silenzio la sua benedizione.', type: 'bird', pos: {x: 25, z: -25} },
+          { id: 'anim_cervo', name: 'Cervo della Foresta', icon: 'fa-tree', quote: 'Il nobile cervo si avvicina con fiducia al saio di pace.', type: 'deer', pos: {x: -35, z: 30} },
+          { id: 'anim_coniglio1', name: 'Coniglietto Selvatico', icon: 'fa-paw', quote: 'Il piccolo coniglio trova conforto e tenerezza.', type: 'rabbit', pos: {x: 15, z: 40} },
+          { id: 'anim_coniglio2', name: 'Lepre dei Campi', icon: 'fa-heart-pulse', quote: 'L\'armonia del creato risplende in ogni creatura viva.', type: 'rabbit', pos: {x: -5, z: -45} }
+        ]
+      },
+      {
+        id: 3,
+        title: "La Pace di Gubbio e il Lupo",
+        location: "Città di Gubbio",
+        desc: "Incontra gli abitanti spaventati, dona il pane di pace e addomestica il Lupo.",
+        skyColor: 0xffd1a4,
+        fogColor: 0xf5c096,
+        groundColor: 0x6e6843,
+        objectives: [
+          { id: 'pane_paesano1', name: 'Incontra Fratello Marco', icon: 'fa-person', quote: 'Salute a te San Francesco! Abbi pietà della nostra città terrorizzata dal lupo.', type: 'villager', speaker: 'Fratello Marco', pos: {x: -15, z: 10} },
+          { id: 'pane_paesano2', name: 'Incontra Sorella Chiara', icon: 'fa-person-dress', quote: 'Pace e bene! Con la tua parola torna la speranza tra di noi.', type: 'villager', speaker: 'Sorella Chiara', pos: {x: 18, z: 15} },
+          { id: 'lupo_gubbio', name: 'Il Lupo di Gubbio', icon: 'fa-shield-dog', quote: 'Frate Lupo, ti prometto che i cittadini ti daranno da mangiare. Vieni in pace!', type: 'wolf', pos: {x: 0, z: 65} }
+        ]
+      },
+      {
+        id: 4,
+        title: "L'Incontro d'Oltremare",
+        location: "Damietta e il Deserto",
+        desc: "Saluta le sentinelle, regala ramoscelli d'ulivo ed esprimi la pace al Sultano.",
+        skyColor: 0xfde68a,
+        fogColor: 0xfef08a,
+        groundColor: 0xd97706,
+        objectives: [
+          { id: 'guardia_1', name: 'Sentinella del Deserto', icon: 'fa-olive-branch', quote: 'Pace a te, uomo venuto da lontano. Accetto il tuo ramo d\'ulivo!', type: 'guard', speaker: 'Sentinella', pos: {x: -20, z: -10} },
+          { id: 'guardia_2', name: 'Guardia del Campo', icon: 'fa-peace', quote: 'Nessuna spada prevale contro un cuore disarmato.', type: 'guard', speaker: 'Guardia Reale', pos: {x: 22, z: 25} },
+          { id: 'sultano', name: 'Incontro con il Sultano Malik', icon: 'fa-crown', quote: 'Sultano Malik al-Kamil: L\'amore fraterno che porti merita rispetto e pace.', type: 'sultan', speaker: 'Sultano Malik al-Kamil', pos: {x: 0, z: 70} }
+        ]
+      },
+      {
+        id: 5,
+        title: "Il Primo Presepe di Greccio",
+        location: "La Grotta di Greccio",
+        desc: "Raduna gli abitanti e gli animali per illuminare la prima Natività di Greccio.",
+        skyColor: 0x0f172a,
+        fogColor: 0x1e293b,
+        groundColor: 0x334155,
+        objectives: [
+          { id: 'presepe_paglia', name: 'Mazzo di Paglia', icon: 'fa-wheat-awn', quote: 'Stendi la paglia per accogliere il calore della Natività.', type: 'item', pos: {x: -25, z: -20} },
+          { id: 'presepe_greppia', name: 'Mangiatoia in Legno', icon: 'fa-box', quote: 'Poni la semplice greppia nella stalla.', type: 'item', pos: {x: 20, z: -10} },
+          { id: 'presepe_bue', name: 'Bue e Asinello', icon: 'fa-horse', quote: 'Gli animali riscaldano il presepe con il loro alito soffice.', type: 'animal', pos: {x: -15, z: 35} },
+          { id: 'presepe_luce', name: 'Stella della Natività', icon: 'fa-star', quote: 'Risplenda la luce di Natale e della pace in tutto il mondo!', type: 'star', pos: {x: 0, z: 50} }
+        ]
+      }
+    ];
+
+    const currentGameState = {
+      playerName: "Pellegrino",
+      levelIndex: 0,
+      completedObjectives: new Set(),
+      nearInteractable: null,
+      isObjectivesCollapsed: false
+    };
+
+    /* =========================================================================
+       3. THREE.JS SCENE SETUP & GAME OBJECTS
+       ========================================================================= */
+    let scene, camera, renderer;
+    let francisGroup;
+    let clock = new THREE.Clock();
+
+    const keys = { forward: false, backward: false, left: false, right: false, interact: false };
+    const joystickVec = { x: 0, y: 0 };
+    const playerSpeed = 9.5;
+
+    let currentLevelEntities = [];
+    let flyingBirds = [];
+    let walkingVillagers = [];
+    let environmentalDecorations = [];
+
+    function initEngine() {
+      const container = document.getElementById('canvas-container');
+
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      container.appendChild(renderer.domElement);
+
+      createFrancisPlayer();
+      createGlobalFlyingBirds();
+      loadLevel(0);
+
+      if (window.innerWidth < 640) {
+        toggleObjectivesHUD(true);
+      }
+
+      window.addEventListener('resize', onWindowResize, false);
+    }
+
+    /* =========================================================================
+       4. ANIMATED 3D BIRDS IN THE SKY
+       ========================================================================= */
+    function createGlobalFlyingBirds() {
+      flyingBirds.forEach(b => scene.remove(b.mesh));
+      flyingBirds = [];
+
+      const birdMat = new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide, roughness: 0.5 });
+
+      for (let i = 0; i < 18; i++) {
+        const birdGroup = new THREE.Group();
+
+        // Left Wing
+        const wingLGeo = new THREE.BufferGeometry();
+        const verticesL = new Float32Array([0,0,0, -0.8,0.2,-0.3, 0,0,-0.6]);
+        wingLGeo.setAttribute('position', new THREE.BufferAttribute(verticesL, 3));
+        wingLGeo.computeVertexNormals();
+        const wingL = new THREE.Mesh(wingLGeo, birdMat);
+
+        // Right Wing
+        const wingRGeo = new THREE.BufferGeometry();
+        const verticesR = new Float32Array([0,0,0, 0.8,0.2,-0.3, 0,0,-0.6]);
+        wingRGeo.setAttribute('position', new THREE.BufferAttribute(verticesR, 3));
+        wingRGeo.computeVertexNormals();
+        const wingR = new THREE.Mesh(wingRGeo, birdMat);
+
+        birdGroup.add(wingL);
+        birdGroup.add(wingR);
+
+        const radius = 25 + Math.random() * 65;
+        const angle = Math.random() * Math.PI * 2;
+        const baseHeight = 12 + Math.random() * 18;
+
+        birdGroup.position.set(Math.cos(angle) * radius, baseHeight, Math.sin(angle) * radius);
+        scene.add(birdGroup);
+
+        flyingBirds.push({
+          mesh: birdGroup,
+          wingL: wingL,
+          wingR: wingR,
+          angle: angle,
+          radius: radius,
+          height: baseHeight,
+          speed: 0.005 + Math.random() * 0.008,
+          flapSpeed: 12 + Math.random() * 8
+        });
+      }
+    }
+
+    function animateBirds(time) {
+      if (!francisGroup) return;
+      const fPos = francisGroup.position;
+
+      flyingBirds.forEach((b, idx) => {
+        b.angle += b.speed;
+        
+        let targetX = Math.cos(b.angle) * b.radius;
+        let targetZ = Math.sin(b.angle) * b.radius;
+        let targetY = b.height + Math.sin(time * 2 + idx) * 2;
+
+        const distToFrancis = Math.hypot(b.mesh.position.x - fPos.x, b.mesh.position.z - fPos.z);
+        if (distToFrancis < 25) {
+          targetY = fPos.y + 4.5 + Math.sin(time * 3 + idx) * 1.5;
+          targetX = fPos.x + Math.cos(time * 1.5 + idx) * 8;
+          targetZ = fPos.z + Math.sin(time * 1.5 + idx) * 8;
+        }
+
+        b.mesh.position.x += (targetX - b.mesh.position.x) * 0.03;
+        b.mesh.position.z += (targetZ - b.mesh.position.z) * 0.03;
+        b.mesh.position.y += (targetY - b.mesh.position.y) * 0.03;
+
+        const wingAngle = Math.sin(time * b.flapSpeed) * 0.65;
+        b.wingL.rotation.z = wingAngle;
+        b.wingR.rotation.z = -wingAngle;
+
+        b.mesh.rotation.y = Math.atan2(
+          targetX - b.mesh.position.x,
+          targetZ - b.mesh.position.z
+        );
+      });
+    }
+
+    /* =========================================================================
+       5. WALKING & GREETING VILLAGERS
+       ========================================================================= */
+    function createWalkingVillager(x, z, roleData = {}) {
+      const group = new THREE.Group();
+
+      const clothesColor = roleData.color || (Math.random() > 0.5 ? 0x2563eb : 0xd97706);
+      const clothMat = new THREE.MeshStandardMaterial({ color: clothesColor, roughness: 0.8, flatShading: true });
+      const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.6 });
+
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.75, 2.8, 8), clothMat);
+      body.position.y = 1.4;
+      body.castShadow = true;
+      group.add(body);
+
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 12), skinMat);
+      head.position.y = 3.1;
+      head.castShadow = true;
+      group.add(head);
+
+      // Arm for Waving Greeting
+      const armMat = new THREE.MeshStandardMaterial({ color: clothesColor });
+      const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.2, 6), armMat);
+      armR.position.set(0.7, 2.5, 0);
+      group.add(armR);
+
+      group.position.set(x, Math.sin(x * 0.03) * Math.cos(z * 0.03) * 3.5, z);
+      scene.add(group);
+
+      const villagerObj = {
+        group: group,
+        armR: armR,
+        initialPos: { x: x, z: z },
+        targetPos: { x: x + (Math.random() - 0.5) * 30, z: z + (Math.random() - 0.5) * 30 },
+        isGreeting: false,
+        speed: 2.2 + Math.random() * 1.5,
+        roleData: roleData
+      };
+
+      walkingVillagers.push(villagerObj);
+      return villagerObj;
+    }
+
+    function animateVillagers(delta, time) {
+      if (!francisGroup) return;
+      const fPos = francisGroup.position;
+
+      walkingVillagers.forEach(v => {
+        const dist = fPos.distanceTo(v.group.position);
+
+        if (dist < 6.0) {
+          // Stop and Greeting San Francesco
+          v.isGreeting = true;
+          const dx = fPos.x - v.group.position.x;
+          const dz = fPos.z - v.group.position.z;
+          v.group.rotation.y = Math.atan2(dx, dz);
+
+          // Wave Hand
+          v.armR.rotation.x = Math.PI / 2 + Math.sin(time * 8) * 0.4;
+          v.armR.rotation.z = 0.4 + Math.cos(time * 8) * 0.3;
+        } else {
+          // Normal Walking
+          v.isGreeting = false;
+          v.armR.rotation.x = 0;
+          v.armR.rotation.z = 0;
+
+          const vPos = v.group.position;
+          const dx = v.targetPos.x - vPos.x;
+          const dz = v.targetPos.z - vPos.z;
+          const dLen = Math.hypot(dx, dz);
+
+          if (dLen < 1.5) {
+            v.targetPos = {
+              x: v.initialPos.x + (Math.random() - 0.5) * 40,
+              z: v.initialPos.z + (Math.random() - 0.5) * 40
+            };
+          } else {
+            const nx = dx / dLen;
+            const nz = dz / dLen;
+            vPos.x += nx * v.speed * delta;
+            vPos.z += nz * v.speed * delta;
+            vPos.y = Math.sin(vPos.x * 0.03) * Math.cos(vPos.z * 0.03) * 3.5;
+            v.group.rotation.y = Math.atan2(nx, nz);
+          }
+        }
+      });
+    }
+
+    /* =========================================================================
+       6. LEVEL BUILDER & ENVIRONMENT
+       ========================================================================= */
+    function loadLevel(levelIdx) {
+      currentGameState.levelIndex = levelIdx;
+      currentGameState.completedObjectives.clear();
+      currentGameState.nearInteractable = null;
+
+      const lvlData = GAME_LEVELS[levelIdx];
+
+      currentLevelEntities.forEach(e => scene.remove(e.group));
+      currentLevelEntities = [];
+      walkingVillagers.forEach(v => scene.remove(v.group));
+      walkingVillagers = [];
+      environmentalDecorations.forEach(d => scene.remove(d));
+      environmentalDecorations = [];
+
+      scene.background = new THREE.Color(lvlData.skyColor);
+      scene.fog = new THREE.FogExp2(lvlData.fogColor, levelIdx === 3 ? 0.005 : 0.008);
+
+      scene.children.filter(c => c.isLight).forEach(l => scene.remove(l));
+      
+      const ambientLight = new THREE.AmbientLight(levelIdx === 3 ? 0xfff5ea : 0xffeedd, levelIdx === 3 ? 0.9 : 0.75);
+      scene.add(ambientLight);
+
+      const dirLight = new THREE.DirectionalLight(0xffeedd, 1.2);
+      dirLight.position.set(60, 90, 40);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.width = 2048;
+      dirLight.shadow.mapSize.height = 2048;
+      dirLight.shadow.camera.near = 0.5;
+      dirLight.shadow.camera.far = 300;
+      const d = 100;
+      dirLight.shadow.camera.left = -d;
+      dirLight.shadow.camera.right = d;
+      dirLight.shadow.camera.top = d;
+      dirLight.shadow.camera.bottom = -d;
+      scene.add(dirLight);
+
+      buildLevelTerrain(lvlData);
+
+      if (francisGroup) {
+        francisGroup.position.set(0, 0, 0);
+      }
+
+      spawnLevelObjectives(lvlData);
+
+      document.getElementById('level-subtitle').innerText = `Livello ${lvlData.id}: ${lvlData.title}`;
+      renderObjectiveTrackerUI();
+      updateHarmonyBarUI();
+    }
+
+    function buildLevelTerrain(lvlData) {
+      const terrainGeo = new THREE.PlaneGeometry(350, 350, 64, 64);
+      terrainGeo.rotateX(-Math.PI / 2);
+
+      const pos = terrainGeo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i);
+        const z = pos.getZ(i);
+        let y = Math.sin(x * 0.03) * Math.cos(z * 0.03) * (lvlData.id === 4 ? 2.0 : 3.5);
+        if (lvlData.id === 4) {
+          y += Math.sin(x * 0.06 + z * 0.04) * 2.5;
+        }
+        const distFromCenter = Math.sqrt(x * x + z * z);
+        if (distFromCenter < 25) y *= (distFromCenter / 25);
+        pos.setY(i, y);
+      }
+      terrainGeo.computeVertexNormals();
+
+      const terrainMat = new THREE.MeshStandardMaterial({
+        color: lvlData.groundColor,
+        roughness: 0.9,
+        flatShading: true
+      });
+
+      const terrain = new THREE.Mesh(terrainGeo, terrainMat);
+      terrain.receiveShadow = true;
+      scene.add(terrain);
+      environmentalDecorations.push(terrain);
+
+      if (lvlData.id === 1 || lvlData.id === 2) {
+        for (let i = 0; i < 35; i++) {
+          const ang = Math.random() * Math.PI * 2;
+          const rad = 25 + Math.random() * 110;
+          createCypressTree(Math.cos(ang) * rad, Math.sin(ang) * rad);
+        }
+        createWalkingVillager(-12, 10, { speaker: 'Contadino dell\'Umbria', quote: 'Pace e Bene, San Francesco!' });
+        createWalkingVillager(15, -18, { speaker: 'Fanciulla di Assisi', quote: 'Benedetto colui che porta la concordia!' });
+      } else if (lvlData.id === 3) {
+        createGubbioTownGate();
+      } else if (lvlData.id === 4) {
+        createSultanCamp();
+      } else if (lvlData.id === 5) {
+        createGreccioGrotto();
+      }
+    }
+
+    function createCypressTree(x, z) {
+      const tree = new THREE.Group();
+      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5a3d28, roughness: 0.9 });
+      const foliageMat = new THREE.MeshStandardMaterial({ color: 0x2e5a1c, roughness: 0.8, flatShading: true });
+
+      const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.6, 4, 6), trunkMat);
+      trunk.position.y = 2;
+      trunk.castShadow = true;
+      tree.add(trunk);
+
+      const foliage = new THREE.Mesh(new THREE.ConeGeometry(2.2, 11, 7), foliageMat);
+      foliage.position.y = 7.5;
+      foliage.castShadow = true;
+      tree.add(foliage);
+
+      tree.position.set(x, Math.sin(x * 0.03) * Math.cos(z * 0.03) * 3.5, z);
+      scene.add(tree);
+      environmentalDecorations.push(tree);
+    }
+
+    function createGubbioTownGate() {
+      const gate = new THREE.Group();
+      const stoneMat = new THREE.MeshStandardMaterial({ color: 0x9e9585, roughness: 0.8, flatShading: true });
+
+      const p1 = new THREE.Mesh(new THREE.BoxGeometry(5, 16, 5), stoneMat);
+      p1.position.set(-8, 8, 70);
+      const p2 = new THREE.Mesh(new THREE.BoxGeometry(5, 16, 5), stoneMat);
+      p2.position.set(8, 8, 70);
+      const top = new THREE.Mesh(new THREE.BoxGeometry(21, 4, 5), stoneMat);
+      top.position.set(0, 16, 70);
+
+      gate.add(p1); gate.add(p2); gate.add(top);
+      scene.add(gate);
+      environmentalDecorations.push(gate);
+    }
+
+    function createSultanCamp() {
+      const camp = new THREE.Group();
+      camp.position.set(0, 0, 70);
+
+      const tentMat = new THREE.MeshStandardMaterial({ color: 0x991b1b, roughness: 0.5, flatShading: true });
+      const tent = new THREE.Mesh(new THREE.ConeGeometry(12, 14, 8), tentMat);
+      tent.position.y = 7;
+      camp.add(tent);
+
+      scene.add(camp);
+      environmentalDecorations.push(camp);
+    }
+
+    function createGreccioGrotto() {
+      const grotto = new THREE.Group();
+      grotto.position.set(0, 0, 50);
+
+      const rockMat = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.9, flatShading: true });
+      const cave = new THREE.Mesh(new THREE.DodecahedronGeometry(12, 1), rockMat);
+      cave.scale.set(1.5, 1.0, 1.2);
+      cave.position.y = 4;
+      grotto.add(cave);
+
+      scene.add(grotto);
+      environmentalDecorations.push(grotto);
+    }
+
+    /* =========================================================================
+       7. SAN FRANCESCO CHARACTER MODEL
+       ========================================================================= */
+    function createFrancisPlayer() {
+      francisGroup = new THREE.Group();
+
+      const habitMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.9, flatShading: true });
+      const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.6 });
+      const cordMat = new THREE.MeshStandardMaterial({ color: 0xe6d7b8, roughness: 0.8 });
+      const hairMat = new THREE.MeshStandardMaterial({ color: 0x332211, roughness: 0.9 });
+
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 1.1, 3.2, 8), habitMat);
+      body.position.y = 1.6;
+      body.castShadow = true;
+      francisGroup.add(body);
+
+      const cord = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.08, 8, 16), cordMat);
+      cord.rotation.x = Math.PI / 2;
+      cord.position.y = 1.6;
+      francisGroup.add(cord);
+
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 12, 12), skinMat);
+      head.position.y = 3.6;
+      head.castShadow = true;
+      francisGroup.add(head);
+
+      const hair = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.1, 8, 16), hairMat);
+      hair.rotation.x = Math.PI / 2;
+      hair.position.set(0, 3.75, 0);
+      francisGroup.add(hair);
+
+      const beard = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.4, 6), hairMat);
+      beard.rotation.x = -Math.PI / 4;
+      beard.position.set(0, 3.4, 0.35);
+      francisGroup.add(beard);
+
+      const haloGeo = new THREE.RingGeometry(0.6, 0.75, 24);
+      const haloMat = new THREE.MeshBasicMaterial({ color: 0xffd700, side: THREE.DoubleSide, transparent: true, opacity: 0.9 });
+      const halo = new THREE.Mesh(haloGeo, haloMat);
+      halo.position.set(0, 4.25, -0.1);
+      francisGroup.add(halo);
+
+      francisGroup.position.set(0, 0, 0);
+      scene.add(francisGroup);
+    }
+
+    /* =========================================================================
+       8. OBJECTIVE ENTITIES & INTERACTION SETUP
+       ========================================================================= */
+    function spawnLevelObjectives(lvlData) {
+      lvlData.objectives.forEach(objData => {
+        const group = new THREE.Group();
+        const p = objData.pos;
+        const groundY = Math.sin(p.x * 0.03) * Math.cos(p.z * 0.03) * 3.5 + 1.2;
+
+        if (lvlData.id === 1) {
+          const orb = new THREE.Mesh(
+            new THREE.SphereGeometry(1.1, 16, 16),
+            new THREE.MeshStandardMaterial({
+              color: objData.color,
+              emissive: objData.color,
+              emissiveIntensity: 0.7,
+              transparent: true,
+              opacity: 0.9
+            })
+          );
+          group.add(orb);
+        } else if (lvlData.id === 2) {
+          group.add(createAnimalMesh(objData.type));
+        } else if (lvlData.id === 3) {
+          if (objData.type === 'wolf') {
+            group.add(createWolfMesh());
+          } else {
+            const villager = createWalkingVillager(p.x, p.z, { speaker: objData.speaker, quote: objData.quote });
+            group.add(villager.group);
+          }
+        } else if (lvlData.id === 4) {
+          group.add(createGuardMesh(objData.type === 'sultan'));
+        } else if (lvlData.id === 5) {
+          group.add(createPresepePropMesh(objData.type));
+        }
+
+        group.position.set(p.x, groundY, p.z);
+        if (objData.type !== 'villager') {
+          scene.add(group);
+        }
+
+        currentLevelEntities.push({
+          data: objData,
+          group: group,
+          completed: false
+        });
+      });
+    }
+
+    function createAnimalMesh(type) {
+      const g = new THREE.Group();
+      const mat = new THREE.MeshStandardMaterial({ color: type === 'bird' ? 0xffffff : (type === 'deer' ? 0xa0522d : 0xdddddd), roughness: 0.7 });
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 1.2), mat);
+      body.position.y = 0.5;
+      g.add(body);
+      return g;
+    }
+
+    function createWolfMesh() {
+      const g = new THREE.Group();
+      const furMat = new THREE.MeshStandardMaterial({ color: 0x374151, roughness: 0.9 });
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+
+      const body = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.3, 2.8), furMat);
+      body.position.y = 1.1;
+      g.add(body);
+
+      const head = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.0, 1.2), furMat);
+      head.position.set(0, 1.9, 1.6);
+      g.add(head);
+
+      const e1 = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), eyeMat);
+      e1.position.set(-0.3, 2.1, 2.2);
+      const e2 = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), eyeMat);
+      e2.position.set(0.3, 2.1, 2.2);
+      g.add(e1); g.add(e2);
+
+      g.userData = { eyeMat: eyeMat };
+      return g;
+    }
+
+    function createGuardMesh(isSultan = false) {
+      const g = new THREE.Group();
+      const clothMat = new THREE.MeshStandardMaterial({ color: isSultan ? 0xd97706 : 0x059669, roughness: 0.6 });
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.8, 3.0, 8), clothMat);
+      body.position.y = 1.5;
+      g.add(body);
+
+      if (isSultan) {
+        const turban = new THREE.Mesh(new THREE.SphereGeometry(0.7, 12, 12), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+        turban.position.y = 3.5;
+        g.add(turban);
+      }
+      return g;
+    }
+
+    function createPresepePropMesh(type) {
+      const g = new THREE.Group();
+      if (type === 'star') {
+        const star = new THREE.Mesh(new THREE.OctahedronGeometry(1.5, 0), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+        g.add(star);
+      } else {
+        const box = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.0, 1.5), new THREE.MeshStandardMaterial({ color: 0xb45309 }));
+        g.add(box);
+      }
+      return g;
+    }
+
+    /* =========================================================================
+       9. UI TRACKERS, COLLAPSIBLE HUD & DIALOGUES
+       ========================================================================= */
+    function renderObjectiveTrackerUI() {
+      const container = document.getElementById('objectives-container');
+      container.innerHTML = '';
+
+      const lvlData = GAME_LEVELS[currentGameState.levelIndex];
+      lvlData.objectives.forEach(obj => {
+        const isDone = currentGameState.completedObjectives.has(obj.id);
+        const item = document.createElement('div');
+        item.className = `flex justify-between items-center text-[11px] sm:text-xs p-1.5 sm:p-2 rounded-xl border transition-all ${
+          isDone ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200' : 'bg-black/40 border-amber-500/20 text-amber-100'
+        }`;
+        item.innerHTML = `
+          <span class="flex items-center gap-1.5 truncate pr-1">
+            <i class="fa-solid ${obj.icon} ${isDone ? 'text-emerald-400' : 'text-amber-400'} text-xs"></i>
+            <span class="font-medium truncate">${obj.name}</span>
+          </span>
+          <i class="fa-solid ${isDone ? 'fa-circle-check text-emerald-400 text-xs sm:text-sm' : 'fa-circle text-amber-500/30 text-[10px]'}"></i>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function updateHarmonyBarUI() {
+      const lvlData = GAME_LEVELS[currentGameState.levelIndex];
+      const total = lvlData.objectives.length;
+      const count = currentGameState.completedObjectives.size;
+      const pct = Math.round((count / total) * 100);
+
+      document.getElementById('harmony-percentage').innerText = `${pct}%`;
+      document.getElementById('harmony-bar').style.width = `${pct}%`;
+
+      if (pct === 100) {
+        setTimeout(() => triggerLevelVictory(), 1000);
+      }
+    }
+
+    function toggleObjectivesHUD(forceCollapse = null) {
+      const wrapper = document.getElementById('objectives-collapsible-wrapper');
+      const icon = document.getElementById('toggle-objectives-icon');
+      
+      if (forceCollapse !== null) {
+        currentGameState.isObjectivesCollapsed = forceCollapse;
+      } else {
+        currentGameState.isObjectivesCollapsed = !currentGameState.isObjectivesCollapsed;
+      }
+
+      if (currentGameState.isObjectivesCollapsed) {
+        wrapper.classList.add('collapsed');
+        icon.className = "fa-solid fa-plus text-[10px] sm:text-xs";
+      } else {
+        wrapper.classList.remove('collapsed');
+        icon.className = "fa-solid fa-minus text-[10px] sm:text-xs";
+      }
+    }
+
+    function checkProximityAndPrompts() {
+      if (!francisGroup) return;
+
+      const pPos = francisGroup.position;
+      let promptText = null;
+      let foundTarget = null;
+
+      currentLevelEntities.forEach(ent => {
+        if (!ent.completed) {
+          const dist = pPos.distanceTo(ent.group.position);
+          if (dist < 4.8) {
+            promptText = `${ent.data.name}`;
+            foundTarget = ent;
+          }
+        }
+      });
+
+      const promptEl = document.getElementById('action-prompt');
+      if (promptText) {
+        document.getElementById('action-prompt-text').innerText = `${promptText} (Tocca / SPAZIO)`;
+        promptEl.classList.remove('hidden');
+        currentGameState.nearInteractable = foundTarget;
+      } else {
+        promptEl.classList.add('hidden');
+        currentGameState.nearInteractable = null;
+      }
+    }
+
+    function handleInteraction() {
+      const target = currentGameState.nearInteractable;
+      if (!target || target.completed) return;
+
+      target.completed = true;
+      currentGameState.completedObjectives.add(target.data.id);
+
+      audioSys.playBellSound();
+
+      if (target.data.type === 'wolf' && target.group.children[0].userData.eyeMat) {
+        target.group.children[0].userData.eyeMat.color.setHex(0x38bdf8);
+      }
+
+      if (GAME_LEVELS[currentGameState.levelIndex].id === 1) {
+        scene.remove(target.group);
+      }
+
+      renderObjectiveTrackerUI();
+      updateHarmonyBarUI();
+
+      showDialogue(target.data.speaker || target.data.name, target.data.quote);
+    }
+
+    function showDialogue(speaker, quote) {
+      const box = document.getElementById('dialogue-box');
+      document.getElementById('dialogue-speaker').innerText = speaker || "Abitante di Assisi";
+      document.getElementById('dialogue-text').innerText = `"${quote}"`;
+      box.classList.remove('hidden');
+    }
+
+    function triggerLevelVictory() {
+      const lvl = GAME_LEVELS[currentGameState.levelIndex];
+      const isLast = currentGameState.levelIndex === GAME_LEVELS.length - 1;
+
+      document.getElementById('victory-title').innerText = isLast ? "Cammino Completato!" : "Pace e Bene!";
+      document.getElementById('victory-desc').innerText = isLast 
+        ? `Complimenti ${currentGameState.playerName}! Hai completato il cammino di pace universale, riconciliando il creato, gli animali ed i popoli!`
+        : `Bravo ${currentGameState.playerName}! Hai completato gli obiettivi del Livello ${lvl.id}: ${lvl.title}.`;
+
+      document.getElementById('victory-modal').classList.remove('hidden');
+    }
+
+    /* =========================================================================
+       10. CONTROLS & LISTENERS
+       ========================================================================= */
+    function setupControls() {
+      document.getElementById('player-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const nameInput = document.getElementById('player-name-input').value.trim();
+        if (nameInput) {
+          currentGameState.playerName = nameInput;
+          document.getElementById('player-badge').innerText = `Pellegrino: ${nameInput}`;
+        }
+        audioSys.init();
+        document.getElementById('player-modal').classList.add('hidden');
+      });
+
+      document.getElementById('toggle-objectives-btn').addEventListener('click', () => {
+        toggleObjectivesHUD();
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'KeyW' || e.code === 'ArrowUp') keys.forward = true;
+        if (e.code === 'KeyS' || e.code === 'ArrowDown') keys.backward = true;
+        if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.left = true;
+        if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.right = true;
+        if (e.code === 'Space' || e.code === 'KeyE') {
+          keys.interact = true;
+          handleInteraction();
+        }
+      });
+
+      window.addEventListener('keyup', (e) => {
+        if (e.code === 'KeyW' || e.code === 'ArrowUp') keys.forward = false;
+        if (e.code === 'KeyS' || e.code === 'ArrowDown') keys.backward = false;
+        if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.left = false;
+        if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.right = false;
+        if (e.code === 'Space' || e.code === 'KeyE') keys.interact = false;
+      });
+
+      // Joystick Logic
+      const joystickEl = document.getElementById('touch-joystick');
+      const stickEl = document.getElementById('joystick-stick');
+      let touchId = null;
+      let center = { x: 0, y: 0 };
+
+      joystickEl.addEventListener('touchstart', (e) => {
+        audioSys.init();
+        const touch = e.changedTouches[0];
+        touchId = touch.identifier;
+        const rect = joystickEl.getBoundingClientRect();
+        center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+        updateJoystick(touch);
+      }, { passive: false });
+
+      window.addEventListener('touchmove', (e) => {
+        if (touchId === null) return;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === touchId) {
+            updateJoystick(e.changedTouches[i]);
+            break;
+          }
+        }
+      }, { passive: false });
+
+      const resetJoystick = () => {
+        touchId = null;
+        joystickVec.x = 0;
+        joystickVec.y = 0;
+        stickEl.style.transform = `translate(0px, 0px)`;
+      };
+
+      window.addEventListener('touchend', resetJoystick);
+      window.addEventListener('touchcancel', resetJoystick);
+
+      function updateJoystick(touch) {
+        const dx = touch.clientX - center.x;
+        const dy = touch.clientY - center.y;
+        const dist = Math.min(Math.sqrt(dx * dx + dy * dy), 35);
+        const angle = Math.atan2(dy, dx);
+
+        const mx = Math.cos(angle) * dist;
+        const my = Math.sin(angle) * dist;
+
+        stickEl.style.transform = `translate(${mx}px, ${my}px)`;
+        joystickVec.x = mx / 35;
+        joystickVec.y = my / 35;
+      }
+
+      document.getElementById('touch-action-btn').addEventListener('click', () => {
+        audioSys.init();
+        handleInteraction();
+      });
+
+      document.getElementById('dialogue-close').addEventListener('click', () => {
+        document.getElementById('dialogue-box').classList.add('hidden');
+      });
+
+      document.getElementById('next-level-btn').addEventListener('click', () => {
+        document.getElementById('victory-modal').classList.add('hidden');
+        if (currentGameState.levelIndex < GAME_LEVELS.length - 1) {
+          loadLevel(currentGameState.levelIndex + 1);
+        }
+      });
+
+      document.getElementById('level-menu-btn').addEventListener('click', () => {
+        openLevelSelectModal();
+      });
+
+      document.getElementById('close-level-select').addEventListener('click', () => {
+        document.getElementById('level-select-modal').classList.add('hidden');
+      });
+
+      document.getElementById('help-btn').addEventListener('click', () => {
+        document.getElementById('intro-modal').classList.remove('hidden');
+      });
+
+      document.getElementById('close-help-btn').addEventListener('click', () => {
+        document.getElementById('intro-modal').classList.add('hidden');
+      });
+
+      document.getElementById('sound-btn').addEventListener('click', () => {
+        audioSys.init();
+        const muted = audioSys.toggleMute();
+        document.getElementById('sound-icon').className = muted 
+          ? "fa-solid fa-volume-xmark text-base sm:text-lg text-rose-400" 
+          : "fa-solid fa-volume-high text-base sm:text-lg text-amber-300";
+      });
+    }
+
+    function openLevelSelectModal() {
+      const container = document.getElementById('levels-list');
+      container.innerHTML = '';
+
+      GAME_LEVELS.forEach((lvl, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `w-full text-left p-3 rounded-2xl border transition flex justify-between items-center ${
+          idx === currentGameState.levelIndex 
+            ? 'bg-amber-500/20 border-amber-400 text-amber-200' 
+            : 'bg-black/40 border-amber-500/20 text-amber-100 hover:bg-black/60'
+        }`;
+        btn.innerHTML = `
+          <div>
+            <div class="font-cinzel font-bold text-xs sm:text-sm">Livello ${lvl.id}: ${lvl.title}</div>
+            <div class="text-[10px] sm:text-xs text-amber-300/70">${lvl.location}</div>
+          </div>
+          <i class="fa-solid fa-chevron-right text-xs text-amber-400"></i>
+        `;
+        btn.onclick = () => {
+          loadLevel(idx);
+          document.getElementById('level-select-modal').classList.add('hidden');
+        };
+        container.appendChild(btn);
+      });
+
+      document.getElementById('level-select-modal').classList.remove('hidden');
+    }
+
+    /* =========================================================================
+       11. MAIN ANIMATION LOOP & RESIZE
+       ========================================================================= */
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const delta = clock.getDelta();
+      const time = clock.getElapsedTime();
+
+      // Move San Francesco
+      let moveX = 0, moveZ = 0;
+      if (keys.forward) moveZ -= 1;
+      if (keys.backward) moveZ += 1;
+      if (keys.left) moveX -= 1;
+      if (keys.right) moveX += 1;
+
+      if (Math.abs(joystickVec.x) > 0.1 || Math.abs(joystickVec.y) > 0.1) {
+        moveX = joystickVec.x;
+        moveZ = joystickVec.y;
+      }
+
+      const moveLen = Math.sqrt(moveX * moveX + moveZ * moveZ);
+
+      if (moveLen > 0.1 && francisGroup) {
+        const normX = moveX / (moveLen > 1 ? moveLen : 1);
+        const normZ = moveZ / (moveLen > 1 ? moveLen : 1);
+
+        francisGroup.position.x += normX * playerSpeed * delta;
+        francisGroup.position.z += normZ * playerSpeed * delta;
+
+        const fx = francisGroup.position.x;
+        const fz = francisGroup.position.z;
+        const terrainY = Math.sin(fx * 0.03) * Math.cos(fz * 0.03) * (currentGameState.levelIndex === 3 ? 2.0 : 3.5);
+        francisGroup.position.y = terrainY;
+
+        francisGroup.rotation.y = Math.atan2(normX, normZ);
+        francisGroup.position.y += Math.abs(Math.sin(time * 10)) * 0.18;
+      }
+
+      // Camera Follow
+      if (francisGroup) {
+        const isMobile = window.innerWidth < 640;
+        const camDistY = isMobile ? 15 : 12;
+        const camDistZ = isMobile ? 22 : 18;
+
+        const camTargetPos = new THREE.Vector3(
+          francisGroup.position.x,
+          francisGroup.position.y + camDistY,
+          francisGroup.position.z + camDistZ
+        );
+        camera.position.lerp(camTargetPos, 0.08);
+        camera.lookAt(francisGroup.position.x, francisGroup.position.y + 2.5, francisGroup.position.z);
+      }
+
+      // Animate Flying Birds & Walking Villagers
+      animateBirds(time);
+      animateVillagers(delta, time);
+
+      // Objective Animations
+      currentLevelEntities.forEach((ent, idx) => {
+        if (ent.group) {
+          ent.group.rotation.y += 0.01;
+          ent.group.position.y += Math.sin(time * 2.5 + idx) * 0.003;
+        }
+      });
+
+      checkProximityAndPrompts();
+      renderer.render(scene, camera);
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    window.onload = function () {
+      initEngine();
+      setupControls();
+      animate();
+    };
+  </script>
+</body>
+</html>
+```
