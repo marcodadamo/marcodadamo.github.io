@@ -1,10 +1,9 @@
-```html
 <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Il Super Muletto 3D - Gioco per Bambini</title>
+    <title> Voxed Muletto 3D - Gioco per Bambini</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Three.js Library -->
@@ -93,7 +92,7 @@
         <div class="bg-white p-6 sm:p-8 rounded-3xl border-8 border-yellow-400 shadow-2xl max-w-md w-full text-center animate-bounce-slow">
             <h1 class="text-3xl sm:text-4xl font-extrabold text-amber-500 mb-2">🚜 IL MULETTO POTITO! 🚚</h1>
             <p class="text-xl font-bold text-slate-700 mb-4">Come ti chiami?</p>
-            
+
             <input type="text" id="playerNameInput" placeholder="Scrivi il tuo nome..." maxLength="12" 
                 class="w-full text-2xl font-bold text-center py-3 px-4 rounded-2xl border-4 border-sky-400 focus:outline-none focus:border-amber-400 mb-4 shadow-inner text-sky-900 placeholder-slate-300">
 
@@ -116,7 +115,7 @@
     <!-- 2. SCHERMATA SELEZIONE LIVELLI E MODALITÀ -->
     <div id="levelScreen" class="absolute inset-0 z-30 bg-sky-400/95 backdrop-blur-md hidden flex flex-col items-center justify-center p-4">
         <div class="bg-white p-6 sm:p-8 rounded-3xl border-8 border-amber-400 shadow-2xl max-w-xl w-full text-center">
-            
+
             <div class="flex justify-between items-center mb-4">
                 <div class="flex items-center gap-2">
                     <span id="playerAvatarDisplay" class="text-4xl">🐻</span>
@@ -173,14 +172,14 @@
     </div>
 
     <!-- GAME TOP HEADER OVERLAY -->
-    <header class="relative w-full max-w-5xl px-4 pt-3 pb-1 flex justify-between items-center z-10 pointer-events-none">
-        
+    <header class="absolute top-0 left-0 right-0 w-full px-4 pt-3 pb-2 flex justify-between items-center z-20 pointer-events-none bg-gradient-to-b from-black/20 to-transparent">
+
         <!-- Left group: Sound + Home/Level Select -->
         <div class="flex items-center gap-2 sm:gap-3 pointer-events-auto">
             <button id="soundToggleBtn" onclick="toggleAudio()" class="bg-amber-400 hover:bg-amber-300 text-amber-950 font-bold p-3 rounded-2xl border-4 border-amber-500 shadow-lg flex items-center justify-center text-lg active:scale-95 transition">
                 <i id="soundIcon" class="fas fa-volume-up text-xl sm:text-2xl"></i>
             </button>
-            
+
             <button onclick="goToLevelSelect()" class="bg-sky-500 hover:bg-sky-400 text-white font-bold px-3 py-2.5 rounded-2xl border-4 border-sky-600 shadow-lg flex items-center gap-2 text-base sm:text-lg active:scale-95 transition">
                 <i class="fas fa-th-large"></i>
                 <span class="hidden sm:inline">Scegli Livello</span>
@@ -243,10 +242,10 @@
         </div>
     </div>
 
-    <!-- TOUCH CONTROLS (Giganti e posizionati leggermente più in alto) -->
-    <footer class="relative w-full max-w-4xl px-4 pb-12 sm:pb-16 pt-1 z-10 pointer-events-none">
+    <!-- TOUCH CONTROLS (Spostati ancora più in basso con pb-2 e absolute bottom-0) -->
+    <footer class="absolute bottom-0 left-0 right-0 w-full max-w-4xl mx-auto px-4 pb-4 sm:pb-6 pt-1 z-20 pointer-events-none">
         <div class="grid grid-cols-3 gap-2 md:gap-4 items-center max-w-md mx-auto sm:max-w-xl pointer-events-auto">
-            
+
             <!-- Steering Controls (Left/Right) -->
             <div class="flex justify-center gap-3">
                 <button id="btnLeft" class="control-btn w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex justify-center items-center text-3xl text-slate-700 active:bg-sky-100">
@@ -579,7 +578,7 @@
             scene.fog = new THREE.FogExp2(0x7dd3fc, 0.012);
 
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            
+
             renderer = new THREE.WebGLRenderer({ canvas: container, antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -731,7 +730,7 @@
             // Googly Eyes
             const eyeWhiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
             const eyeBlackMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-            
+
             const eye1 = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), eyeWhiteMat);
             eye1.position.set(0.9, 1.3, 0.35);
             const pupil1 = new THREE.Mesh(new THREE.SphereGeometry(0.1, 16, 16), eyeBlackMat);
@@ -1253,4 +1252,3 @@
     </script>
 </body>
 </html>
-```
