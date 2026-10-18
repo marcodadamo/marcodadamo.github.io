@@ -1,0 +1,1132 @@
+```html
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Savana 3D Safari - Le Missioni del Piccolo Tito</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1510;
+        }
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        .ui-panel {
+            background: rgba(30, 20, 12, 0.88);
+            backdrop-filter: blur(10px);
+            border: 2px solid #8b5a2b;
+            color: #f7e7ce;
+        }
+        .btn-savana {
+            background: linear-gradient(135deg, #ea580c 0%, #b45309 100%);
+            color: white;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+        .btn-savana:hover {
+            background: linear-gradient(135deg, #f97316 0%, #d97706 100%);
+            transform: translateY(-2px);
+        }
+        .btn-savana:active {
+            transform: translateY(1px);
+        }
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.2);
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #8b5a2b;
+            border-radius: 4px;
+        }
+        .touch-btn {
+            background: rgba(234, 88, 12, 0.65);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(4px);
+            touch-action: manipulation;
+        }
+        .touch-btn:active {
+            background: rgba(234, 88, 12, 0.95);
+        }
+        .pulse-glow {
+            animation: pulseGlow 2s infinite ease-in-out;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(234, 88, 12, 0.4); }
+            50% { box-shadow: 0 0 25px rgba(245, 158, 11, 0.8); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="text-gray-100">
+
+    <!-- 3D Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- HUD / UI Overlay -->
+    <div class="relative z-10 flex flex-col justify-between h-screen p-3 md:p-4 pointer-events-none">
+        
+        <!-- Header Controls & Title -->
+        <div class="flex justify-between items-start pointer-events-auto gap-2">
+            <div class="ui-panel p-3 md:p-4 rounded-2xl shadow-2xl flex items-center gap-3 max-w-xs md:max-w-md">
+                <div class="bg-amber-600/30 p-2.5 md:p-3 rounded-xl border border-amber-500/50 text-amber-400">
+                    <i class="fa-solid fa-child text-2xl md:text-3xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-black text-amber-400 tracking-wide uppercase leading-tight">Le Missioni di Tito</h1>
+                    <p class="text-[10px] md:text-xs text-amber-200/80">Salva gli animali della Savana!</p>
+                </div>
+            </div>
+
+            <!-- Stats & Action Buttons -->
+            <div class="flex gap-2">
+                <div class="ui-panel px-3 md:px-4 py-2 rounded-xl flex items-center gap-2 md:gap-3">
+                    <i class="fa-solid fa-shield-heart text-amber-400 text-base md:text-lg"></i>
+                    <div>
+                        <div class="text-[9px] md:text-[10px] uppercase tracking-wider text-amber-300/70">Salvati</div>
+                        <div id="found-counter" class="text-sm md:text-lg font-bold text-amber-400">0 / 5</div>
+                    </div>
+                </div>
+
+                <button id="btn-missions" class="pointer-events-auto btn-savana px-3 md:px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm pulse-glow">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span class="hidden md:inline">Missioni</span>
+                </button>
+
+                <button id="btn-info" class="pointer-events-auto bg-amber-900/80 hover:bg-amber-800 text-amber-200 p-2.5 md:p-3 rounded-xl border border-amber-600 transition" title="Guida Savana">
+                    <i class="fa-solid fa-book-open"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Compass & Distance Tracker HUD -->
+        <div class="self-center ui-panel px-4 py-2 rounded-full flex items-center gap-3 border-amber-500/80 shadow-lg pointer-events-auto">
+            <i id="compass-arrow" class="fa-solid fa-location-arrow text-amber-400 text-xl transition-transform duration-100"></i>
+            <div class="text-xs md:text-sm font-semibold text-amber-200">
+                Guida Tito verso: <span id="target-name" class="text-amber-400 font-bold">In attesa missione...</span>
+                <span id="target-dist" class="ml-2 text-amber-300 font-mono text-xs bg-black/40 px-2 py-0.5 rounded-full">-- m</span>
+            </div>
+        </div>
+
+        <!-- Bottom Controls & Navigation -->
+        <div class="flex justify-between items-end pointer-events-auto">
+            <!-- Game Controls Hint -->
+            <div class="ui-panel p-3 rounded-xl text-xs max-w-sm hidden sm:block">
+                <div class="font-bold text-amber-400 mb-1"><i class="fa-solid fa-gamepad mr-1"></i> Controlli di Tito:</div>
+                <p>• <b>WASD / Frecce:</b> Muovi Tito</p>
+                <p>• <b>Spazio:</b> Fai saltare Tito</p>
+                <p>• <b>Mouse/Touch:</b> Ruota la visuale</p>
+                <p>• <b>Tasto E / Click:</b> Interagisci con gli obiettivi</p>
+            </div>
+
+            <!-- Audio & Reset Camera Toggle -->
+            <div class="flex gap-2">
+                <button id="btn-sound" class="ui-panel p-3 rounded-xl text-amber-400 hover:text-amber-200">
+                    <i class="fa-solid fa-volume-high text-lg"></i>
+                </button>
+                <button id="btn-reset-cam" class="ui-panel p-3 rounded-xl text-amber-400 hover:text-amber-200" title="Ripristina Visuale">
+                    <i class="fa-solid fa-rotate-left text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Touch Controls -->
+    <div class="sm:hidden absolute bottom-16 left-4 z-20 flex flex-col items-center gap-1 opacity-80 pointer-events-auto">
+        <button id="btn-up" class="touch-btn w-11 h-11 rounded-xl text-white font-bold text-lg"><i class="fa-solid fa-arrow-up"></i></button>
+        <div class="flex gap-1">
+            <button id="btn-left" class="touch-btn w-11 h-11 rounded-xl text-white font-bold text-lg"><i class="fa-solid fa-arrow-left"></i></button>
+            <button id="btn-down" class="touch-btn w-11 h-11 rounded-xl text-white font-bold text-lg"><i class="fa-solid fa-arrow-down"></i></button>
+            <button id="btn-right" class="touch-btn w-11 h-11 rounded-xl text-white font-bold text-lg"><i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+    </div>
+    
+    <!-- Mobile Action & Jump Buttons -->
+    <div class="sm:hidden absolute bottom-16 right-4 z-20 pointer-events-auto flex gap-2">
+        <button id="btn-jump-mobile" class="touch-btn w-12 h-12 rounded-full text-amber-200 font-bold text-lg flex items-center justify-center border border-amber-400">
+            <i class="fa-solid fa-person-arrow-up-from-line"></i>
+        </button>
+        <button id="btn-action-mobile" class="touch-btn w-14 h-14 rounded-full text-amber-300 font-bold text-2xl flex items-center justify-center border-2 border-amber-400 shadow-xl">
+            <i class="fa-solid fa-hand"></i>
+        </button>
+    </div>
+
+    <!-- Active Missions Modal -->
+    <div id="modal-missions" class="fixed inset-0 z-30 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="ui-panel max-w-xl w-full rounded-2xl overflow-hidden shadow-2xl border-2 border-amber-600 max-h-[85vh] flex flex-col">
+            <div class="p-4 bg-amber-900/40 border-b border-amber-700/50 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-amber-400 flex items-center gap-2">
+                    <i class="fa-solid fa-list-check"></i> Missioni di Salvataggio di Tito
+                </h2>
+                <button id="btn-close-missions" class="bg-black/40 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/80">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="missions-list" class="p-4 overflow-y-auto space-y-3 custom-scroll">
+                <!-- Populated via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Educational Animal Badge Modal -->
+    <div id="modal-animal" class="fixed inset-0 z-30 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="ui-panel max-w-lg w-full rounded-2xl overflow-hidden shadow-2xl border-2 border-amber-500 animate-float">
+            <div class="relative h-44 bg-amber-950/90 flex items-center justify-center overflow-hidden border-b border-amber-700/50">
+                <div id="modal-animal-bg" class="absolute inset-0 bg-cover bg-center opacity-30"></div>
+                <div id="modal-animal-icon" class="text-7xl z-10 transform hover:scale-110 transition-transform">🦏</div>
+                <button id="btn-close-modal" class="absolute top-3 right-3 bg-black/60 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/90">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="absolute bottom-2 left-4 right-4 flex justify-between items-end">
+                    <h2 id="modal-animal-name" class="text-2xl font-black text-amber-300 drop-shadow-md">Rinoceronte</h2>
+                    <span id="modal-animal-tag" class="text-xs bg-emerald-600 text-emerald-100 px-2.5 py-1 rounded-md font-bold uppercase tracking-wider">TITO HA SALVATO L'ANIMALE!</span>
+                </div>
+            </div>
+            <div class="p-5 space-y-4">
+                <p id="modal-animal-desc" class="text-amber-100 text-sm leading-relaxed">
+                    Grande lavoro, Tito! Hai completato la missione con successo.
+                </p>
+                <div class="bg-amber-950/60 p-3.5 rounded-xl border border-amber-700/50">
+                    <h4 class="text-xs font-bold text-amber-400 uppercase mb-1 flex items-center gap-1.5">
+                        <i class="fa-solid fa-graduation-cap text-amber-300"></i> Scheda Educativa ANIMALS
+                    </h4>
+                    <p id="modal-animal-fact" class="text-xs text-amber-200/90 leading-normal">
+                        Il rinoceronte è un massiccio erbivoro oggi gravemente minacciato dal bracconaggio per il suo corno.
+                    </p>
+                </div>
+                <button id="btn-got-it" class="w-full btn-savana py-3 rounded-xl font-bold text-center text-sm uppercase tracking-wider">
+                    Continua le missioni con Tito
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Final Certificate Modal (All Missions Complete) -->
+    <div id="modal-certificate" class="fixed inset-0 z-40 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="ui-panel max-w-xl w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-amber-500 p-6 text-center space-y-4 relative">
+            <div class="text-amber-400 text-5xl mb-2"><i class="fa-solid fa-award"></i></div>
+            <h2 class="text-3xl font-black text-amber-300 tracking-wide uppercase">Certificato di Eroe della Savana</h2>
+            <div class="text-lg text-amber-100">
+                Congratulazioni al piccolo esploratore <b class="text-amber-400 text-2xl uppercase underline decoration-amber-500">Tito</b>!
+            </div>
+            <p class="text-xs md:text-sm text-amber-200/90 leading-relaxed bg-amber-950/80 p-4 rounded-xl border border-amber-700/60">
+                Grazie al tuo coraggio e al tuo aiuto, tutti gli animali della Savana (Rinoceronte, Elefante, Giraffa, Leone e Ghepardo) sono stati tratti in salvo e rimessi in sicurezza nel loro habitat naturale!
+            </p>
+            <div class="text-2xl font-bold text-emerald-400 flex justify-center items-center gap-2">
+                <i class="fa-solid fa-check-double"></i> 5 / 5 ANIMALI SALVATI
+            </div>
+            <button id="btn-close-cert" class="btn-savana px-8 py-3 rounded-xl font-black text-sm uppercase tracking-wider">
+                Esplora liberamente la Savana
+            </button>
+        </div>
+    </div>
+
+    <!-- Info Dossier Modal (PDF info) -->
+    <div id="modal-info" class="fixed inset-0 z-30 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="ui-panel max-w-2xl w-full rounded-2xl overflow-hidden shadow-2xl border-2 border-amber-600 max-h-[90vh] flex flex-col">
+            <div class="p-4 bg-amber-900/40 border-b border-amber-700/50 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-amber-400 flex items-center gap-2">
+                    <i class="fa-solid fa-globe"></i> Ecosistema Savana - Dossier Scientifico
+                </h2>
+                <button id="btn-close-info" class="bg-black/40 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-black/80">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-5 overflow-y-auto space-y-4 custom-scroll text-sm">
+                <div class="bg-amber-950/50 p-4 rounded-xl border border-amber-800/50">
+                    <h3 class="font-bold text-amber-300 text-base mb-1">La Savana e i suoi Abitanti</h3>
+                    <p class="text-amber-100/90 leading-relaxed text-xs md:text-sm">
+                        La savana è uno degli ecosistemi più iconici della Terra. Distese di erba, alberi isolati (acacie e baobab) e grandi mandrie fanno da sfondo alla continua ricerca di acqua e cibo. Qui ogni specie svolge un ruolo fondamentale.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="bg-amber-950/30 p-3 rounded-lg border border-amber-800/30">
+                        <div class="font-bold text-amber-400 text-xs uppercase mb-1"><i class="fa-solid fa-map-location-dot"></i> Dove si trova</div>
+                        <p class="text-xs text-amber-100">Africa orientale e meridionale, oltre ad aree di India, Sud America e Australia.</p>
+                    </div>
+                    <div class="bg-amber-950/30 p-3 rounded-lg border border-amber-800/30">
+                        <div class="font-bold text-amber-400 text-xs uppercase mb-1"><i class="fa-solid fa-sun"></i> Clima</div>
+                        <p class="text-xs text-amber-100">Caldo tutto l'anno con alternanza tra stagione delle piogge e stagione secca.</p>
+                    </div>
+                </div>
+
+                <div class="bg-amber-950/30 p-4 rounded-xl border border-amber-800/30">
+                    <h4 class="font-bold text-amber-300 mb-2 text-xs md:text-sm"><i class="fa-solid fa-leaf"></i> Caratteristiche e Curiosità</h4>
+                    <ul class="list-disc list-inside space-y-1.5 text-xs text-amber-100">
+                        <li><b>Acacie e Baobab:</b> Caratterizzano e definiscono il paesaggio naturale.</li>
+                        <li><b>Grandi Migrazioni:</b> Coinvolgono milioni di erbivori in movimento per il cibo.</li>
+                        <li><b>Equilibrio Naturale:</b> Predatori ed erbivori convivono in un delicato bilanciamento.</li>
+                        <li><b>Importanza della Conservazione:</b> Proteggere la savana significa salvaguardare la biodiversità.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 z-40 bg-amber-600 text-white px-6 py-3 rounded-full shadow-2xl font-bold text-sm transition-all duration-300 opacity-0 pointer-events-none flex items-center gap-2 border border-amber-300">
+        <i class="fa-solid fa-bell"></i>
+        <span id="toast-msg">Notifica</span>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // --- MISSIONS & ANIMAL DATA ---
+        const MISSIONS_DATA = [
+            {
+                id: 'rhino',
+                title: 'Tito salva il Rinoceronte',
+                subtitle: 'Neutralizza le trappole dei bracconieri',
+                animal: 'Rinoceronte',
+                emoji: '🦏',
+                targetPos: { x: 18, z: -15 },
+                interactPos: { x: 18, z: -12 },
+                status: 'active',
+                desc: 'I bracconieri hanno posizionato trappole e segnali radio vicino al rinoceronte. Tito deve disattivare i 3 segnali per metterlo al sicuro!',
+                fact: 'RINOCERONTE: Massiccio erbivoro corazzato, oggi gravemente minacciato dal bracconaggio per il suo corno fatto di cheratina.',
+                color: 0x4b5563,
+                stepsNeeded: 3,
+                stepsDone: 0,
+                stepLabel: 'Segnali Rimossi'
+            },
+            {
+                id: 'elephant',
+                title: 'Tito porta l\'Acqua all\'Elefante',
+                subtitle: 'Attiva la fonte idrica per l\'oasi',
+                animal: 'Elefante Africano',
+                emoji: '🐘',
+                targetPos: { x: -22, z: 12 },
+                interactPos: { x: -22, z: 8 },
+                status: 'active',
+                desc: 'L\'elefante ha molta sete a causa della stagione secca. Aiuta Tito ad azionare la pompa dell\'oasi per dissetarlo!',
+                fact: 'ELEFANTE AFRICANO: Il più grande animale terrestre, dotato di straordinaria memoria, intelligenza ed empatia.',
+                color: 0x6b7280,
+                stepsNeeded: 1,
+                stepsDone: 0,
+                stepLabel: 'Fonte Attivata'
+            },
+            {
+                id: 'giraffe',
+                title: 'Tito libera la Giraffa',
+                subtitle: 'Rimuovi l\'ostacolo dal collo',
+                animal: 'Giraffa',
+                emoji: '🦒',
+                targetPos: { x: 22, z: 18 },
+                interactPos: { x: 20, z: 18 },
+                status: 'active',
+                desc: 'La giraffa è rimasta incastrata in rami spezzati. Guida Tito per rimuovere l\'ostacolo e farla tornare a mangiare le foglie di acacia!',
+                fact: 'GIRAFFA: L\'animale terrestre più alto del mondo, si nutre delle foglie delle acacie con la sua lunga lingua protettiva.',
+                color: 0xf59e0b,
+                stepsNeeded: 1,
+                stepsDone: 0,
+                stepLabel: 'Rami Rimosse'
+            },
+            {
+                id: 'lion',
+                title: 'Tito riunisce la Famiglia dei Leoni',
+                subtitle: 'Riporta il cucciolo alla mamma',
+                animal: 'Leone e Cucciolo',
+                emoji: '🦁',
+                targetPos: { x: -15, z: -18 },
+                interactPos: { x: -12, z: -18 },
+                status: 'active',
+                desc: 'Il cucciolo di leone si è perso nell\'erba alta. Tito deve trovarlo e accompagnarlo verso la mamma leone.',
+                fact: 'LEONE: Predatore sociale che vive in branchi. Il suo ruggito potente può essere udito fino a 8 chilometri di distanza!',
+                color: 0xd97706,
+                stepsNeeded: 2,
+                stepsDone: 0,
+                stepLabel: 'Cucciolo Riunito'
+            },
+            {
+                id: 'cheetah',
+                title: 'Tito libera la pista del Ghepardo',
+                subtitle: 'Pulisci la pianura per la corsa',
+                animal: 'Ghepardo',
+                emoji: '🐆',
+                targetPos: { x: -5, z: -25 },
+                interactPos: { x: -5, z: -22 },
+                status: 'active',
+                desc: 'Il ghepardo ha bisogno di una radura pulita per scattare in corsa. Aiuta Tito a raccogliere i 3 ostacoli dalla pista.',
+                fact: 'GHEPARDO: Il mammifero terrestre più veloce del pianeta, capace di scatti fulminei fino a 100 km/h!',
+                color: 0xeab308,
+                stepsNeeded: 3,
+                stepsDone: 0,
+                stepLabel: 'Ostacoli Rimossi'
+            }
+        ];
+
+        // --- GLOBAL VARIABLES ---
+        let scene, camera, renderer, controls;
+        let titoGroup; // 3D Character model for Tito
+        let leftLeg, rightLeg, leftArm, rightArm; // Limbs for walking animation
+        let activeMissionIndex = 0;
+        let interactiveObjects = [];
+        let isAudioMuted = false;
+        let audioCtx = null;
+
+        // Tito's physics
+        let titoVelY = 0;
+        let isJumping = false;
+        let walkCycle = 0;
+
+        // Key bindings
+        const keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, ' ': false };
+
+        // --- INITIALIZE THREE.JS ENVIRONMENT ---
+        function init3D() {
+            const container = document.getElementById('canvas-container');
+
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf3cb98); // Savana Sunset Sky
+            scene.fog = new THREE.FogExp2(0xf3cb98, 0.012);
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            // Orbit Controls tied to Tito
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2 - 0.05;
+            controls.minDistance = 4;
+            controls.maxDistance = 30;
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffeedd, 0.75);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xfffaed, 1.25);
+            sunLight.position.set(40, 60, 20);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            sunLight.shadow.camera.near = 0.5;
+            sunLight.shadow.camera.far = 200;
+            const d = 50;
+            sunLight.shadow.camera.left = -d;
+            sunLight.shadow.camera.right = d;
+            sunLight.shadow.camera.top = d;
+            sunLight.shadow.camera.bottom = -d;
+            scene.add(sunLight);
+
+            const hemiLight = new THREE.HemisphereLight(0xffe0b2, 0x8d6e63, 0.5);
+            scene.add(hemiLight);
+
+            // Build World
+            createTitoCharacter();
+            createTerrain();
+            createBambooFences();
+            createTreesAndEnvironment();
+            createMissionAnimalsAndTargets();
+
+            // Event Listeners
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('keydown', (e) => {
+                handleKey(e, true);
+                if (e.key.toLowerCase() === 'e') checkInteraction();
+            });
+            window.addEventListener('keyup', (e) => handleKey(e, false));
+
+            // Start Loop
+            animate();
+            updateHUDCompass();
+            renderMissionsList();
+        }
+
+        // --- TITO CHARACTER MODEL (BASED ON PHOTO CLOTHES) ---
+        function createTitoCharacter() {
+            titoGroup = new THREE.Group();
+
+            // Materials reflecting photo:
+            // White cable-knit sweater with dark blue stripes, light blue shirt, cream trousers, sneakers
+            const sweaterMat = new THREE.MeshStandardMaterial({ color: 0xfafafa, roughness: 0.7 });
+            const stripeMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.5 });
+            const shirtMat = new THREE.MeshStandardMaterial({ color: 0x93c5fd, roughness: 0.6 }); // Light blue shirt
+            const pantsMat = new THREE.MeshStandardMaterial({ color: 0xf5f5dc, roughness: 0.8 }); // Cream trousers
+            const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.5 }); // Skin tone
+            const hairMat = new THREE.MeshStandardMaterial({ color: 0x3d2314, roughness: 0.9 }); // Dark brown hair
+            const shoeMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4 }); // Sneakers
+
+            // 1. Torso (White Sweater + Blue Shirt Collar)
+            const torsoGeo = new THREE.CylinderGeometry(0.35, 0.32, 0.7, 12);
+            const torso = new THREE.Mesh(torsoGeo, sweaterMat);
+            torso.position.y = 0.85;
+            torso.castShadow = true;
+            titoGroup.add(torso);
+
+            // Shirt collar
+            const collarGeo = new THREE.ConeGeometry(0.25, 0.2, 8);
+            const collar = new THREE.Mesh(collarGeo, shirtMat);
+            collar.position.set(0, 1.18, 0.05);
+            collar.rotation.x = -Math.PI / 2;
+            titoGroup.add(collar);
+
+            // Sweater dark blue stripe accents (as in photo)
+            const stripeGeo = new THREE.TorusGeometry(0.34, 0.02, 8, 16);
+            const stripeBottom = new THREE.Mesh(stripeGeo, stripeMat);
+            stripeBottom.position.y = 0.55;
+            stripeBottom.rotation.x = Math.PI / 2;
+            titoGroup.add(stripeBottom);
+
+            const stripeCuffL = new THREE.Mesh(stripeGeo, stripeMat);
+            stripeCuffL.scale.set(0.3, 0.3, 0.3);
+
+            // 2. Head & Hair
+            const headGeo = new THREE.SphereGeometry(0.28, 16, 16);
+            const head = new THREE.Mesh(headGeo, skinMat);
+            head.position.y = 1.4;
+            head.castShadow = true;
+            titoGroup.add(head);
+
+            // Hair
+            const hairGeo = new THREE.SphereGeometry(0.3, 16, 16, 0, Math.PI * 2, 0, Math.PI / 1.8);
+            const hair = new THREE.Mesh(hairGeo, hairMat);
+            hair.position.set(0, 1.45, 0);
+            hair.scale.set(1, 0.8, 1.05);
+            titoGroup.add(hair);
+
+            // Eyes & Expression
+            const eyeGeo = new THREE.SphereGeometry(0.035, 8, 8);
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x1e1e1e });
+            const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
+            eyeL.position.set(-0.1, 1.42, 0.24);
+            const eyeR = new THREE.Mesh(eyeGeo, eyeMat);
+            eyeR.position.set(0.1, 1.42, 0.24);
+            titoGroup.add(eyeL);
+            titoGroup.add(eyeR);
+
+            // 3. Arms (White Cardigan Sleeves)
+            const armGeo = new THREE.CylinderGeometry(0.09, 0.08, 0.55, 8);
+            
+            leftArm = new THREE.Mesh(armGeo, sweaterMat);
+            leftArm.position.set(-0.42, 0.88, 0);
+            leftArm.castShadow = true;
+            titoGroup.add(leftArm);
+
+            rightArm = new THREE.Mesh(armGeo, sweaterMat);
+            rightArm.position.set(0.42, 0.88, 0);
+            rightArm.castShadow = true;
+            titoGroup.add(rightArm);
+
+            // 4. Legs & Shoes (Light Trousers & Sneakers)
+            const legGeo = new THREE.CylinderGeometry(0.11, 0.1, 0.6, 8);
+
+            leftLeg = new THREE.Group();
+            const lLegMesh = new THREE.Mesh(legGeo, pantsMat);
+            lLegMesh.position.y = -0.3;
+            lLegMesh.castShadow = true;
+            leftLeg.add(lLegMesh);
+            
+            const lShoe = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.14, 0.3), shoeMat);
+            lShoe.position.set(0, -0.58, 0.06);
+            lShoe.castShadow = true;
+            leftLeg.add(lShoe);
+            
+            leftLeg.position.set(-0.16, 0.5, 0);
+            titoGroup.add(leftLeg);
+
+            rightLeg = new THREE.Group();
+            const rLegMesh = new THREE.Mesh(legGeo, pantsMat);
+            rLegMesh.position.y = -0.3;
+            rLegMesh.castShadow = true;
+            rightLeg.add(rLegMesh);
+
+            const rShoe = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.14, 0.3), shoeMat);
+            rShoe.position.set(0, -0.58, 0.06);
+            rShoe.castShadow = true;
+            rightLeg.add(rShoe);
+
+            rightLeg.position.set(0.16, 0.5, 0);
+            titoGroup.add(rightLeg);
+
+            titoGroup.position.set(0, 0, 0);
+            scene.add(titoGroup);
+
+            // Initial Camera setup relative to Tito
+            camera.position.set(0, 6, 12);
+            controls.target.copy(titoGroup.position);
+        }
+
+        // --- ENVIRONMENT BUILDERS ---
+        function createTerrain() {
+            const groundGeo = new THREE.PlaneGeometry(140, 140, 64, 64);
+            const pos = groundGeo.attributes.position;
+
+            for (let i = 0; i < pos.count; i++) {
+                const vx = pos.getX(i);
+                const vy = pos.getY(i);
+                const z = Math.sin(vx * 0.08) * Math.cos(vy * 0.08) * 0.8;
+                pos.setZ(i, z);
+            }
+            groundGeo.computeVertexNormals();
+
+            const groundMat = new THREE.MeshStandardMaterial({
+                color: 0x6e8b3d, // Savana grass green from photo
+                roughness: 0.9,
+                metalness: 0.1
+            });
+
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            // Central Exhibition Rock Structure (Photo inspired)
+            const rockGeo = new THREE.DodecahedronGeometry(3.5, 1);
+            const rockMat = new THREE.MeshStandardMaterial({ color: 0x7c4a21, roughness: 0.9 });
+            const centerRock = new THREE.Mesh(rockGeo, rockMat);
+            centerRock.position.set(0, 0.8, 0);
+            centerRock.scale.set(1.4, 0.8, 1.2);
+            centerRock.castShadow = true;
+            centerRock.receiveShadow = true;
+            scene.add(centerRock);
+        }
+
+        function createBambooFences() {
+            const fenceGroup = new THREE.Group();
+            const bambooMat = new THREE.MeshStandardMaterial({ color: 0xd4a373, roughness: 0.5 });
+            
+            const radius = 30;
+            const segments = 28;
+
+            for (let i = 0; i < segments; i++) {
+                const angle = (i / segments) * Math.PI * 2;
+                const nextAngle = ((i + 1) / segments) * Math.PI * 2;
+
+                const x1 = Math.cos(angle) * radius;
+                const z1 = Math.sin(angle) * radius;
+                const x2 = Math.cos(nextAngle) * radius;
+                const z2 = Math.sin(nextAngle) * radius;
+
+                // Vertical posts
+                const post = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 2.2, 8), bambooMat);
+                post.position.set(x1, 1.1, z1);
+                post.castShadow = true;
+                fenceGroup.add(post);
+
+                // Crossbars
+                const dx = x2 - x1;
+                const dz = z2 - z1;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+                const beamGeo = new THREE.CylinderGeometry(0.08, 0.08, dist, 8);
+                
+                const beam1 = new THREE.Mesh(beamGeo, bambooMat);
+                beam1.position.set((x1 + x2) / 2, 1.4, (z1 + z2) / 2);
+                beam1.rotation.y = Math.atan2(dx, dz) + Math.PI / 2;
+                beam1.rotation.z = Math.PI / 2;
+                fenceGroup.add(beam1);
+
+                const beam2 = new THREE.Mesh(beamGeo, bambooMat);
+                beam2.position.set((x1 + x2) / 2, 0.7, (z1 + z2) / 2);
+                beam2.rotation.y = Math.atan2(dx, dz) + Math.PI / 2;
+                beam2.rotation.z = Math.PI / 2;
+                fenceGroup.add(beam2);
+            }
+
+            scene.add(fenceGroup);
+        }
+
+        function createTreesAndEnvironment() {
+            function addAcacia(x, z, s = 1) {
+                const tree = new THREE.Group();
+                const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.9 });
+                const leafMat = new THREE.MeshStandardMaterial({ color: 0x4a7c59, roughness: 0.8 });
+
+                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.6, 5, 8), trunkMat);
+                trunk.position.y = 2.5;
+                trunk.castShadow = true;
+                tree.add(trunk);
+
+                const canopy = new THREE.Mesh(new THREE.CylinderGeometry(4, 1.5, 0.8, 8), leafMat);
+                canopy.position.y = 5.2;
+                canopy.castShadow = true;
+                tree.add(canopy);
+
+                tree.position.set(x, 0, z);
+                tree.scale.set(s, s, s);
+                scene.add(tree);
+            }
+
+            function addBaobab(x, z, s = 1) {
+                const tree = new THREE.Group();
+                const trunkMat = new THREE.MeshStandardMaterial({ color: 0x8b6d5c, roughness: 0.9 });
+                const leafMat = new THREE.MeshStandardMaterial({ color: 0x3d6b42, roughness: 0.8 });
+
+                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(2, 2.6, 6, 12), trunkMat);
+                trunk.position.y = 3;
+                trunk.castShadow = true;
+                tree.add(trunk);
+
+                const crown = new THREE.Mesh(new THREE.DodecahedronGeometry(3, 1), leafMat);
+                crown.position.y = 6.5;
+                crown.scale.set(1.2, 0.6, 1.2);
+                crown.castShadow = true;
+                tree.add(crown);
+
+                tree.position.set(x, 0, z);
+                tree.scale.set(s, s, s);
+                scene.add(tree);
+            }
+
+            addAcacia(-15, -15, 1.2);
+            addAcacia(20, 8, 1.0);
+            addAcacia(-20, 18, 1.1);
+            addBaobab(22, -22, 1.3);
+            addBaobab(-26, -5, 1.0);
+        }
+
+        // --- ANIMALS & INTERACTIVE OBJECTS ---
+        function createAnimalSpriteTexture(emoji, name) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            const grad = ctx.createRadialGradient(256, 256, 40, 256, 256, 240);
+            grad.addColorStop(0, 'rgba(255,255,255,0.95)');
+            grad.addColorStop(0.6, 'rgba(245, 158, 11, 0.45)');
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 512, 512);
+
+            ctx.font = '220px serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(emoji, 256, 220);
+
+            ctx.fillStyle = '#1e140c';
+            ctx.roundRect(70, 380, 372, 75, 16);
+            ctx.fill();
+            ctx.strokeStyle = '#ea580c';
+            ctx.lineWidth = 6;
+            ctx.stroke();
+
+            ctx.fillStyle = '#f7e7ce';
+            ctx.font = 'bold 36px sans-serif';
+            ctx.fillText(name, 256, 428);
+
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createMissionAnimalsAndTargets() {
+            interactiveObjects = [];
+
+            MISSIONS_DATA.forEach((mission, index) => {
+                const group = new THREE.Group();
+
+                const baseGeo = new THREE.CylinderGeometry(1.2, 1.4, 0.4, 16);
+                const baseMat = new THREE.MeshStandardMaterial({ color: mission.color, roughness: 0.8 });
+                const base = new THREE.Mesh(baseGeo, baseMat);
+                base.position.y = 0.2;
+                base.receiveShadow = true;
+                group.add(base);
+
+                const texture = createAnimalSpriteTexture(mission.emoji, mission.animal);
+                const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true });
+                const sprite = new THREE.Sprite(spriteMat);
+                sprite.scale.set(5.5, 5.5, 1);
+                sprite.position.y = 3.2;
+                group.add(sprite);
+
+                group.position.set(mission.targetPos.x, 0, mission.targetPos.z);
+                scene.add(group);
+
+                // Glowing Beacon for Action
+                const beaconGroup = new THREE.Group();
+                const ringGeo = new THREE.RingGeometry(0.8, 1.4, 32);
+                const ringMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+                const ring = new THREE.Mesh(ringGeo, ringMat);
+                ring.rotation.x = Math.PI / 2;
+                ring.position.y = 0.05;
+                beaconGroup.add(ring);
+
+                const light = new THREE.PointLight(0xf59e0b, 2, 8);
+                light.position.y = 1.5;
+                beaconGroup.add(light);
+
+                beaconGroup.position.set(mission.interactPos.x, 0, mission.interactPos.z);
+                beaconGroup.userData = { missionIndex: index, ringMesh: ring, light: light };
+                scene.add(beaconGroup);
+
+                interactiveObjects.push(beaconGroup);
+            });
+        }
+
+        // --- CONTROLS & MOVEMENT & PHYSICS ---
+        function handleKey(e, isDown) {
+            if (keys.hasOwnProperty(e.key)) keys[e.key] = isDown;
+            if (keys.hasOwnProperty(e.code)) keys[e.code] = isDown;
+        }
+
+        function updateTitoMovement() {
+            const speed = 0.22;
+            const moveVector = new THREE.Vector3(0, 0, 0);
+
+            const forward = new THREE.Vector3();
+            camera.getWorldDirection(forward);
+            forward.y = 0;
+            forward.normalize();
+
+            const side = new THREE.Vector3();
+            side.crossVectors(camera.up, forward).normalize();
+
+            if (keys.w || keys.ArrowUp) moveVector.addScaledVector(forward, speed);
+            if (keys.s || keys.ArrowDown) moveVector.addScaledVector(forward, -speed);
+            if (keys.a || keys.ArrowLeft) moveVector.addScaledVector(side, speed);
+            if (keys.d || keys.ArrowRight) moveVector.addScaledVector(side, -speed);
+
+            // Handle Jumping
+            if (keys[' '] && !isJumping) {
+                titoVelY = 0.22;
+                isJumping = true;
+                playSynthSound(350, 0.1, 'sine');
+            }
+
+            // Apply gravity
+            if (isJumping) {
+                titoGroup.position.y += titoVelY;
+                titoVelY -= 0.015;
+
+                if (titoGroup.position.y <= 0) {
+                    titoGroup.position.y = 0;
+                    isJumping = false;
+                    titoVelY = 0;
+                }
+            }
+
+            const isMoving = moveVector.lengthSq() > 0;
+
+            if (isMoving) {
+                titoGroup.position.add(moveVector);
+
+                const angle = Math.atan2(moveVector.x, moveVector.z);
+                titoGroup.rotation.y = angle;
+
+                // Tito's walking limb animation
+                walkCycle += 0.25;
+                leftLeg.rotation.x = Math.sin(walkCycle) * 0.6;
+                rightLeg.rotation.x = -Math.sin(walkCycle) * 0.6;
+                leftArm.rotation.x = -Math.sin(walkCycle) * 0.6;
+                rightArm.rotation.x = Math.sin(walkCycle) * 0.6;
+
+                controls.target.copy(titoGroup.position);
+                camera.position.add(moveVector);
+            } else {
+                // Reset limbs when idle
+                leftLeg.rotation.x = 0;
+                rightLeg.rotation.x = 0;
+                leftArm.rotation.x = 0;
+                rightArm.rotation.x = 0;
+            }
+
+            updateHUDCompass();
+        }
+
+        // --- HUD COMPASS & TRACKER ---
+        function updateHUDCompass() {
+            const currentMission = MISSIONS_DATA[activeMissionIndex];
+            if (!currentMission) return;
+
+            document.getElementById('target-name').innerText = currentMission.animal;
+
+            const targetVector = new THREE.Vector3(currentMission.interactPos.x, 0, currentMission.interactPos.z);
+            const dist = Math.round(titoGroup.position.distanceTo(targetVector));
+
+            document.getElementById('target-dist').innerText = `${dist} m`;
+
+            const dx = targetVector.x - titoGroup.position.x;
+            const dz = targetVector.z - titoGroup.position.z;
+            const targetAngle = Math.atan2(dx, dz);
+
+            const camDirection = new THREE.Vector3();
+            camera.getWorldDirection(camDirection);
+            const camAngle = Math.atan2(camDirection.x, camDirection.z);
+
+            let relativeAngle = targetAngle - camAngle;
+            let deg = (relativeAngle * 180 / Math.PI);
+
+            document.getElementById('compass-arrow').style.transform = `rotate(${deg}deg)`;
+        }
+
+        // --- INTERACTION & MISSIONS ---
+        function checkInteraction() {
+            const currentMission = MISSIONS_DATA[activeMissionIndex];
+            if (!currentMission || currentMission.status === 'completed') return;
+
+            const targetPos = new THREE.Vector3(currentMission.interactPos.x, 0, currentMission.interactPos.z);
+            const dist = titoGroup.position.distanceTo(targetPos);
+
+            if (dist <= 4.0) {
+                currentMission.stepsDone++;
+                playSynthSound(650, 0.15, 'triangle');
+
+                if (currentMission.stepsDone >= currentMission.stepsNeeded) {
+                    currentMission.status = 'completed';
+                    playVictorySound();
+                    showAnimalSavedModal(currentMission);
+                    updateMissionsCount();
+
+                    // Check if ALL completed
+                    const totalCompleted = MISSIONS_DATA.filter(m => m.status === 'completed').length;
+                    if (totalCompleted === MISSIONS_DATA.length) {
+                        setTimeout(() => {
+                            document.getElementById('modal-certificate').classList.remove('hidden');
+                        }, 1200);
+                    } else {
+                        const nextUncompleted = MISSIONS_DATA.findIndex(m => m.status === 'active');
+                        if (nextUncompleted !== -1) {
+                            activeMissionIndex = nextUncompleted;
+                        }
+                    }
+                } else {
+                    showToast(`Tito ha agito! (${currentMission.stepsDone}/${currentMission.stepsNeeded})`);
+                }
+
+                renderMissionsList();
+            } else {
+                showToast(`Sei ancora troppo lontano! Avvicina Tito all'obiettivo. (${Math.round(dist)}m)`);
+            }
+        }
+
+        function showAnimalSavedModal(mission) {
+            document.getElementById('modal-animal-name').innerText = mission.animal;
+            document.getElementById('modal-animal-icon').innerText = mission.emoji;
+            document.getElementById('modal-animal-desc').innerText = mission.desc;
+            document.getElementById('modal-animal-fact').innerText = mission.fact;
+            document.getElementById('modal-animal').classList.remove('hidden');
+        }
+
+        function updateMissionsCount() {
+            const completed = MISSIONS_DATA.filter(m => m.status === 'completed').length;
+            document.getElementById('found-counter').innerText = `${completed} / ${MISSIONS_DATA.length}`;
+        }
+
+        function renderMissionsList() {
+            const container = document.getElementById('missions-list');
+            container.innerHTML = '';
+
+            MISSIONS_DATA.forEach((m, idx) => {
+                const isCurrent = idx === activeMissionIndex;
+                const isDone = m.status === 'completed';
+
+                const card = document.createElement('div');
+                card.className = `p-3.5 rounded-xl border transition-all flex justify-between items-center ${
+                    isDone 
+                        ? 'bg-emerald-950/40 border-emerald-600/60 text-emerald-200' 
+                        : isCurrent 
+                            ? 'bg-amber-900/60 border-amber-500 text-amber-100 ring-2 ring-amber-500/50' 
+                            : 'bg-amber-950/30 border-amber-800/40 text-amber-200/80 opacity-80'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="text-3xl">${m.emoji}</div>
+                        <div>
+                            <div class="font-bold text-sm text-amber-300 ${isDone ? 'line-through text-emerald-300' : ''}">${m.title}</div>
+                            <div class="text-xs text-amber-200/80">${m.subtitle}</div>
+                            <div class="text-[10px] text-amber-400 mt-1 font-mono">${m.stepLabel}: ${m.stepsDone}/${m.stepsNeeded}</div>
+                        </div>
+                    </div>
+                    <div>
+                        ${isDone 
+                            ? '<span class="bg-emerald-600/80 text-emerald-100 text-[10px] px-2 py-1 rounded-md font-bold uppercase">Completato</span>' 
+                            : `<button onclick="setActiveMission(${idx})" class="btn-savana text-xs px-3 py-1.5 rounded-lg font-bold">Traccia</button>`
+                        }
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function setActiveMission(index) {
+            activeMissionIndex = index;
+            renderMissionsList();
+            document.getElementById('modal-missions').classList.add('hidden');
+            showToast(`Mappa puntata su: ${MISSIONS_DATA[index].animal}`);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('opacity-0');
+            setTimeout(() => toast.classList.add('opacity-0'), 2500);
+        }
+
+        // --- SYNTH AUDIO (WEB AUDIO API) ---
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSynthSound(freq, duration, type = 'sine') {
+            if (isAudioMuted) return;
+            initAudio();
+            if (!audioCtx) return;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playVictorySound() {
+            if (isAudioMuted) return;
+            initAudio();
+            if (!audioCtx) return;
+
+            const now = audioCtx.currentTime;
+            [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.frequency.setValueAtTime(freq, now + i * 0.1);
+                gain.gain.setValueAtTime(0.25, now + i * 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.3);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now + i * 0.1);
+                osc.stop(now + i * 0.1 + 0.3);
+            });
+        }
+
+        // --- ANIMATION LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            updateTitoMovement();
+            controls.update();
+
+            const time = Date.now() * 0.003;
+            interactiveObjects.forEach((beacon) => {
+                if (beacon.userData.ringMesh) {
+                    beacon.userData.ringMesh.scale.setScalar(1 + Math.sin(time) * 0.15);
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- LOAD EVENT BINDINGS ---
+        window.onload = function() {
+            init3D();
+
+            document.getElementById('btn-missions').onclick = () => {
+                document.getElementById('modal-missions').classList.remove('hidden');
+            };
+            document.getElementById('btn-close-missions').onclick = () => {
+                document.getElementById('modal-missions').classList.add('hidden');
+            };
+            document.getElementById('btn-close-modal').onclick = () => {
+                document.getElementById('modal-animal').classList.add('hidden');
+            };
+            document.getElementById('btn-got-it').onclick = () => {
+                document.getElementById('modal-animal').classList.add('hidden');
+            };
+            document.getElementById('btn-close-cert').onclick = () => {
+                document.getElementById('modal-certificate').classList.add('hidden');
+            };
+            document.getElementById('btn-info').onclick = () => {
+                document.getElementById('modal-info').classList.remove('hidden');
+            };
+            document.getElementById('btn-close-info').onclick = () => {
+                document.getElementById('modal-info').classList.add('hidden');
+            };
+
+            document.getElementById('btn-reset-cam').onclick = () => {
+                camera.position.set(titoGroup.position.x, titoGroup.position.y + 6, titoGroup.position.z + 12);
+                controls.target.copy(titoGroup.position);
+            };
+
+            document.getElementById('btn-action-mobile').onclick = () => {
+                checkInteraction();
+            };
+
+            document.getElementById('btn-jump-mobile').onclick = () => {
+                keys[' '] = true;
+                setTimeout(() => { keys[' '] = false; }, 100);
+            };
+
+            document.getElementById('btn-sound').onclick = (e) => {
+                isAudioMuted = !isAudioMuted;
+                const icon = e.currentTarget.querySelector('i');
+                if (isAudioMuted) {
+                    icon.className = 'fa-solid fa-volume-xmark text-lg text-red-400';
+                } else {
+                    icon.className = 'fa-solid fa-volume-high text-lg text-amber-400';
+                }
+            };
+
+            const bindTouchBtn = (id, key) => {
+                const btn = document.getElementById(id);
+                if (!btn) return;
+                btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; });
+                btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; });
+                btn.addEventListener('mousedown', () => { keys[key] = true; });
+                btn.addEventListener('mouseup', () => { keys[key] = false; });
+            };
+
+            bindTouchBtn('btn-up', 'w');
+            bindTouchBtn('btn-down', 's');
+            bindTouchBtn('btn-left', 'a');
+            bindTouchBtn('btn-right', 'd');
+        };
+    </script>
+</body>
+</html>
+```
