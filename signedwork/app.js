@@ -1,4 +1,4 @@
-// GENERAZIONE QR PER GLI OPERAI
+// GENERAZIONE QR
 new QRious({ element: document.getElementById("qrAntonio"), value: "Antonio", size: 150 });
 new QRious({ element: document.getElementById("qrMarco"), value: "Marco", size: 150 });
 
@@ -57,13 +57,12 @@ function aggiungiRiga(r) {
     tbody.appendChild(tr);
 }
 
-// Carica timbrature salvate all’avvio
 window.addEventListener('DOMContentLoaded', () => {
     let dati = JSON.parse(localStorage.getItem("timbrature")) || [];
     dati.forEach(aggiungiRiga);
 });
 
-// Esporta tutte le timbrature in CSV
+// EXPORT CSV
 function exportExcel() {
     let dati = JSON.parse(localStorage.getItem("timbrature")) || [];
     let csv = "Operaio,Tipo,Data,Ora,GPS\n";
@@ -81,11 +80,10 @@ function exportExcel() {
     a.click();
 }
 
-// CALCOLO ORE LAVORATE PER OPERAIO E GIORNO
+// CALCOLO ORE LAVORATE
 function calcolaOreLavorate() {
     let dati = JSON.parse(localStorage.getItem("timbrature")) || [];
 
-    // Raggruppa per operaio+data
     let gruppi = {};
 
     dati.forEach(r => {
@@ -99,11 +97,8 @@ function calcolaOreLavorate() {
     Object.keys(gruppi).forEach(key => {
         let timbrature = gruppi[key];
 
-        // Ordina per data+ora
         timbrature.sort((a, b) => {
-            const da = new Date(a.data + " " + a.ora);
-            const db = new Date(b.data + " " + b.ora);
-            return da - db;
+            return new Date(a.data + " " + a.ora) - new Date(b.data + " " + b.ora);
         });
 
         let totaleMs = 0;
@@ -114,7 +109,7 @@ function calcolaOreLavorate() {
                 entrata = new Date(t.data + " " + t.ora);
             } else if (t.tipo === "Uscita" && entrata) {
                 let uscita = new Date(t.data + " " + t.ora);
-                totaleMs += (uscita - entrata);
+                totaleMs += uscita - entrata;
                 entrata = null;
             }
         });
@@ -131,16 +126,10 @@ function calcolaOreLavorate() {
     return risultati;
 }
 
-// Mostra le ore lavorate in un alert
 function mostraOre() {
     const risultati = calcolaOreLavorate();
 
-    if (risultati.length === 0) {
-        alert("Nessuna timbratura disponibile per il calcolo.");
-        return;
-    }
-
-    let msg = "Ore lavorate per giornata:\n\n";
+    let msg = "Ore lavorate:\n\n";
 
     risultati.forEach(r => {
         msg += `${r.operaio} - ${r.data}: ${r.ore} ore\n`;
