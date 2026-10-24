@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Timbratura Avanzata Operai</title>
+    <style>
+        body { font-family: Arial; background: #f0f0f0; padding: 20px; }
+        .card { background: #fff; padding: 20px; max-width: 800px; margin: auto; border-radius: 10px; }
+        button { padding: 10px; margin: 10px 5px; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-entrata { background: #2e7d32; color: white; }
+        .btn-uscita { background: #c62828; color: white; }
+        .btn-export { background: #1565c0; color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+        th { background: #e0e0e0; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Login Operaio</h2>
+    <input type="text" id="loginNome" placeholder="Inserisci nome operaio">
+    <button onclick="login()">Accedi</button>
+
+    <h3 id="utenteLoggato" style="color:green;"></h3>
+
+    <hr>
+
+    <h2>Timbratura</h2>
+    <button class="btn-entrata" onclick="timbratura('Entrata')">Entrata</button>
+    <button class="btn-uscita" onclick="timbratura('Uscita')">Uscita</button>
+
+    <h3>Storico Timbrature</h3>
+    <table id="tabella">
+        <thead>
+            <tr>
+                <th>Operaio</th>
+                <th>Tipo</th>
+                <th>Data</th>
+                <th>Ora</th>
+                <th>GPS</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <button class="btn-export" onclick="exportExcel()">Esporta Excel</button>
+</div>
+
+<script>
+    let operaio = null;
+
+    function login() {
+        operaio = document.getElementById("loginNome").value;
+        if (!operaio) { alert("Inserisci un nome valido"); return; }
+        document.getElementById("utenteLoggato").innerText = "Operaio loggato: " + operaio;
+    }
+
+    function timbratura(tipo) {
+        if (!operaio) { alert("Effettua il login prima di timbrare"); return; }
+
+        navigator.geolocation.getCurrentPosition(pos => {
+            const gps = pos.coords.latitude + ", " + pos.coords.longitude;
+
+            const now = new Date();
+            const data = now.toLocaleDateString('it-IT');
+            const ora = now.toLocaleTimeString('it-IT');
+
+            const record = { operaio, tipo, data, ora, gps };
+
+            salva(record);
+            aggiungiRiga(record);
+        });
+    }
+
+    function salva(record) {
+        let dati = JSON.parse(localStorage.getItem("timbrature")) || [];
+        dati.push(record);
+        localStorage.setItem("timbrature", JSON.stringify(dati));
+    }
+
+    function aggiungiRiga(r) {
+        const tbody = document.querySelector("#tabella tbody");
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${r.operaio}</td>
+            <td>${r.tipo}</td>
+            <td>${r.data}</td>
+            <td>${r.ora}</td>
+            <td>${r.gps}</td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    function exportExcel() {
+        let dati = JSON.parse(localStorage.getItem("timbrature")) || [];
+        let csv = "Operaio,Tipo,Data,Ora,GPS\n";
+
+        dati.forEach(r => {
+            csv += `${r.operaio},${r.tipo},${r.data},${r.ora},${r.gps}\n`;
+        });
+
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "timbrature.csv";
+        a.click();
+    }
+</script>
+
+</body>
+</html>
