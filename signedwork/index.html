@@ -10,6 +10,7 @@
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#1565c0">
 
+    <!-- Librerie QR -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 </head>
@@ -55,17 +56,17 @@
         <tbody></tbody>
     </table>
 
-    <button class="btn-export" onclick="exportExcel()">Esporta Excel</button>
+    <button class="btn-export" onclick="exportExcel()">Esporta Timbrature (CSV)</button>
+    <button class="btn-export" onclick="mostraOre()">Calcola Ore Lavorate</button>
 
 </div>
 
 <script src="app.js"></script>
-
 <script>
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-}
+    // Registrazione service worker (PWA)
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js');
+    }
 </script>
-
 </body>
 </html>
