@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SignedWork - Timbratura Operai</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#1565c0">
+
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+</head>
+<body>
+
+<div class="card">
+
+    <h2>QR Code Operai</h2>
+
+    <div class="qr-box">
+        <div>
+            <h3>Antonio</h3>
+            <canvas id="qrAntonio"></canvas>
+        </div>
+
+        <div>
+            <h3>Marco</h3>
+            <canvas id="qrMarco"></canvas>
+        </div>
+    </div>
+
+    <hr>
+
+    <h2>Timbratura QR</h2>
+
+    <button class="btn-entrata" onclick="startScan('Entrata')">Timbra Entrata</button>
+    <button class="btn-uscita" onclick="startScan('Uscita')">Timbra Uscita</button>
+
+    <div id="qr-reader"></div>
+
+    <h3>Storico Timbrature</h3>
+
+    <table id="tabella">
+        <thead>
+            <tr>
+                <th>Operaio</th>
+                <th>Tipo</th>
+                <th>Data</th>
+                <th>Ora</th>
+                <th>GPS</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <button class="btn-export" onclick="exportExcel()">Esporta Excel</button>
+
+</div>
+
+<script src="app.js"></script>
+
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+}
+</script>
+
+</body>
+</html>
