@@ -1,97 +1,188 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
+
 <meta charset="UTF-8">
-<title>Mini Sonic</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+<title>Mini Sonic Mobile</title>
 
 <style>
+
 body{
     margin:0;
     overflow:hidden;
-    background:#87ceeb;
+    background:#87CEEB;
+    touch-action:none;
 }
 
 canvas{
     display:block;
 }
 
-#info{
-    position:absolute;
+#hud{
+    position:fixed;
     top:10px;
     left:10px;
     color:white;
-    font-size:24px;
     font-family:Arial;
+    font-size:26px;
     font-weight:bold;
+    text-shadow:2px 2px 4px black;
+    z-index:100;
 }
+
+#controls{
+    position:fixed;
+    bottom:20px;
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    pointer-events:none;
+}
+
+.leftControls,
+.rightControls{
+    display:flex;
+    gap:15px;
+    padding:20px;
+    pointer-events:auto;
+}
+
+.btn{
+    width:80px;
+    height:80px;
+    border:none;
+    border-radius:50%;
+    background:rgba(255,255,255,0.8);
+    font-size:35px;
+    font-weight:bold;
+    box-shadow:0 0 10px rgba(0,0,0,.4);
+}
+
+.btn:active{
+    transform:scale(0.95);
+}
+
 </style>
 
 </head>
+
 <body>
 
-<div id="info">Anelli: 0</div>
+<div id="hud">Anelli: 0</div>
 
 <canvas id="game"></canvas>
+
+<div id="controls">
+
+    <div class="leftControls">
+        <button class="btn" id="left">◀</button>
+        <button class="btn" id="right">▶</button>
+    </div>
+
+    <div class="rightControls">
+        <button class="btn" id="jump">▲</button>
+    </div>
+
+</div>
 
 <script>
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+function resize(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
 
-const keys = {};
+resize();
+window.addEventListener("resize",resize);
+
+const keys={};
 
 document.addEventListener("keydown",e=>keys[e.code]=true);
 document.addEventListener("keyup",e=>keys[e.code]=false);
 
-const player = {
+const touch={
+    left:false,
+    right:false,
+    jump:false
+};
+
+function bind(id,key){
+
+    const btn=document.getElementById(id);
+
+    btn.addEventListener("touchstart",(e)=>{
+        e.preventDefault();
+        touch[key]=true;
+    });
+
+    btn.addEventListener("touchend",(e)=>{
+        e.preventDefault();
+        touch[key]=false;
+    });
+
+    btn.addEventListener("touchcancel",(e)=>{
+        e.preventDefault();
+        touch[key]=false;
+    });
+}
+
+bind("left","left");
+bind("right","right");
+bind("jump","jump");
+
+const player={
     x:100,
-    y:200,
+    y:100,
     w:40,
     h:40,
     vx:0,
     vy:0,
-    speed:8,
-    jump:-15,
     rings:0
 };
 
-const gravity = 0.7;
+const gravity=0.7;
+const worldWidth=6000;
 
-const worldWidth = 5000;
+let cameraX=0;
 
-let cameraX = 0;
-
-const platforms = [
-    {x:0,y:500,w:5000,h:100},
-    {x:500,y:420,w:200,h:20},
-    {x:900,y:350,w:200,h:20},
-    {x:1300,y:280,w:200,h:20},
-    {x:1800,y:400,w:300,h:20}
+const platforms=[
+    {x:0,y:500,w:6000,h:100},
+    {x:600,y:420,w:200,h:20},
+    {x:1000,y:340,w:250,h:20},
+    {x:1500,y:270,w:250,h:20},
+    {x:2200,y:420,w:350,h:20},
+    {x:3000,y:350,w:350,h:20},
+    {x:4200,y:280,w:300,h:20}
 ];
 
 const rings=[];
 
-for(let i=0;i<40;i++){
+for(let i=0;i<60;i++){
+
     rings.push({
-        x:250+i*100,
-        y:300-Math.sin(i)*80,
+        x:250+i*90,
+        y:300+Math.sin(i)*60,
         collected:false
     });
+
 }
 
 const enemies=[
-    {x:800,y:470,w:30,h:30},
-    {x:1600,y:470,w:30,h:30},
-    {x:2500,y:470,w:30,h:30}
+    {x:900,y:470,w:30,h:30},
+    {x:1800,y:470,w:30,h:30},
+    {x:2800,y:470,w:30,h:30},
+    {x:4200,y:470,w:30,h:30}
 ];
 
-function resetGame(){
+function reset(){
 
     player.x=100;
-    player.y=200;
+    player.y=100;
     player.vx=0;
     player.vy=0;
     player.rings=0;
@@ -99,44 +190,49 @@ function resetGame(){
     rings.forEach(r=>{
         r.collected=false;
     });
+
 }
 
 function update(){
 
-    if(keys["ArrowRight"])
-        player.vx=player.speed;
+    if(keys["ArrowRight"] || touch.right)
+        player.vx=8;
 
-    else if(keys["ArrowLeft"])
-        player.vx=-player.speed;
+    else if(keys["ArrowLeft"] || touch.left)
+        player.vx=-8;
 
     else
-        player.vx*=0.8;
+        player.vx*=0.85;
+
+    let grounded=false;
+
+    for(let p of platforms){
+
+        if(
+            player.y+player.h>=p.y-5 &&
+            player.y+player.h<=p.y+15 &&
+            player.x+player.w>p.x &&
+            player.x<p.x+p.w
+        ){
+            grounded=true;
+        }
+
+    }
+
+    if((keys["Space"] || touch.jump) && grounded){
+        player.vy=-15;
+    }
 
     player.vy+=gravity;
 
-    if(keys["Space"]){
-
-        let grounded=false;
-
-        for(let p of platforms){
-
-            if(
-                player.y+player.h>=p.y-5 &&
-                player.y+player.h<=p.y+10 &&
-                player.x+player.w>p.x &&
-                player.x<p.x+p.w
-            ){
-                grounded=true;
-            }
-        }
-
-        if(grounded){
-            player.vy=player.jump;
-        }
-    }
-
     player.x+=player.vx;
     player.y+=player.vy;
+
+    if(player.x<0)
+        player.x=0;
+
+    if(player.x>worldWidth-player.w)
+        player.x=worldWidth-player.w;
 
     for(let p of platforms){
 
@@ -145,24 +241,31 @@ function update(){
             player.x+player.w>p.x &&
             player.x<p.x+p.w &&
             player.y+player.h>=p.y &&
-            player.y+player.h<=p.y+20
+            player.y+player.h<=p.y+25
         ){
+
             player.y=p.y-player.h;
             player.vy=0;
+
         }
+
     }
 
     rings.forEach(r=>{
 
-        if(r.collected) return;
+        if(r.collected)
+            return;
 
-        let dx=(player.x+20)-r.x;
-        let dy=(player.y+20)-r.y;
+        const dx=(player.x+20)-r.x;
+        const dy=(player.y+20)-r.y;
 
-        if(Math.sqrt(dx*dx+dy*dy)<30){
+        if(Math.sqrt(dx*dx+dy*dy)<25){
+
             r.collected=true;
             player.rings++;
+
         }
+
     });
 
     enemies.forEach(e=>{
@@ -173,49 +276,86 @@ function update(){
             player.y<e.y+e.h &&
             player.y+player.h>e.y
         ){
+
             alert("Game Over!");
-            resetGame();
+            reset();
+
         }
 
     });
 
     cameraX=player.x-canvas.width/3;
 
-    document.getElementById("info").innerText =
-        "Anelli: "+player.rings;
+    if(cameraX<0)
+        cameraX=0;
+
+    document.getElementById("hud").innerHTML=
+    "Anelli: "+player.rings;
+
+}
+
+function drawBackground(){
+
+    ctx.fillStyle="#87CEEB";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle="white";
+
+    for(let i=0;i<20;i++){
+
+        ctx.beginPath();
+        ctx.arc(
+            (i*400-cameraX*0.2)%8000,
+            100+(i%3)*30,
+            30,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+    }
+
 }
 
 function draw(){
 
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawBackground();
 
     ctx.save();
 
     ctx.translate(-cameraX,0);
 
-    ctx.fillStyle="green";
+    ctx.fillStyle="#22aa22";
+
     platforms.forEach(p=>{
+
         ctx.fillRect(p.x,p.y,p.w,p.h);
+
     });
 
     rings.forEach(r=>{
 
         if(r.collected) return;
 
-        ctx.beginPath();
         ctx.strokeStyle="gold";
         ctx.lineWidth=5;
+
+        ctx.beginPath();
         ctx.arc(r.x,r.y,12,0,Math.PI*2);
         ctx.stroke();
+
     });
 
     ctx.fillStyle="red";
 
     enemies.forEach(e=>{
+
         ctx.fillRect(e.x,e.y,e.w,e.h);
+
     });
 
-    ctx.fillStyle="blue";
+    ctx.fillStyle="#0066ff";
 
     ctx.beginPath();
     ctx.arc(
@@ -225,9 +365,11 @@ function draw(){
         0,
         Math.PI*2
     );
+
     ctx.fill();
 
     ctx.restore();
+
 }
 
 function loop(){
@@ -235,6 +377,7 @@ function loop(){
     update();
     draw();
     requestAnimationFrame(loop);
+
 }
 
 loop();
