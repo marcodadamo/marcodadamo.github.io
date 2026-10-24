@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Gioco Ruota 3D</title>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+<style>
+
+body{
+    margin:0;
+    background:#05152b;
+    color:white;
+    font-family:Arial,sans-serif;
+    overflow:hidden;
+    text-align:center;
+}
+
+h1{
+    margin:15px;
+}
+
+#board3d{
+    width:100%;
+    height:260px;
+}
+
+.controls{
+    margin:15px;
+}
+
+input{
+    font-size:22px;
+    width:60px;
+    text-align:center;
+}
+
+button{
+    padding:10px 20px;
+    font-size:18px;
+    margin:4px;
+    cursor:pointer;
+}
+
+#wheelArea{
+    margin-top:10px;
+}
+
+#wheel{
+    width:350px;
+    height:350px;
+    margin:auto;
+    border-radius:50%;
+    border:8px solid gold;
+    background:
+    conic-gradient(
+        #e53935 0 45deg,
+        #fb8c00 45deg 90deg,
+        #fdd835 90deg 135deg,
+        #43a047 135deg 180deg,
+        #1e88e5 180deg 225deg,
+        #3949ab 225deg 270deg,
+        #8e24aa 270deg 315deg,
+        #6d4c41 315deg 360deg
+    );
+    transition:transform 6s cubic-bezier(.15,.9,.2,1);
+}
+
+.arrow{
+    width:0;
+    height:0;
+    margin:auto;
+    border-left:20px solid transparent;
+    border-right:20px solid transparent;
+    border-top:40px solid red;
+}
+
+#result{
+    margin-top:10px;
+    font-size:28px;
+    font-weight:bold;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>🎡 Gioco Ruota 3D</h1>
+
+<div id="board3d"></div>
+
+<div class="controls">
+
+<input
+id="letterInput"
+maxlength="1"
+placeholder="A">
+
+<button onclick="guessLetter()">
+Scopri Lettera
+</button>
+
+<button onclick="spinWheel()">
+Gira Ruota
+</button>
+
+</div>
+
+<div id="wheelArea">
+
+<div class="arrow"></div>
+
+<div id="wheel"></div>
+
+</div>
+
+<div id="result"></div>
+
+<script>
+
+//////////////////////////////////////////////////
+// RUOTA
+//////////////////////////////////////////////////
+
+const prizes = [
+"100",
+"200",
+"300",
+"500",
+"700",
+"900",
+"JOLLY",
+"BANCO"
+];
+
+let wheelRotation = 0;
+
+function spinWheel(){
+
+    const wheel =
+        document.getElementById("wheel");
+
+    const index =
+        Math.floor(
+            Math.random()*prizes.length
+        );
+
+    wheelRotation +=
+        360*6 -
+        index*(360/prizes.length);
+
+    wheel.style.transform =
+        `rotate(${wheelRotation}deg)`;
+
+    setTimeout(()=>{
+
+        document.getElementById(
+            "result"
+        ).innerHTML =
+        "Premio: " +
+        prizes[index];
+
+    },6000);
+}
+
+//////////////////////////////////////////////////
+// THREE JS
+//////////////////////////////////////////////////
+
+const phrase =
+"RUOTA FORTUNATA";
+
+const discovered =
+phrase.split("")
+.map(x=>x===" " ? " " : "_");
+
+const scene =
+new THREE.Scene();
+
+scene.background =
+new THREE.Color(0x05152b);
+
+const camera =
+new THREE.PerspectiveCamera(
+50,
+window.innerWidth / 260,
+0.1,
+1000
+);
+
+camera.position.z = 24;
+
+const renderer =
+new THREE.WebGLRenderer({
+antialias:true
+});
+
+renderer.setSize(
+window.innerWidth,
+260
+);
+
+document
+.getElementById("board3d")
+.appendChild(
+renderer.domElement
+);
+
+const ambient =
+new THREE.AmbientLight(
+0xffffff,
+1.5
+);
+
+scene.add(ambient);
+
+const light =
+new THREE.PointLight(
+0xffffff,
+4
+);
+
+light.position.set(
+10,
+10,
+10
+);
+
+scene.add(light);
+
+//////////////////////////////////////////////////
+// LETTERE 3D
+//////////////////////////////////////////////////
+
+const letterMeshes = [];
+
+for(let i=0;i<phrase.length;i++){
+
+    if(phrase[i] === " ")
+        continue;
+
+    const box =
+    new THREE.Mesh(
+
+        new THREE.BoxGeometry(
+            1.25,
+            1.6,
+            0.25
+        ),
+
+        new THREE.MeshPhongMaterial({
+            color:0x007733
+        })
+
+    );
+
+    box.position.x =
+    (i - phrase.length/2)
+    *1.45;
+
+    scene.add(box);
+
+    const canvas =
+    document.createElement(
+        "canvas"
+    );
+
+    canvas.width = 256;
+    canvas.height = 256;
+
+    const ctx =
+    canvas.getContext("2d");
+
+    const texture =
+    new THREE.CanvasTexture(
+        canvas
+    );
+
+    const plane =
+    new THREE.Mesh(
+
+        new THREE.PlaneGeometry(
+            1,
+            1
+        ),
+
+        new THREE.MeshBasicMaterial({
+            map:texture,
+            transparent:true
+        })
+
+    );
+
+    plane.position.z = 0.13;
+
+    box.add(plane);
+
+    letterMeshes.push({
+
+        box,
+        plane,
+        ctx,
+        texture,
+        character: phrase[i]
+
+    });
+}
+
+//////////////////////////////////////////////////
+// AGGIORNA LETTERA
+//////////////////////////////////////////////////
+
+function revealLetter(letter){
+
+    letter = letter.toUpperCase();
+
+    letterMeshes.forEach(obj=>{
+
+        if(obj.character!==letter)
+            return;
+
+        obj.ctx.clearRect(
+            0,
+            0,
+            256,
+            256
+        );
+
+        obj.ctx.fillStyle =
+            "#FFD700";
+
+        obj.ctx.font =
+            "bold 180px Arial";
+
+        obj.ctx.textAlign =
+            "center";
+
+        obj.ctx.textBaseline =
+            "middle";
+
+        obj.ctx.fillText(
+            letter,
+            128,
+            128
+        );
+
+        obj.texture.needsUpdate =
+            true;
+
+        obj.box.material.emissive
+            = new THREE.Color(
+                0xffff00
+            );
+
+        createConfettiBurst(
+            obj.box.position.x,
+            obj.box.position.y,
+            0
+        );
+    });
+}
+
+//////////////////////////////////////////////////
+// INPUT LETTERA
+//////////////////////////////////////////////////
+
+function guessLetter(){
+
+    const value =
+    document
+    .getElementById(
+        "letterInput"
+    )
+    .value
+    .toUpperCase();
+
+    if(!value)
+        return;
+
+    let found = false;
+
+    for(let i=0;i<phrase.length;i++){
+
+        if(phrase[i]===value){
+
+            discovered[i]=value;
+
+            found=true;
+        }
+    }
+
+    if(found){
+
+        revealLetter(value);
+
+    }
+
+    if(
+        discovered.join("")
+        === phrase
+    ){
+
+        victoryShow();
+
+        document
+        .getElementById(
+            "result"
+        )
+        .innerHTML =
+        "🏆 HAI VINTO!";
+    }
+
+    document
+        .getElementById(
+            "letterInput"
+        )
+        .value="";
+}
+
+//////////////////////////////////////////////////
+// CORIANDOLI 3D
+//////////////////////////////////////////////////
+
+const confetti = [];
+
+const sharedGeometries = [
+
+new THREE.BoxGeometry(
+0.12,0.12,0.03
+),
+
+new THREE.TetrahedronGeometry(
+0.1
+),
+
+new THREE.OctahedronGeometry(
+0.1
+)
+
+];
+
+const sharedMaterials = [
+
+new THREE.MeshPhongMaterial({
+color:0xff0000
+}),
+
+new THREE.MeshPhongMaterial({
+color:0xffff00
+}),
+
+new THREE.MeshPhongMaterial({
+color:0x00ff00
+}),
+
+new THREE.MeshPhongMaterial({
+color:0x00ffff
+}),
+
+new THREE.MeshPhongMaterial({
+color:0xff00ff
+})
+
+];
+
+function createConfettiBurst(
+x,y,z
+){
+
+for(let i=0;i<80;i++){
+
+const mesh =
+new THREE.Mesh(
+
+sharedGeometries[
+Math.floor(
+Math.random()*
+sharedGeometries.length
+)
+],
+
+sharedMaterials[
+Math.floor(
+Math.random()*
+sharedMaterials.length
+)
+]
+
+);
+
+mesh.position.set(
+x,
+y,
+z
+);
+
+mesh.userData={
+
+vx:(Math.random()-0.5)*0.18,
+vy:Math.random()*0.2,
+vz:(Math.random()-0.5)*0.18,
+
+rx:Math.random()*0.2,
+ry:Math.random()*0.2,
+rz:Math.random()*0.2
+
+};
+
+scene.add(mesh);
+
+confetti.push(mesh);
+}
+}
+
+//////////////////////////////////////////////////
+// FUOCHI
+//////////////////////////////////////////////////
+
+function firework(
+x,y,z,color
+){
+
+const particles = 300;
+
+const positions=[];
+
+const speeds=[];
+
+for(let i=0;i<particles;i++){
+
+positions.push(x,y,z);
+
+const a =
+Math.random()*Math.PI*2;
+
+const b =
+Math.random()*Math.PI;
+
+speeds.push({
+
+x:Math.sin(b)
+* Math.cos(a)
+* 0.2,
+
+y:Math.cos(b)
+* 0.2,
+
+z:Math.sin(b)
+* Math.sin(a)
+* 0.2
+
+});
+}
+
+const geo =
+new THREE.BufferGeometry();
+
+geo.setAttribute(
+"position",
+new THREE.Float32BufferAttribute(
+positions,
+3
+)
+);
+
+const mat =
+new THREE.PointsMaterial({
+
+size:0.15,
+color:color
+
+});
+
+const pts =
+new THREE.Points(
+geo,
+mat
+);
+
+scene.add(pts);
+
+let t=0;
+
+function anim(){
+
+t++;
+
+const p=
+geo.attributes.position;
+
+for(let i=0;i<particles;i++){
+
+p.array[i*3]+=speeds[i].x;
+p.array[i*3+1]+=speeds[i].y;
+p.array[i*3+2]+=speeds[i].z;
+
+speeds[i].y-=0.002;
+}
+
+p.needsUpdate=true;
+
+if(t<120){
+
+requestAnimationFrame(
+anim
+);
+
+}else{
+
+scene.remove(pts);
+}
+}
+
+anim();
+}
+
+//////////////////////////////////////////////////
+// VITTORIA
+//////////////////////////////////////////////////
+
+function victoryShow(){
+
+for(let i=0;i<20;i++){
+
+setTimeout(()=>{
+
+firework(
+
+(Math.random()-0.5)*20,
+
+Math.random()*8,
+
+(Math.random()-0.5)*10,
+
+new THREE.Color(
+Math.random(),
+Math.random(),
+Math.random()
+)
+
+);
+
+},i*250);
+
+}
+}
+
+//////////////////////////////////////////////////
+// LOOP
+//////////////////////////////////////////////////
+
+function animate(){
+
+requestAnimationFrame(
+animate
+);
+
+for(let i=0;i<confetti.length;i++){
+
+const c =
+confetti[i];
+
+c.position.x += c.userData.vx;
+c.position.y += c.userData.vy;
+c.position.z += c.userData.vz;
+
+c.userData.vy -= 0.004;
+
+c.rotation.x += c.userData.rx;
+c.rotation.y += c.userData.ry;
+c.rotation.z += c.userData.rz;
+}
+
+light.intensity =
+3 +
+Math.sin(
+Date.now()*0.002
+)*1.5;
+
+renderer.render(
+scene,
+camera
+);
+
+}
+
+animate();
+
+</script>
+
+</body>
+</html>
