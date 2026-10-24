@@ -8,7 +8,7 @@
 
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.webmanifest">
-    <meta name="theme-color" content="#1565c0">
+    <meta name="theme-color" content="#0d47a1">
 
     <!-- Librerie QR -->
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -16,57 +16,66 @@
 </head>
 <body>
 
-<div class="card">
+<header class="topbar">
+    <h1>SignedWork</h1>
+</header>
 
-    <h2>QR Code Operai</h2>
+<div class="container">
 
-    <div class="qr-box">
-        <div>
-            <h3>Antonio</h3>
-            <canvas id="qrAntonio"></canvas>
+    <section class="card">
+        <h2>QR Code Operai</h2>
+
+        <div class="qr-box">
+            <div class="qr-item">
+                <h3>Antonio</h3>
+                <canvas id="qrAntonio"></canvas>
+            </div>
+
+            <div class="qr-item">
+                <h3>Marco</h3>
+                <canvas id="qrMarco"></canvas>
+            </div>
         </div>
+    </section>
 
-        <div>
-            <h3>Marco</h3>
-            <canvas id="qrMarco"></canvas>
-        </div>
-    </div>
+    <section class="card">
+        <h2>Timbratura QR</h2>
 
-    <hr>
+        <button class="btn btn-green" onclick="startScan('Entrata')">Timbra Entrata</button>
+        <button class="btn btn-red" onclick="startScan('Uscita')">Timbra Uscita</button>
 
-    <h2>Timbratura QR</h2>
+        <div id="qr-reader"></div>
+    </section>
 
-    <button class="btn-entrata" onclick="startScan('Entrata')">Timbra Entrata</button>
-    <button class="btn-uscita" onclick="startScan('Uscita')">Timbra Uscita</button>
+    <section class="card">
+        <h2>Storico Timbrature</h2>
 
-    <div id="qr-reader"></div>
+        <table id="tabella">
+            <thead>
+                <tr>
+                    <th>Operaio</th>
+                    <th>Tipo</th>
+                    <th>Data</th>
+                    <th>Ora</th>
+                    <th>GPS</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
 
-    <h3>Storico Timbrature</h3>
-
-    <table id="tabella">
-        <thead>
-            <tr>
-                <th>Operaio</th>
-                <th>Tipo</th>
-                <th>Data</th>
-                <th>Ora</th>
-                <th>GPS</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
-
-    <button class="btn-export" onclick="exportExcel()">Esporta Timbrature (CSV)</button>
-    <button class="btn-export" onclick="mostraOre()">Calcola Ore Lavorate</button>
+        <button class="btn btn-blue" onclick="exportExcel()">Esporta Timbrature (CSV)</button>
+        <button class="btn btn-purple" onclick="mostraOre()">Calcola Ore Lavorate</button>
+    </section>
 
 </div>
 
 <script src="app.js"></script>
+
 <script>
-    // Registrazione service worker (PWA)
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js');
-    }
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+}
 </script>
+
 </body>
 </html>
